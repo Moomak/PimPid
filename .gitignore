@@ -1,0 +1,62 @@
+# Build
+.build/
+DerivedData/
+*.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+
+# Swift Package Manager
+.swiftpm/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode user state (ไม่ push การตั้งค่าส่วนตัว)
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+
+# ไม่ push โฟลเดอร์/ไฟล์จากเครื่องมือภายนอก หรือที่อาจมีข้อมูลเฉพาะเครื่อง
+.adal
+.agent/
+.agents/
+.augment/
+.claude/
+.cline/
+.codebuddy/
+.commandcode/
+.continue/
+.crush/
+.cursor/
+.factory/
+.goose/
+.iflow/
+.junie/
+.kilocode/
+.kiro/
+.kode/
+.mcpjam/
+.mux/
+.neovate/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.vibe/
+.windsurf/
+.zencoder/
+skills/
+
+# ความลับ / env (ถ้ามีเพิ่มภายหลัง)
+.env
+.env.*
+!.env.example
+*.pem
+*credentials*
+*secrets*
+*.key
