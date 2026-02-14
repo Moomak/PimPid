@@ -35,6 +35,10 @@ swift run PimPid
 
 จะได้เมนูบาร์และใช้งานได้ แต่ยังไม่ใช่ .app bundle; สำหรับการติดตั้งถาวรใช้วิธีที่ 1
 
+### วิธีที่ 3: ใช้ .app ที่ build ไว้แล้ว (ไม่ต้อง build เอง)
+
+ใน repo มีโฟลเดอร์ [**release/PimPid.app**](release/) — ดาวน์โหลดแล้วย้ายไป Applications หรือเปิดได้เลย (macOS 14+, Apple Silicon) ดูคำอธิบายใน [release/README.md](release/README.md)
+
 ## สิทธิ์ที่จำเป็น
 
 - **Accessibility** — เพื่อให้ shortcut **⌘⇧L** ทำงานเมื่อแอปอื่นโฟกัสอยู่ และเพื่อจำลอง Copy/Paste
