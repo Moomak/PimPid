@@ -1,0 +1,63 @@
+import XCTest
+@testable import PimPid
+
+/// ทดสอบว่าไม่แทนที่คำไทยที่ตั้งใจพิมพ์ และไม่แทนที่คำอังกฤษที่ตั้งใจพิมพ์
+/// ใช้ NSSpellChecker ของระบบ — รันบน macOS: swift test
+final class ConversionValidatorTests: XCTestCase {
+
+    func testThaiToEnglish_RejectConvertedWithDigits() {
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "g0v", direction: .thaiToEnglish, original: "เจอ"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "ab1c", direction: .thaiToEnglish, original: "อะไร"))
+    }
+
+    func testThaiToEnglish_RejectNonEnglishWords() {
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "xit", direction: .thaiToEnglish, original: "ประ"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "gmL", direction: .thaiToEnglish, original: "เทศ"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "iyd", direction: .thaiToEnglish, original: "รัก"))
+    }
+
+    func testThaiToEnglish_AcceptValidEnglish() {
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "hello", direction: .thaiToEnglish, original: "อะไรก็ได้"))
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "world", direction: .thaiToEnglish, original: "ฟสวฟก"))
+    }
+
+    func testEnglishToThai_RejectWhenOriginalIsValidEnglish() {
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "ะำหะ", direction: .englishToThai, original: "test"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "สววฟฟ", direction: .englishToThai, original: "hello"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "ฟรสว", direction: .englishToThai, original: "world"))
+    }
+
+    func testEnglishToThai_AcceptWhenOriginalIsNotValidEnglish() {
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "ะำหะ", direction: .englishToThai, original: "tset"))
+    }
+
+    func testNone_Reject() {
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "anything", direction: .none, original: "anything"))
+    }
+
+    func testThaiToEnglish_RejectWhenOriginalIsInThaiWordList() {
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "xit", direction: .thaiToEnglish, original: "ประ"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "gmL", direction: .thaiToEnglish, original: "เทศ"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "iyd", direction: .thaiToEnglish, original: "รัก"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "ช=j;p", direction: .thaiToEnglish, original: "ช่วย"))
+        XCTAssertTrue(ThaiWordList.containsKnownThai("ประเทศ"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "xityg", direction: .thaiToEnglish, original: "ประเทศ"))
+        XCTAssertTrue(ThaiWordList.containsKnownThai("ครับ"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "iyb", direction: .thaiToEnglish, original: "ครับ"))
+    }
+
+    func testThaiToEnglish_AcceptWhenConvertedIsValidEnglishEvenIfOriginalInList() {
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "type", direction: .thaiToEnglish, original: "ะัยำ"))
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "test", direction: .thaiToEnglish, original: "ะำหะ"))
+    }
+
+    func testThaiToEnglish_RejectWhenConvertedHasPunctuation() {
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: ",bh'", direction: .thaiToEnglish, original: "มิ้ง"))
+    }
+
+    func testEnglishToThai_AcceptWhenOriginalHasDigitsOrPunctuation() {
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "วัน", direction: .englishToThai, original: ";yo"))
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "เติม", direction: .englishToThai, original: "g9b,"))
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "จัน", direction: .englishToThai, original: "0yo"))
+    }
+}

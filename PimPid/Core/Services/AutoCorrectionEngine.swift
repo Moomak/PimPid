@@ -244,8 +244,8 @@ final class AutoCorrectionEngine {
         // Perform replacement (still on replacementQueue)
         TextManipulator.replaceWithClipboard(deleteCount: deleteCount, text: info.converted)
 
-        // Wait for paste to complete
-        usleep(50000) // 50ms
+        // Wait for paste to complete (ลดจาก 50ms เพื่อไม่ให้รู้สึกค้าง)
+        usleep(25000) // 25ms
 
         // Switch keyboard + stats on main thread (Carbon API requires main thread)
         let direction = info.direction
@@ -309,7 +309,7 @@ final class AutoCorrectionEngine {
 
         var shouldReplace = false
         DispatchQueue.main.sync {
-            shouldReplace = ConversionValidator.shouldReplace(converted: converted, direction: direction)
+            shouldReplace = ConversionValidator.shouldReplace(converted: converted, direction: direction, original: trimmed)
         }
         guard shouldReplace else { return nil }
 

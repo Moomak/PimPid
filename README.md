@@ -65,6 +65,24 @@ PimPid/
 └── README.md
 ```
 
+## รายการคำไทย (Thai word list)
+
+แอปมี **รายการคำไทย** — ถ้าข้อความที่พิมพ์ตรงกับคำในรายการ **จะไม่ถูกแปลง** เป็นอังกฤษ (ลดการแก้คำผิดแบบ ประ→xit, เจอ→g0v)
+
+- **ไฟล์ [PimPid/Resources/ThaiWords.txt](PimPid/Resources/ThaiWords.txt)** มีคำไทยประมาณ **52,000+ คำ** จาก [wannaphong/thai-wordlist](https://github.com/wannaphong/thai-wordlist) และ [korakot/thainlp](https://github.com/korakot/thainlp) (Apache 2.0 / ใช้ได้อย่างอิสระ)
+- แอปโหลดคำจากไฟล์นี้ + คำในตัว (embedded) แล้วรวมกันใช้
+- **ต้องการเพิ่มคำ**: เพิ่มใน ThaiWords.txt (บรรทัดละคำ บรรทัดที่ขึ้นต้นด้วย `#` เป็น comment) แล้ว build ใหม่ หรือ copy ไฟล์ไปไว้ใน `PimPid.app/Contents/Resources/ThaiWords.txt` แล้วเปิดแอปใหม่
+
+## การทดสอบ (Testing)
+
+จากโฟลเดอร์โปรเจกต์ รัน unit tests:
+
+```bash
+swift test
+```
+
+ทดสอบการแปลง layout (KeyboardLayoutConverter) และกฎไม่แทนที่คำที่ตั้งใจพิมพ์ (ConversionValidator) เช่น ไม่แปลง คำไทย "ประ"/"เจอ" เป็น "xit"/"g0v" และไม่แปลงคำอังกฤษ "test" เป็น "ะำหะ"
+
 ## หมายเหตุ
 
 - ใช้การแมปคีย์บอร์ด **ไทย Kedmanee** กับ **US QWERTY** (ตำแหน่งปุ่มเดียวกัน)

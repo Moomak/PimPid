@@ -11,7 +11,13 @@ let package = Package(
         .executableTarget(
             name: "PimPid",
             path: "PimPid",
-            exclude: ["PimPid.entitlements", "README.md", "Icon"]
+            exclude: ["PimPid.entitlements", "README.md", "Icon"],
+            resources: [.process("Resources")]
+        ),
+        .testTarget(
+            name: "PimPidTests",
+            dependencies: ["PimPid"],
+            path: "Tests/PimPidTests"
         ),
     ]
 )

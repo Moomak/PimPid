@@ -44,9 +44,9 @@ cat > release/PimPid.app/Contents/Info.plist << 'EOF'
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.4.0</string>
+	<string>1.5.2</string>
 	<key>CFBundleVersion</key>
-	<string>5</string>
+	<string>8</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>NSHighResolutionCapable</key>
@@ -82,6 +82,9 @@ EOF
 # 5. Copy icon
 echo "🎨 Copying icon..."
 cp PimPid/Icon/PimPid.icns release/PimPid.app/Contents/Resources/
+
+# 5b. Copy Thai words list (optional)
+[ -f PimPid/Resources/ThaiWords.txt ] && cp PimPid/Resources/ThaiWords.txt release/PimPid.app/Contents/Resources/
 
 # 6. Refresh Services registration
 echo "🔄 Refreshing Services registration..."

@@ -74,6 +74,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AutoCorrectionEngine.shared.start()
         }
 
+        // โหลดรายการคำไทยและ warm spell checker ล่วงหน้า เพื่อไม่ให้การแปลงครั้งแรกค้าง
+        DispatchQueue.global(qos: .utility).async {
+            _ = ThaiWordList.words
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let checker = NSSpellChecker.shared
+            checker.setLanguage("en")
+            _ = checker.checkSpelling(of: "the", startingAt: 0)
+        }
+
         // Show onboarding on first launch
         if !UserDefaults.standard.bool(forKey: PimPidKeys.hasCompletedOnboarding) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

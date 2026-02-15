@@ -113,7 +113,7 @@ struct GeneralSettingsView: View {
             }
 
             Section {
-                LabeledContent("เวอร์ชัน", value: "1.4.0")
+                LabeledContent("เวอร์ชัน", value: "1.5.2")
                 LabeledContent("สถานะ", value: appState.isEnabled ? "✅ ใช้งาน" : "⏸️ หยุดชั่วคราว")
             } header: {
                 Text("ข้อมูล")

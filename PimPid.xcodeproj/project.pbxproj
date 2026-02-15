@@ -17,6 +17,7 @@
 		A1000008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008 /* SettingsView.swift */; };
 		A1000010 /* PimPidKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000010 /* PimPidKeys.swift */; };
 		A1000011 /* ConversionValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000011 /* ConversionValidator.swift */; };
+		A1000012 /* ThaiWordList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012 /* ThaiWordList.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		A2000009 /* PimPid.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PimPid.entitlements; sourceTree = "<group>"; };
 		A2000010 /* PimPidKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PimPidKeys.swift; sourceTree = "<group>"; };
 		A2000011 /* ConversionValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionValidator.swift; sourceTree = "<group>"; };
+		A2000012 /* ThaiWordList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThaiWordList.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				A2000011 /* ConversionValidator.swift */,
+				A2000012 /* ThaiWordList.swift */,
 				A2000002 /* KeyboardLayoutConverter.swift */,
 				A2000003 /* ExcludeListStore.swift */,
 				A2000004 /* TextReplacementService.swift */,
@@ -146,6 +149,7 @@
 				A1000008 /* SettingsView.swift in Sources */,
 				A1000010 /* PimPidKeys.swift in Sources */,
 				A1000011 /* ConversionValidator.swift in Sources */,
+				A1000012 /* ThaiWordList.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -205,7 +209,7 @@
 				CODE_SIGN_ENTITLEMENTS = PimPid/PimPid.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -214,7 +218,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pimpid;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -230,7 +234,7 @@
 				CODE_SIGN_ENTITLEMENTS = PimPid/PimPid.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -239,7 +243,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pimpid;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
