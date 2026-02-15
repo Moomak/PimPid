@@ -37,18 +37,27 @@ enum TextReplacementService {
         let original = getSelectedTextViaPasteboard()
         guard let raw = original?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return }
         if excludeStore.shouldExclude(text: raw) { return }
+        let directionUsed: KeyboardLayoutConverter.ConversionDirection
         let converted: String
         if let dir = direction {
+            directionUsed = dir
             switch dir {
             case .thaiToEnglish: converted = KeyboardLayoutConverter.convertThaiToEnglish(raw)
             case .englishToThai: converted = KeyboardLayoutConverter.convertEnglishToThai(raw)
             case .none: converted = raw
             }
         } else {
+            directionUsed = KeyboardLayoutConverter.dominantLanguage(raw)
             converted = KeyboardLayoutConverter.convertAuto(raw)
         }
         if converted != raw {
             pasteText(converted)
+            // สลับคีย์บอร์ดให้ตรงกับภาษาที่แปลงไป เพื่อพิมพ์ต่อได้ทันที
+            switch directionUsed {
+            case .thaiToEnglish: InputSourceSwitcher.switchTo(.english)
+            case .englishToThai: InputSourceSwitcher.switchTo(.thai)
+            case .none: break
+            }
         }
     }
 

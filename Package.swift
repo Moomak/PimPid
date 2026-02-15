@@ -11,7 +11,7 @@ let package = Package(
         .executableTarget(
             name: "PimPid",
             path: "PimPid",
-            exclude: ["PimPid.entitlements", "README.md"]
+            exclude: ["PimPid.entitlements", "README.md", "Icon"]
         ),
     ]
 )

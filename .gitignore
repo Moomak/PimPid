@@ -60,3 +60,7 @@ skills/
 *credentials*
 *secrets*
 *.key
+
+# Icon build (เก็บแค่ .icns + script)
+PimPid/Icon/AppIcon.iconset/
+PimPid/Icon/icon_1024.png

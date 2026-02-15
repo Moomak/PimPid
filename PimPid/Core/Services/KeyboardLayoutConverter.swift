@@ -1,20 +1,64 @@
 import Foundation
 
 /// แปลงข้อความระหว่างภาษาไทย (คีย์บอร์ด Kedmanee) กับอังกฤษ (QWERTY) ตามตำแหน่งปุ่มเดียวกัน
+///
+/// IMPORTANT: Thai combining marks (sara am ั, sara ii ี, mai ek ่, etc.) combine with preceding
+/// consonants into grapheme clusters in Swift's `Character` type. We use `Unicode.Scalar` keys
+/// to ensure each code point is looked up individually.
 struct KeyboardLayoutConverter {
-    private static let thaiToEnglish: [Character: Character] = [
-        "ๅ": "`", "๑": "1", "๒": "2", "๓": "3", "๔": "4", "๕": "5", "๖": "6", "๗": "7", "๘": "8", "๙": "9", "๐": "0", "-": "-", "=": "=",
-        "ๆ": "q", "ไ": "w", "ำ": "e", "พ": "r", "ะ": "t", "ั": "y", "ี": "u", "ร": "i", "น": "o", "ย": "p", "บ": "[", "ล": "]",
-        "ฟ": "a", "ห": "s", "ก": "d", "ด": "f", "้": "g", "่": "h", "จ": "j", "ข": "k", "ิ": "l", "์": ";", "\"": "'",
-        "ผ": "z", "ป": "x", "แ": "c", "อ": "v", "็": "b", "ื": "n", "ท": "m", "ม": ",", "ใ": ".", "ฝ": "/",
-        "ฤ": "1", "ู": "2", "ฺ": "3", "ฎ": "4", "ฏ": "5", "ฐ": "6", "ฑ": "7", "ฒ": "8", "ณ": "9", "ฯ": "0",
-        " ": " "
+
+    // MARK: - Kedmanee Layout Mapping (English key → Thai character)
+    // Source of truth: each English key maps to exactly one Thai character.
+    // thaiToEnglish is derived by inverting this (no conflicts in that direction).
+
+    /// Unshifted keys
+    private static let englishToThaiUnshifted: [Unicode.Scalar: Unicode.Scalar] = [
+        // Number row
+        "`": "ๅ", "1": "ๆ", "2": "/", "3": "-", "4": "ภ", "5": "ถ",
+        "6": "ุ", "7": "ึ", "8": "ค", "9": "ต", "0": "จ", "-": "ข", "=": "ช",
+        // Top row (QWERTY)
+        "q": "ๆ", "w": "ไ", "e": "ำ", "r": "พ", "t": "ะ", "y": "ั",
+        "u": "ี", "i": "ร", "o": "น", "p": "ย", "[": "บ", "]": "ล", "\\": "ฃ",
+        // Home row (ASDF)
+        "a": "ฟ", "s": "ห", "d": "ก", "f": "ด", "g": "เ", "h": "้",
+        "j": "่", "k": "า", "l": "ส", ";": "ว", "'": "ง",
+        // Bottom row (ZXCV)
+        "z": "ผ", "x": "ป", "c": "แ", "v": "อ", "b": "ิ", "n": "ื",
+        "m": "ท", ",": "ม", ".": "ใ", "/": "ฝ",
+        // Space
+        " ": " ",
     ]
 
-    private static var englishToThai: [Character: Character] = {
-        var map: [Character: Character] = [:]
-        for (thai, eng) in thaiToEnglish {
-            map[eng] = thai
+    /// Shifted keys
+    private static let englishToThaiShifted: [Unicode.Scalar: Unicode.Scalar] = [
+        // Number row (shifted)
+        "~": "%", "!": "+", "@": "๑", "#": "๒", "$": "๓", "%": "๔",
+        "^": "ู", "&": "฿", "*": "๕", "(": "๖", ")": "๗", "_": "๘", "+": "๙",
+        // Top row (shifted)
+        "Q": "๐", "W": "\"", "E": "ฎ", "R": "ฑ", "T": "ธ", "Y": "ํ",
+        "U": "๊", "I": "ณ", "O": "ฯ", "P": "ญ", "{": "ฐ", "}": ",", "|": "ฅ",
+        // Home row (shifted)
+        "A": "ฤ", "S": "ฆ", "D": "ฏ", "F": "โ", "G": "ฌ", "H": "็",
+        "J": "๋", "K": "ษ", "L": "ศ", ":": "ซ", "\"": ".",
+        // Bottom row (shifted)
+        "Z": "(", "X": ")", "C": "ฉ", "V": "ฮ", "B": "ฺ", "N": "์",
+        "M": "?", "<": "ฒ", ">": "ฬ", "?": "ฦ",
+    ]
+
+    /// Combined English → Thai (unshifted + shifted)
+    private static let englishToThai: [Unicode.Scalar: Unicode.Scalar] = {
+        var map = englishToThaiUnshifted
+        for (k, v) in englishToThaiShifted {
+            map[k] = v
+        }
+        return map
+    }()
+
+    /// Thai → English (inverted from englishToThai)
+    private static let thaiToEnglish: [Unicode.Scalar: Unicode.Scalar] = {
+        var map: [Unicode.Scalar: Unicode.Scalar] = [:]
+        for (eng, thai) in englishToThai {
+            map[thai] = eng
         }
         return map
     }()
@@ -23,23 +67,35 @@ struct KeyboardLayoutConverter {
     static func isThai(_ c: Character) -> Bool {
         guard let scalar = c.unicodeScalars.first else { return false }
         let v = scalar.value
-        return (v >= 0x0E01 && v <= 0x0E5B) || (v >= 0x0E50 && v <= 0x0E59) // ไทย + ตัวเลขไทย
+        return (v >= 0x0E01 && v <= 0x0E5B)
+    }
+
+    /// ตรวจว่า Unicode scalar เป็นภาษาไทย
+    private static func isThai(_ scalar: Unicode.Scalar) -> Bool {
+        let v = scalar.value
+        return (v >= 0x0E01 && v <= 0x0E5B)
+    }
+
+    /// ตรวจว่า Unicode scalar เป็นภาษาอังกฤษ/ASCII
+    private static func isEnglish(_ scalar: Unicode.Scalar) -> Bool {
+        scalar.isASCII
     }
 
     /// ตรวจว่าเป็นตัวอักษรอังกฤษ (ละติน)
     static func isEnglish(_ c: Character) -> Bool {
-        c.isASCII && (c.isLetter || c.isNumber || "`-=[];',./ ".contains(c))
+        c.isASCII && (c.isLetter || c.isNumber || "`-=[];',./ ~!@#$%^&*()_+{}|:\"<>?\\".contains(c))
     }
 
     /// ตรวจว่าข้อความส่วนใหญ่เป็นภาษาไหน (ใช้ตัดสินใจทิศทางแปลง)
+    /// ใช้ unicodeScalars เพื่อนับ combining marks แยกจากตัวอักษรหลัก
     static func dominantLanguage(_ text: String) -> ConversionDirection {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return .none }
         var thaiCount = 0
         var engCount = 0
-        for c in trimmed {
-            if isThai(c) { thaiCount += 1 }
-            else if isEnglish(c) { engCount += 1 }
+        for scalar in trimmed.unicodeScalars {
+            if isThai(scalar) { thaiCount += 1 }
+            else if isEnglish(scalar) && scalar != " " { engCount += 1 }
         }
         if thaiCount > engCount { return .thaiToEnglish }
         if engCount > thaiCount { return .englishToThai }
@@ -53,13 +109,30 @@ struct KeyboardLayoutConverter {
     }
 
     /// แปลงไทย → อังกฤษ (ตามตำแหน่งปุ่ม)
+    /// ใช้ unicodeScalars เพราะ Thai combining marks รวมกับ consonant เป็น grapheme cluster
     static func convertThaiToEnglish(_ text: String) -> String {
-        text.map { thaiToEnglish[$0] ?? $0 }.map(String.init).joined()
+        var result = ""
+        for scalar in text.unicodeScalars {
+            if let mapped = thaiToEnglish[scalar] {
+                result.unicodeScalars.append(mapped)
+            } else {
+                result.unicodeScalars.append(scalar)
+            }
+        }
+        return result
     }
 
     /// แปลงอังกฤษ → ไทย (ตามตำแหน่งปุ่ม)
     static func convertEnglishToThai(_ text: String) -> String {
-        text.map { englishToThai[$0] ?? $0 }.map(String.init).joined()
+        var result = ""
+        for scalar in text.unicodeScalars {
+            if let mapped = englishToThai[scalar] {
+                result.unicodeScalars.append(mapped)
+            } else {
+                result.unicodeScalars.append(scalar)
+            }
+        }
+        return result
     }
 
     /// แปลงอัตโนมัติตามภาษาที่เดาได้

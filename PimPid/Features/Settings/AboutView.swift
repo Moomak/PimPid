@@ -1,0 +1,178 @@
+import SwiftUI
+
+/// About view with app information and quick start guide
+struct AboutView: View {
+    var body: some View {
+        Form {
+            Section {
+                VStack(spacing: 16) {
+                    // App icon
+                    Image(systemName: "character.bubble.fill")
+                        .font(.system(size: 64))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+
+                    // App name and version
+                    VStack(spacing: 4) {
+                        Text("PimPid")
+                            .font(.system(size: 24, weight: .bold))
+
+                        Text("เวอร์ชัน 1.4.0")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Description
+                    Text("แปลงข้อความไทย ⇄ อังกฤษ ตามตำแหน่งปุ่มคีย์บอร์ด")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: 16) {
+                    QuickStartStep(
+                        number: 1,
+                        title: "เปิดใช้งาน PimPid",
+                        description: "คลิก menu bar icon และเปิด toggle 'PimPid เปิดใช้งาน'"
+                    )
+
+                    QuickStartStep(
+                        number: 2,
+                        title: "ให้สิทธิ์ Accessibility",
+                        description: "อนุญาตให้ PimPid เข้าถึงคีย์บอร์ดใน System Settings"
+                    )
+
+                    QuickStartStep(
+                        number: 3,
+                        title: "เลือกข้อความและกด Shortcut",
+                        description: "เลือกข้อความที่พิมพ์ผิดภาษา แล้วกด ⌘⇧L"
+                    )
+
+                    QuickStartStep(
+                        number: 4,
+                        title: "เปิด Auto-Correct (ตัวเลือก)",
+                        description: "เปิดใช้ auto-correct เพื่อแก้ไขอัตโนมัติขณะพิมพ์"
+                    )
+                }
+            } header: {
+                Text("Quick Start Guide")
+                    .font(.headline)
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    AboutLink(
+                        icon: "link",
+                        title: "GitHub",
+                        value: "github.com/your-repo/pimpid"
+                    )
+
+                    AboutLink(
+                        icon: "envelope.fill",
+                        title: "Support",
+                        value: "support@pimpid.app"
+                    )
+
+                    AboutLink(
+                        icon: "doc.text.fill",
+                        title: "License",
+                        value: "MIT License"
+                    )
+                }
+            } header: {
+                Text("ข้อมูลเพิ่มเติม")
+                    .font(.headline)
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("© 2025 PimPid")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Text("Made with ❤️ for Thai and English switchers")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("เกี่ยวกับ")
+    }
+}
+
+/// Quick start step component
+struct QuickStartStep: View {
+    let number: Int
+    let title: String
+    let description: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            // Number badge
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [.blue, .purple],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 28, height: 28)
+
+                Text("\(number)")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+            }
+
+            // Content
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+
+                Text(description)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+}
+
+/// About link component
+struct AboutLink: View {
+    let icon: String
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .frame(width: 20)
+
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+
+            Spacer()
+
+            Text(value)
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+#Preview {
+    AboutView()
+}
