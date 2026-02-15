@@ -12,6 +12,10 @@ enum ConversionValidator {
         case .thaiToEnglish:
             return isValidEnglishForReplace(converted)
         case .englishToThai:
+            // อย่าแปลงเมื่อเป็นแค่ตัวเลขหรือช่องว่าง (เช่น 897, 154, 897 154) — ไม่มีความหมายเป็นคำไทย
+            if !original.contains(where: { $0.isLetter }) {
+                return false
+            }
             if original.contains(where: { $0.isNumber }) { return true }
             if !original.allSatisfy({ $0.isLetter || $0 == " " || $0 == "'" }) { return true }
             return !isValidEnglish(original)
