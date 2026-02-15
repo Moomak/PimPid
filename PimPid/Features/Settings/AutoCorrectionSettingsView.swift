@@ -10,13 +10,13 @@ struct AutoCorrectionSettingsView: View {
             Section {
                 Toggle("เปิดใช้งาน Auto-Correct", isOn: $appState.autoCorrectEnabled)
                     .toggleStyle(.switch)
-                    .disabled(!KeyboardShortcutManager.isAccessibilityTrusted)
+                    .disabled(!AccessibilityHelper.isAccessibilityTrusted)
 
-                Text("แก้ไขข้อความอัตโนมัติทันทีที่พิมพ์ผิดภาษา โดยไม่ต้องกด shortcut")
+                Text("แก้ไขข้อความอัตโนมัติทันทีที่พิมพ์ผิดภาษา")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                if !KeyboardShortcutManager.isAccessibilityTrusted {
+                if !AccessibilityHelper.isAccessibilityTrusted {
                     HStack {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.orange)
@@ -58,16 +58,8 @@ struct AutoCorrectionSettingsView: View {
                 Toggle("เสียงแจ้งเตือน", isOn: $appState.autoCorrectSoundEnabled)
                     .toggleStyle(.switch)
                     .disabled(!appState.autoCorrectEnabled)
-
-                Toggle("แสดงการแจ้งเตือนบนหน้าจอ", isOn: $appState.autoCorrectVisualFeedback)
-                    .toggleStyle(.switch)
-                    .disabled(!appState.autoCorrectEnabled)
-
-                Text("แสดง toast notification เมื่อแก้ไขข้อความสำเร็จ")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             } header: {
-                Text("Visual & Sound Feedback")
+                Text("เสียง")
                     .font(.headline)
             }
 
@@ -138,7 +130,7 @@ struct AutoCorrectionSettingsView: View {
                         icon: "checkmark.circle.fill",
                         color: .green,
                         title: "ประโยชน์",
-                        description: "ไม่ต้องเลือกข้อความและกด shortcut อีกต่อไป แค่พิมพ์ไปเรื่อยๆ"
+                        description: "แค่พิมพ์ไปเรื่อยๆ PimPid จะแก้ไขอัตโนมัติเมื่อตรวจพบการพิมพ์ผิดภาษา"
                     )
 
                     InfoRow(

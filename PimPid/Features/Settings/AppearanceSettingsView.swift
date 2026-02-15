@@ -1,101 +1,55 @@
 import SwiftUI
 
-/// Appearance settings view
+/// Appearance settings: theme, font size
 struct AppearanceSettingsView: View {
     @EnvironmentObject var appState: AppState
 
+    private static let themeOptions: [(id: String, label: String)] = [
+        ("auto", "ตามระบบ"),
+        ("light", "สว่าง"),
+        ("dark", "มืด"),
+    ]
+    private static let fontSizeOptions: [(id: String, label: String)] = [
+        ("small", "เล็ก"),
+        ("medium", "ปกติ"),
+        ("large", "ใหญ่"),
+    ]
     var body: some View {
         Form {
             Section {
-                Text("การตั้งค่ารูปลักษณ์จะมีให้ในเวอร์ชันถัดไป")
+                Picker("ธีมสี", selection: $appState.appearanceTheme) {
+                    ForEach(Self.themeOptions, id: \.id) { option in
+                        Text(option.label).tag(option.id)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                Text("เลือกโทนสีของแอป (ตั้งค่า → เกี่ยวกับ และเมนู)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-
-                VStack(alignment: .leading, spacing: 16) {
-                    FeaturePreview(
-                        icon: "paintpalette.fill",
-                        title: "ธีมสี",
-                        description: "เลือกธีมสีที่ชอบ (Light, Dark, Auto)",
-                        available: false
-                    )
-
-                    FeaturePreview(
-                        icon: "textformat.size",
-                        title: "ขนาดตัวอักษร",
-                        description: "ปรับขนาดตัวอักษรใน menu bar และ settings",
-                        available: false
-                    )
-
-                    FeaturePreview(
-                        icon: "bell.badge.fill",
-                        title: "สไตล์การแจ้งเตือน",
-                        description: "เลือกรูปแบบ toast notification",
-                        available: false
-                    )
-                }
-                .padding(.vertical, 8)
             } header: {
-                Text("รูปลักษณ์")
+                Text("ธีมสี")
                     .font(.headline)
             }
 
             Section {
-                HStack(spacing: 12) {
-                    Image(systemName: "info.circle.fill")
-                        .foregroundColor(.blue)
-                    Text("ฟีเจอร์เหล่านี้จะพร้อมใช้งานในเวอร์ชัน 1.1")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                Picker("ขนาดตัวอักษร", selection: $appState.appearanceFontSize) {
+                    ForEach(Self.fontSizeOptions, id: \.id) { option in
+                        Text(option.label).tag(option.id)
+                    }
                 }
+                .pickerStyle(.menu)
+
+                Text("ใช้กับเมนูและหน้าตั้งค่า")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("ขนาดตัวอักษร")
+                    .font(.headline)
             }
         }
         .formStyle(.grouped)
         .navigationTitle("รูปลักษณ์")
-    }
-}
-
-/// Feature preview component
-struct FeaturePreview: View {
-    let icon: String
-    let title: String
-    let description: String
-    let available: Bool
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: available ? [.blue, .purple] : [.gray, .gray],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 32)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(title)
-                        .font(.system(size: 13, weight: .semibold))
-
-                    if !available {
-                        Text("เร็วๆ นี้")
-                            .font(.system(size: 9, weight: .semibold))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.orange.opacity(0.2))
-                            .foregroundColor(.orange)
-                            .cornerRadius(4)
-                    }
-                }
-
-                Text(description)
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-            }
-        }
-        .opacity(available ? 1.0 : 0.6)
     }
 }
 

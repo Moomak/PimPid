@@ -11,7 +11,7 @@
 		A1000002 /* KeyboardLayoutConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* KeyboardLayoutConverter.swift */; };
 		A1000003 /* ExcludeListStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* ExcludeListStore.swift */; };
 		A1000004 /* TextReplacementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004 /* TextReplacementService.swift */; };
-		A1000005 /* KeyboardShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005 /* KeyboardShortcutManager.swift */; };
+		A1000013 /* AccessibilityHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013 /* AccessibilityHelper.swift */; };
 		A1000006 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006 /* AppState.swift */; };
 		A1000007 /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007 /* MenuBarContentView.swift */; };
 		A1000008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008 /* SettingsView.swift */; };
@@ -26,7 +26,7 @@
 		A2000002 /* KeyboardLayoutConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardLayoutConverter.swift; sourceTree = "<group>"; };
 		A2000003 /* ExcludeListStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExcludeListStore.swift; sourceTree = "<group>"; };
 		A2000004 /* TextReplacementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextReplacementService.swift; sourceTree = "<group>"; };
-		A2000005 /* KeyboardShortcutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutManager.swift; sourceTree = "<group>"; };
+		A2000013 /* AccessibilityHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityHelper.swift; sourceTree = "<group>"; };
 		A2000006 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		A2000007 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		A2000008 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -84,7 +84,7 @@
 				A2000002 /* KeyboardLayoutConverter.swift */,
 				A2000003 /* ExcludeListStore.swift */,
 				A2000004 /* TextReplacementService.swift */,
-				A2000005 /* KeyboardShortcutManager.swift */,
+				A2000013 /* AccessibilityHelper.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -143,7 +143,7 @@
 				A1000002 /* KeyboardLayoutConverter.swift in Sources */,
 				A1000003 /* ExcludeListStore.swift in Sources */,
 				A1000004 /* TextReplacementService.swift in Sources */,
-				A1000005 /* KeyboardShortcutManager.swift in Sources */,
+				A1000013 /* AccessibilityHelper.swift in Sources */,
 				A1000006 /* AppState.swift in Sources */,
 				A1000007 /* MenuBarContentView.swift in Sources */,
 				A1000008 /* SettingsView.swift in Sources */,
@@ -209,7 +209,7 @@
 				CODE_SIGN_ENTITLEMENTS = PimPid/PimPid.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -218,7 +218,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.5.2;
+				MARKETING_VERSION = 1.5.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pimpid;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -234,7 +234,7 @@
 				CODE_SIGN_ENTITLEMENTS = PimPid/PimPid.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -243,7 +243,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.5.2;
+				MARKETING_VERSION = 1.5.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pimpid;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

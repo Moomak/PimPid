@@ -44,37 +44,15 @@ cat > release/PimPid.app/Contents/Info.plist << 'EOF'
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.5.2</string>
+	<string>1.5.4</string>
 	<key>CFBundleVersion</key>
-	<string>8</string>
+	<string>10</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>LSUIElement</key>
 	<true/>
-	<key>NSServices</key>
-	<array>
-		<dict>
-			<key>NSMenuItem</key>
-			<dict>
-				<key>default</key>
-				<string>Convert Thai ↔ English</string>
-			</dict>
-			<key>NSMessage</key>
-			<string>convertText</string>
-			<key>NSPortName</key>
-			<string>PimPid</string>
-			<key>NSSendTypes</key>
-			<array>
-				<string>public.utf8-plain-text</string>
-			</array>
-			<key>NSReturnTypes</key>
-			<array>
-				<string>public.utf8-plain-text</string>
-			</array>
-		</dict>
-	</array>
 </dict>
 </plist>
 EOF

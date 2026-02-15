@@ -14,21 +14,15 @@ struct OnboardingView: View {
             color: .blue
         ),
         OnboardingStep(
-            icon: "keyboard.fill",
-            title: "พิมพ์ผิดภาษา?",
-            description: "เลือกข้อความที่พิมพ์ผิดภาษา แล้วกด shortcut ⌘⇧L เพื่อแปลงทันที",
-            color: .purple
-        ),
-        OnboardingStep(
             icon: "bolt.fill",
             title: "Auto-Correct",
-            description: "เปิดใช้ auto-correct เพื่อให้ PimPid แก้ไขอัตโนมัติขณะพิมพ์ โดยไม่ต้องเลือกข้อความ",
+            description: "เปิดใช้ Auto-Correct เพื่อให้ PimPid แก้ไขอัตโนมัติขณะพิมพ์เมื่อตรวจพบการพิมพ์ผิดภาษา",
             color: .orange
         ),
         OnboardingStep(
             icon: "lock.shield.fill",
-            title: "ต้องการสิทธิ์ Accessibility",
-            description: "PimPid ต้องการสิทธิ์เพื่อตรวจจับ keyboard shortcut และทำงานได้อย่างถูกต้อง",
+            title: "ให้สิทธิ์ Accessibility",
+            description: "PimPid ต้องการสิทธิ์ Accessibility เพื่อให้ Auto-Correct ทำงานได้",
             color: .green
         )
     ]
@@ -83,7 +77,7 @@ struct OnboardingView: View {
                 } else {
                     VStack(spacing: 8) {
                         Button("เปิด System Settings") {
-                            KeyboardShortcutManager.openAccessibilitySettings()
+                            AccessibilityHelper.openAccessibilitySettings()
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.green)

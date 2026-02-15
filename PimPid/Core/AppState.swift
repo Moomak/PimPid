@@ -41,6 +41,17 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: PimPidKeys.hasCompletedOnboarding) }
     }
 
+    // Appearance
+    @Published var appearanceTheme: String {
+        didSet { UserDefaults.standard.set(appearanceTheme, forKey: PimPidKeys.appearanceTheme) }
+    }
+    @Published var appearanceFontSize: String {
+        didSet { UserDefaults.standard.set(appearanceFontSize, forKey: PimPidKeys.appearanceFontSize) }
+    }
+    @Published var notificationStyle: String {
+        didSet { UserDefaults.standard.set(notificationStyle, forKey: PimPidKeys.notificationStyle) }
+    }
+
     init() {
         // Initialize isEnabled
         if UserDefaults.standard.object(forKey: PimPidKeys.enabled) == nil {
@@ -78,5 +89,19 @@ final class AppState: ObservableObject {
 
         // Initialize onboarding
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: PimPidKeys.hasCompletedOnboarding)
+
+        // Appearance
+        if UserDefaults.standard.object(forKey: PimPidKeys.appearanceTheme) == nil {
+            UserDefaults.standard.set("auto", forKey: PimPidKeys.appearanceTheme)
+        }
+        self.appearanceTheme = UserDefaults.standard.string(forKey: PimPidKeys.appearanceTheme) ?? "auto"
+        if UserDefaults.standard.object(forKey: PimPidKeys.appearanceFontSize) == nil {
+            UserDefaults.standard.set("medium", forKey: PimPidKeys.appearanceFontSize)
+        }
+        self.appearanceFontSize = UserDefaults.standard.string(forKey: PimPidKeys.appearanceFontSize) ?? "medium"
+        if UserDefaults.standard.object(forKey: PimPidKeys.notificationStyle) == nil {
+            UserDefaults.standard.set("toast", forKey: PimPidKeys.notificationStyle)
+        }
+        self.notificationStyle = UserDefaults.standard.string(forKey: PimPidKeys.notificationStyle) ?? "toast"
     }
 }

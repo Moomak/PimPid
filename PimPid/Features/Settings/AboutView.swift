@@ -22,14 +22,19 @@ struct AboutView: View {
                         Text("PimPid")
                             .font(.system(size: 24, weight: .bold))
 
-                        Text("เวอร์ชัน 1.5.2")
+                        Text("เวอร์ชัน 1.5.4")
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
                     }
 
                     // Description
-                    Text("แปลงข้อความไทย ⇄ อังกฤษ ตามตำแหน่งปุ่มคีย์บอร์ด")
+                    Text("แปลงข้อความไทย ⇄ อังกฤษ ตามตำแหน่งปุ่มคีย์บอร์ด (Kedmanee / QWERTY)")
                         .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    Text("รองรับ Auto-Correct ขณะพิมพ์ และรายการคำ exclude")
+                        .font(.system(size: 12))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -53,14 +58,8 @@ struct AboutView: View {
 
                     QuickStartStep(
                         number: 3,
-                        title: "เลือกข้อความและกด Shortcut",
-                        description: "เลือกข้อความที่พิมพ์ผิดภาษา แล้วกด ⌘⇧L"
-                    )
-
-                    QuickStartStep(
-                        number: 4,
-                        title: "เปิด Auto-Correct (ตัวเลือก)",
-                        description: "เปิดใช้ auto-correct เพื่อแก้ไขอัตโนมัติขณะพิมพ์"
+                        title: "เปิด Auto-Correct",
+                        description: "เปิดใช้ Auto-Correct เพื่อแก้ไขอัตโนมัติขณะพิมพ์เมื่อตรวจพบการพิมพ์ผิดภาษา"
                     )
                 }
             } header: {
@@ -70,23 +69,37 @@ struct AboutView: View {
 
             Section {
                 VStack(alignment: .leading, spacing: 12) {
-                    AboutLink(
-                        icon: "link",
-                        title: "GitHub",
-                        value: "github.com/your-repo/pimpid"
-                    )
+                    Link(destination: URL(string: "https://github.com/Moomak/PimPid")!) {
+                        HStack {
+                            Image(systemName: "link")
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                                .frame(width: 20)
+                            Text("GitHub")
+                                .font(.system(size: 12, weight: .medium))
+                            Spacer()
+                            Text("github.com/Moomak/PimPid")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 10))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
 
-                    AboutLink(
-                        icon: "envelope.fill",
-                        title: "Support",
-                        value: "support@pimpid.app"
-                    )
-
-                    AboutLink(
-                        icon: "doc.text.fill",
-                        title: "License",
-                        value: "MIT License"
-                    )
+                    HStack {
+                        Image(systemName: "doc.text.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                            .frame(width: 20)
+                        Text("License")
+                            .font(.system(size: 12, weight: .medium))
+                        Spacer()
+                        Text("MIT License")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
                 }
             } header: {
                 Text("ข้อมูลเพิ่มเติม")
@@ -95,11 +108,11 @@ struct AboutView: View {
 
             Section {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("© 2025 PimPid")
+                    Text("© 2025 PimPid · MIT License")
                         .font(.caption)
                         .foregroundColor(.secondary)
 
-                    Text("Made with ❤️ for Thai and English switchers")
+                    Text("Made with ❤️ for Thai and English keyboard switchers")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

@@ -250,7 +250,6 @@ final class AutoCorrectionEngine {
         // Switch keyboard + stats on main thread (Carbon API requires main thread)
         let direction = info.direction
         let converted = info.converted
-        let showFeedback = UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectVisualFeedback)
         let playSound = UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectSoundEnabled)
         let statsDir: ConversionDirection = direction == .thaiToEnglish ? .thaiToEnglish : .englishToThai
 
@@ -265,11 +264,7 @@ final class AutoCorrectionEngine {
                 break
             }
 
-            // Stats + feedback
             ConversionStats.shared.recordConversion(from: trimmed, to: converted, direction: statsDir)
-            if showFeedback {
-                NotificationService.shared.showToast(message: "\(trimmed) → \(converted)")
-            }
             if playSound {
                 NSSound.beep()
             }

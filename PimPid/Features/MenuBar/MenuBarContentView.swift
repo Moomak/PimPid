@@ -4,13 +4,34 @@ struct MenuBarContentView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.openSettings) private var openSettings
 
+    private var fontScale: CGFloat {
+        switch appState.appearanceFontSize {
+        case "small": return 0.9
+        case "large": return 1.15
+        default: return 1.0
+        }
+    }
+
+    private var colorScheme: ColorScheme? {
+        switch appState.appearanceTheme {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
+
     var body: some View {
+        menuContent
+        .preferredColorScheme(colorScheme)
+    }
+
+    private var menuContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header with gradient
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "character.bubble.fill")
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.system(size: 20 * fontScale, weight: .semibold))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [.blue, .purple],
@@ -19,7 +40,7 @@ struct MenuBarContentView: View {
                             )
                         )
                     Text("PimPid")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 16 * fontScale, weight: .bold))
                     Spacer()
                     Circle()
                         .fill(appState.isEnabled ? Color.green : Color.gray)
@@ -27,7 +48,7 @@ struct MenuBarContentView: View {
                 }
 
                 Text("ไทย ⇄ English Converter")
-                    .font(.system(size: 11))
+                    .font(.system(size: 11 * fontScale))
                     .foregroundStyle(.secondary)
             }
             .padding(.bottom, 4)
@@ -57,25 +78,11 @@ struct MenuBarContentView: View {
                     }
                 }
                 .toggleStyle(.switch)
-                .disabled(!KeyboardShortcutManager.isAccessibilityTrusted)
+                .disabled(!AccessibilityHelper.isAccessibilityTrusted)
             }
-
-            // Shortcut info
-            HStack(spacing: 6) {
-                Image(systemName: "keyboard")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-                Text("Shortcut:")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-                Text(ShortcutPreference.displayString(keyCode: ShortcutPreference.keyCode, modifierFlags: ShortcutPreference.modifierFlags))
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.primary)
-            }
-            .padding(.vertical, 4)
 
             // Accessibility warning
-            if !KeyboardShortcutManager.isAccessibilityTrusted {
+            if !AccessibilityHelper.isAccessibilityTrusted {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Image(systemName: "exclamationmark.triangle.fill")
@@ -87,7 +94,7 @@ struct MenuBarContentView: View {
                     }
 
                     Button("เปิดการตั้งค่า") {
-                        KeyboardShortcutManager.openAccessibilitySettings()
+                        AccessibilityHelper.openAccessibilitySettings()
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.orange)

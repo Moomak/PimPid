@@ -16,4 +16,9 @@ enum PimPidKeys {
 
     // Onboarding
     static let hasCompletedOnboarding = "pimpid.onboarding.completed"
+
+    // Appearance
+    static let appearanceTheme = "pimpid.appearance.theme"
+    static let appearanceFontSize = "pimpid.appearance.fontSize"
+    static let notificationStyle = "pimpid.appearance.notificationStyle"
 }

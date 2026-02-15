@@ -30,8 +30,6 @@ struct SettingsNavigationView: View {
                     GeneralSettingsView()
                 case .autoCorrect:
                     AutoCorrectionSettingsView()
-                case .shortcut:
-                    ShortcutSettingsView()
                 case .exclude:
                     ExcludeSettingsView()
                 case .appearance:
@@ -51,7 +49,6 @@ struct SettingsNavigationView: View {
 enum SettingsSection: String, CaseIterable, Identifiable {
     case general
     case autoCorrect
-    case shortcut
     case exclude
     case appearance
     case about
@@ -62,7 +59,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "ทั่วไป"
         case .autoCorrect: return "Auto-Correct"
-        case .shortcut: return "Shortcut"
         case .exclude: return "Exclude คำ"
         case .appearance: return "รูปลักษณ์"
         case .about: return "เกี่ยวกับ"
@@ -73,7 +69,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "gearshape.fill"
         case .autoCorrect: return "bolt.fill"
-        case .shortcut: return "keyboard.fill"
         case .exclude: return "minus.circle.fill"
         case .appearance: return "paintbrush.fill"
         case .about: return "info.circle.fill"
@@ -84,7 +79,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general: return .blue
         case .autoCorrect: return .orange
-        case .shortcut: return .purple
         case .exclude: return .red
         case .appearance: return .pink
         case .about: return .green
@@ -113,7 +107,7 @@ struct GeneralSettingsView: View {
             }
 
             Section {
-                LabeledContent("เวอร์ชัน", value: "1.5.2")
+                LabeledContent("เวอร์ชัน", value: "1.5.4")
                 LabeledContent("สถานะ", value: appState.isEnabled ? "✅ ใช้งาน" : "⏸️ หยุดชั่วคราว")
             } header: {
                 Text("ข้อมูล")
@@ -122,57 +116,6 @@ struct GeneralSettingsView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("ทั่วไป")
-    }
-}
-
-/// Shortcut settings section (existing content)
-struct ShortcutSettingsView: View {
-    @State private var shortcutDisplay = ShortcutPreference.displayString(
-        keyCode: ShortcutPreference.keyCode,
-        modifierFlags: ShortcutPreference.modifierFlags
-    )
-
-    var body: some View {
-        Form {
-            Section {
-                ShortcutRecorderView(currentShortcut: shortcutDisplay) { _, _ in
-                    shortcutDisplay = ShortcutPreference.displayString(
-                        keyCode: ShortcutPreference.keyCode,
-                        modifierFlags: ShortcutPreference.modifierFlags
-                    )
-                }
-                .frame(height: 36)
-
-                Text("กดปุ่ม shortcut ที่ต้องการ แล้วคลิก Save")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } header: {
-                Text("Keyboard Shortcut")
-                    .font(.headline)
-            }
-
-            if !KeyboardShortcutManager.isAccessibilityTrusted {
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("⚠️ ต้องการสิทธิ์ Accessibility")
-                            .font(.headline)
-                            .foregroundStyle(.orange)
-
-                        Text("PimPid ต้องการสิทธิ์ในการตรวจจับ keyboard shortcut เพื่อให้สามารถแปลงข้อความได้")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        Button("เปิดการตั้งค่า System Settings") {
-                            KeyboardShortcutManager.openAccessibilitySettings()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.orange)
-                    }
-                }
-            }
-        }
-        .formStyle(.grouped)
-        .navigationTitle("Shortcut")
     }
 }
 

@@ -1,37 +1,54 @@
 import SwiftUI
 
-/// Toast notification overlay แสดงผลการแปลงแบบสวยงาม
+/// Toast notification overlay แสดงผลการแปลงแบบสวยงาม (รองรับขนาดตัวอักษรและสไตล์จาก Settings)
 struct ToastNotificationView: View {
     let toast: ToastMessage
 
     @State private var isVisible = false
 
-    var body: some View {
-        HStack(spacing: 12) {
-            // Icon
-            Image(systemName: toast.type.icon)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(toast.type.color)
+    private static var fontSizeScale: CGFloat {
+        let key = UserDefaults.standard.string(forKey: PimPidKeys.appearanceFontSize) ?? "medium"
+        switch key {
+        case "small": return 0.9
+        case "large": return 1.15
+        default: return 1.0
+        }
+    }
 
-            // Message
+    private static var isMinimalStyle: Bool {
+        UserDefaults.standard.string(forKey: PimPidKeys.notificationStyle) == "minimal"
+    }
+
+    var body: some View {
+        let scale = Self.fontSizeScale
+        let minimal = Self.isMinimalStyle
+
+        HStack(spacing: minimal ? 8 : 12) {
+            if !minimal {
+                Image(systemName: toast.type.icon)
+                    .font(.system(size: 16 * scale, weight: .semibold))
+                    .foregroundColor(toast.type.color)
+            }
+
             Text(toast.message)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: (minimal ? 12 : 13) * scale, weight: .medium))
                 .foregroundColor(.primary)
+                .lineLimit(minimal ? 1 : 2)
 
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, minimal ? 12 : 16)
+        .padding(.vertical, minimal ? 8 : 12)
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: minimal ? 6 : 10)
                 .fill(Color(NSColor.controlBackgroundColor))
-                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(minimal ? 0.15 : 0.2), radius: minimal ? 4 : 8, x: 0, y: minimal ? 2 : 4)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(toast.type.color.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: minimal ? 6 : 10)
+                .strokeBorder(toast.type.color.opacity(minimal ? 0.2 : 0.3), lineWidth: 1)
         )
-        .frame(maxWidth: 300)
+        .frame(maxWidth: minimal ? 260 : 300)
         .offset(y: isVisible ? 0 : -50)
         .opacity(isVisible ? 1 : 0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isVisible)

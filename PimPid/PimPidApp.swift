@@ -35,12 +35,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowObservers: [NSObjectProtocol] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        KeyboardShortcutManager.shared.register()
-
-        // Register services provider
-        NSApp.servicesProvider = self
-        NSUpdateDynamicServices()
-
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
@@ -98,7 +92,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        KeyboardShortcutManager.shared.unregister()
         AutoCorrectionEngine.shared.stop()
         windowObservers.forEach { NotificationCenter.default.removeObserver($0) }
     }
@@ -120,62 +113,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func appDidBecomeActive() {
-        KeyboardShortcutManager.shared.reregisterIfNeeded()
         if UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled),
-           KeyboardShortcutManager.isAccessibilityTrusted,
+           AccessibilityHelper.isAccessibilityTrusted,
            !AutoCorrectionEngine.shared.isRunning {
             AutoCorrectionEngine.shared.start()
-        }
-    }
-
-    // MARK: - Services Menu
-
-    /// Convert selected text (Services menu: "Convert Thai ↔ English")
-    @objc func convertText(_ pasteboard: NSPasteboard, userData: String, error: AutoreleasingUnsafeMutablePointer<NSString>) {
-        guard let text = pasteboard.string(forType: .string),
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return
-        }
-
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        // Check exclude list from UserDefaults directly (avoid @MainActor dependency)
-        let excludeWords = Set(
-            (UserDefaults.standard.stringArray(forKey: PimPidKeys.excludeWords) ?? [])
-                .map { $0.lowercased().trimmingCharacters(in: .whitespaces) }
-                .filter { !$0.isEmpty }
-        )
-        let lower = trimmed.lowercased()
-        if excludeWords.contains(lower) { return }
-        let tokens = lower.split(separator: " ").map(String.init)
-        if !tokens.isEmpty && tokens.allSatisfy({ excludeWords.contains($0) }) { return }
-
-        // Convert text
-        let converted = KeyboardLayoutConverter.convertAuto(trimmed)
-        guard converted != trimmed else { return }
-
-        let direction = KeyboardLayoutConverter.dominantLanguage(trimmed)
-
-        // Write back to pasteboard (synchronously)
-        pasteboard.clearContents()
-        pasteboard.setString(converted, forType: .string)
-
-        // Switch keyboard layout
-        switch direction {
-        case .thaiToEnglish:
-            InputSourceSwitcher.switchTo(.english)
-        case .englishToThai:
-            InputSourceSwitcher.switchTo(.thai)
-        case .none:
-            break
-        }
-
-        // Show notification if enabled (fire-and-forget to main thread)
-        if UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectVisualFeedback) {
-            let msg = "\(trimmed) → \(converted)"
-            DispatchQueue.main.async {
-                NotificationService.shared.showToast(message: msg)
-            }
         }
     }
 }

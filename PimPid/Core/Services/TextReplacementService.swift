@@ -10,7 +10,7 @@ enum TextReplacementService {
         // Simulate Copy
         let source = CGEventSource(stateID: .combinedSessionState)
         keyPress(keyCode: 8, modifier: .maskCommand, source: source) // Cmd+C (C = 8)
-        Thread.sleep(forTimeInterval: 0.1)
+        Thread.sleep(forTimeInterval: 0.2)
         if pasteboard.changeCount != oldCount, let str = pasteboard.string(forType: .string) {
             return str
         }
@@ -50,7 +50,7 @@ enum TextReplacementService {
             directionUsed = KeyboardLayoutConverter.dominantLanguage(raw)
             converted = KeyboardLayoutConverter.convertAuto(raw)
         }
-        if converted != raw {
+        if converted != raw, ConversionValidator.shouldReplace(converted: converted, direction: directionUsed, original: raw) {
             pasteText(converted)
             // สลับคีย์บอร์ดให้ตรงกับภาษาที่แปลงไป เพื่อพิมพ์ต่อได้ทันที
             switch directionUsed {
