@@ -7,15 +7,22 @@ import Foundation
 enum ConversionValidator {
 
     /// ควรแทนที่ด้วยข้อความที่แปลงแล้วหรือไม่
+    /// หลัก: แปลงแล้วต้องมีความหมาย — ถ้าแปลงแล้วไม่มีความหมาย ไม่ต้องแปลง
     static func shouldReplace(converted: String, direction: KeyboardLayoutConverter.ConversionDirection, original: String) -> Bool {
         switch direction {
         case .thaiToEnglish:
-            // ต้นทางที่เป็นสระ/วรรณยุกต์นำ (ไม่มีตัวอักษรนำ) มักเป็นคำผิด (พิมพ์ผิด layout) — ให้แปลงเป็นอังกฤษได้
+            // ต้นทางเป็นคำไทยที่รู้จัก (เช่น ยัง, เป็น) — ไม่แปลง
+            if ThaiWordList.containsKnownThai(original) { return false }
+            // ต้นทางที่เป็นสระ/วรรณยุกต์นำ มักเป็นคำผิด layout — ให้แปลงเป็นอังกฤษได้
             let originalLikelyWrongLayout = hasLeadingThaiVowelOrSign(original)
             return isValidEnglishForReplace(converted, allowShortWhenOriginalIsSuspiciousThai: originalLikelyWrongLayout)
         case .englishToThai:
-            // อย่าแปลงเมื่อเป็นแค่ตัวเลขหรือช่องว่าง (เช่น 897, 154, 897 154) — ไม่มีความหมายเป็นคำไทย
+            // อย่าแปลงเมื่อเป็นแค่ตัวเลขหรือช่องว่าง
             if !original.contains(where: { $0.isLetter }) {
+                return false
+            }
+            // แปลงแล้วต้องมีความหมายเป็นคำไทย — ถ้าไม่รู้จัก (เช่น claude→cแสฟีกำ) ไม่แปลง
+            if !ThaiWordList.containsKnownThai(converted) {
                 return false
             }
             if original.contains(where: { $0.isNumber }) { return true }
