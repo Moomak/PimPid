@@ -11,12 +11,14 @@ enum ConversionValidator {
     static func shouldReplace(converted: String, direction: KeyboardLayoutConverter.ConversionDirection, original: String) -> Bool {
         switch direction {
         case .thaiToEnglish:
-            // ต้นทางเป็นคำไทยที่รู้จัก (เช่น ยัง, เป็น, เก็บ) — ไม่แปลง
+            // ต้นทางเป็นคำไทยที่รู้จัก (เช่น ยัง, เป็น, เก็บ, งงๆ) — ไม่แปลง
             if ThaiWordList.containsKnownThai(original) { return false }
             // ต้นทางเป็นคำนำของคำไทยที่รู้จัก (กำลังพิมพ์อยู่ เช่น เก็ ก่อน เก็บ) — ไม่แปลง
             if ThaiWordList.hasWordWithPrefix(original) { return false }
             // ผลลัพธ์อังกฤษที่มีตัวพิมพ์ใหญ่กลางคำ (เช่น gdH จาก เก็) มักผิด — ไม่แปลง
             if convertedEnglishHasSuspiciousCasing(converted) { return false }
+            // แปลงแล้วเป็นคำสั้นมาก + มี apostrophe (เช่น ''q จาก งงๆ) ไม่ใช่คำ — ไม่แปลง
+            if convertedLooksLikeGarbageEnglish(converted) { return false }
             // ต้นทางที่เป็นสระ/วรรณยุกต์นำ มักเป็นคำผิด layout — ให้แปลงเป็นอังกฤษได้
             let originalLikelyWrongLayout = hasLeadingThaiVowelOrSign(original)
             return isValidEnglishForReplace(converted, allowShortWhenOriginalIsSuspiciousThai: originalLikelyWrongLayout)
@@ -51,6 +53,17 @@ enum ConversionValidator {
         let minSingleWordLength = allowShortWhenOriginalIsSuspiciousThai ? 1 : 2
         if words.count == 1 && words[0].count <= minSingleWordLength { return false }
         return isValidEnglish(trimmed)
+    }
+
+    /// ผลลัพธ์ที่แปลงแล้วดูไม่ใช่คำ (เช่น ''q จาก งงๆ) — ไม่แทนที่
+    private static func convertedLooksLikeGarbageEnglish(_ text: String) -> Bool {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let words = t.split(separator: " ").map(String.init).filter { !$0.isEmpty }
+        guard words.count == 1, let single = words.first else { return false }
+        if single.count > 3 { return false }
+        let lettersOnly = single.filter(\.isLetter)
+        if lettersOnly.count > 1 { return false }
+        return single.contains("'") || single.contains("`")
     }
 
     /// ผลลัพธ์อังกฤษที่มีตัวพิมพ์ใหญ่กลางคำ (เช่น gdH จาก เก็) มักมาจาก shift+key ในไทย — ไม่ใช้แทนที่

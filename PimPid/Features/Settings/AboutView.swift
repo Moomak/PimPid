@@ -22,7 +22,7 @@ struct AboutView: View {
                         Text("PimPid")
                             .font(.system(size: 24, weight: .bold))
 
-                        Text("เวอร์ชัน 1.5.7")
+                        Text("เวอร์ชัน \(Bundle.main.appVersion)")
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
                     }

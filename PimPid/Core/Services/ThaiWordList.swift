@@ -15,15 +15,26 @@ enum ThaiWordList {
         return set
     }
 
+    /// ตัวอักษร  ๆ (ไม้ยมก / repetition mark) — ถ้าต่อท้ายคำ ให้ถือว่าเป็นคำเดียวกัน (งงๆ = งง)
+    private static let thaiRepetitionMark = "\u{0E46}"
+
     /// ตรวจว่าข้อความเป็นคำไทยที่รู้จัก (ทั้งก้อนหรือทุกคำในข้อความ)
     /// ถ้าใช่ = ไม่ควรแปลง Thai→English
+    /// รองรับคำลงท้าย  ๆ เช่น งงๆ (ถือว่าเป็นคำว่า งง)
     static func containsKnownThai(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
         let tokenized = trimmed.split(separator: " ").map { String($0).trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         guard !tokenized.isEmpty else { return false }
         let w = words
-        return tokenized.allSatisfy { w.contains($0) }
+        return tokenized.allSatisfy { token in
+            if w.contains(token) { return true }
+            if token.hasSuffix(thaiRepetitionMark) {
+                let base = String(token.dropLast(thaiRepetitionMark.count))
+                if !base.isEmpty, w.contains(base) { return true }
+            }
+            return false
+        }
     }
 
     /// ตรวจว่ามีคำไทยที่รู้จักที่ขึ้นต้นด้วย prefix นี้ (เช่น เก็ เป็นต้นของ เก็บ) — กำลังพิมพ์อยู่ ไม่แปลง

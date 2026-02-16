@@ -55,6 +55,17 @@ final class ConversionValidatorTests: XCTestCase {
         XCTAssertFalse(ConversionValidator.shouldReplace(converted: ",bh'", direction: .thaiToEnglish, original: "มิ้ง"))
     }
 
+    /// แปลงแล้วไม่ใช่คำ (เช่น ''q จาก งงๆ) — ไม่แทนที่
+    func testThaiToEnglish_RejectGarbageLikeApostropheQ() {
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "'q", direction: .thaiToEnglish, original: "งงๆ"))
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "''q", direction: .thaiToEnglish, original: "งงๆ"))
+    }
+
+    /// คำลงท้าย  ๆ (งงๆ) ถือว่าเป็นคำไทยที่รู้จัก — ไม่แปลง
+    func testThaiWordList_ContainsKnownThaiWithRepetitionMark() {
+        XCTAssertTrue(ThaiWordList.containsKnownThai("งงๆ"))
+    }
+
     func testEnglishToThai_AcceptWhenOriginalHasDigitsOrPunctuation() {
         XCTAssertTrue(ConversionValidator.shouldReplace(converted: "วัน", direction: .englishToThai, original: ";yo"))
         XCTAssertTrue(ConversionValidator.shouldReplace(converted: "เติม", direction: .englishToThai, original: "g9b,"))
