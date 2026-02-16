@@ -11,8 +11,12 @@ enum ConversionValidator {
     static func shouldReplace(converted: String, direction: KeyboardLayoutConverter.ConversionDirection, original: String) -> Bool {
         switch direction {
         case .thaiToEnglish:
-            // ต้นทางเป็นคำไทยที่รู้จัก (เช่น ยัง, เป็น) — ไม่แปลง
+            // ต้นทางเป็นคำไทยที่รู้จัก (เช่น ยัง, เป็น, เก็บ) — ไม่แปลง
             if ThaiWordList.containsKnownThai(original) { return false }
+            // ต้นทางเป็นคำนำของคำไทยที่รู้จัก (กำลังพิมพ์อยู่ เช่น เก็ ก่อน เก็บ) — ไม่แปลง
+            if ThaiWordList.hasWordWithPrefix(original) { return false }
+            // ผลลัพธ์อังกฤษที่มีตัวพิมพ์ใหญ่กลางคำ (เช่น gdH จาก เก็) มักผิด — ไม่แปลง
+            if convertedEnglishHasSuspiciousCasing(converted) { return false }
             // ต้นทางที่เป็นสระ/วรรณยุกต์นำ มักเป็นคำผิด layout — ให้แปลงเป็นอังกฤษได้
             let originalLikelyWrongLayout = hasLeadingThaiVowelOrSign(original)
             return isValidEnglishForReplace(converted, allowShortWhenOriginalIsSuspiciousThai: originalLikelyWrongLayout)
@@ -47,6 +51,22 @@ enum ConversionValidator {
         let minSingleWordLength = allowShortWhenOriginalIsSuspiciousThai ? 1 : 2
         if words.count == 1 && words[0].count <= minSingleWordLength { return false }
         return isValidEnglish(trimmed)
+    }
+
+    /// ผลลัพธ์อังกฤษที่มีตัวพิมพ์ใหญ่กลางคำ (เช่น gdH จาก เก็) มักมาจาก shift+key ในไทย — ไม่ใช้แทนที่
+    private static func convertedEnglishHasSuspiciousCasing(_ text: String) -> Bool {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        var i = t.startIndex
+        while i < t.endIndex {
+            let c = t[i]
+            if c.isUppercase {
+                let isStart = i == t.startIndex
+                let afterSpace = i > t.startIndex && t[t.index(before: i)] == " "
+                if !isStart && !afterSpace { return true }
+            }
+            i = t.index(after: i)
+        }
+        return false
     }
 
     /// ข้อความไทยที่ขึ้นต้นด้วยสระหรือวรรณยุกต์ (ไม่มีตัวอักษรนำ) มักเป็นคำผิด (พิมพ์ผิด layout)

@@ -26,6 +26,14 @@ enum ThaiWordList {
         return tokenized.allSatisfy { w.contains($0) }
     }
 
+    /// ตรวจว่ามีคำไทยที่รู้จักที่ขึ้นต้นด้วย prefix นี้ (เช่น เก็ เป็นต้นของ เก็บ) — กำลังพิมพ์อยู่ ไม่แปลง
+    static func hasWordWithPrefix(_ prefix: String) -> Bool {
+        let p = prefix.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard p.unicodeScalars.count >= 2 else { return false }
+        let w = words
+        return w.contains { $0.hasPrefix(p) }
+    }
+
     private static func loadFromBundle() -> Set<String>? {
         let bundles: [Bundle] = {
             #if canImport(AppKit)
