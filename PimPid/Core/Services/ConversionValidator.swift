@@ -125,7 +125,6 @@ enum ConversionValidator {
 
     private static func isValidEnglishImpl(words: [String]) -> Bool {
         let checker = NSSpellChecker.shared
-        checker.setLanguage("en")
 
         for word in words {
             let lower = word.lowercased()
@@ -137,7 +136,8 @@ enum ConversionValidator {
             }
             spellCacheLock.unlock()
 
-            let range = checker.checkSpelling(of: word, startingAt: 0)
+            var wordCount: Int = 0
+            let range = checker.checkSpelling(of: word, startingAt: 0, language: "en", wrap: false, inSpellDocumentWithTag: 0, wordCount: &wordCount)
             let valid = range.location == NSNotFound
 
             spellCacheLock.lock()
