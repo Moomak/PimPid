@@ -27,8 +27,13 @@ final class ConversionValidatorTests: XCTestCase {
         XCTAssertFalse(ConversionValidator.shouldReplace(converted: "ฟรสว", direction: .englishToThai, original: "world"))
     }
 
+    /// เมื่อต้นทางไม่ใช่คำอังกฤษที่ถูกต้อง และผลลัพธ์เป็นคำไทยที่รู้จัก → ยอมรับ
+    /// เมื่อผลลัพธ์ไม่ใช่คำไทยที่รู้จัก (เช่น ะำหะ จาก tset) → ไม่แทนที่
     func testEnglishToThai_AcceptWhenOriginalIsNotValidEnglish() {
-        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "ะำหะ", direction: .englishToThai, original: "tset"))
+        // ต้นทางมีตัวเลข/ punctuation และแปลงเป็นคำไทยที่รู้จัก → ยอมรับ
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "วัน", direction: .englishToThai, original: ";yo"))
+        // ต้นทางเป็นคำผิด (tset) แต่ผลลัพธ์ ะำหะ ไม่ได้อยู่ในรายการคำไทย → ไม่แทนที่
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "ะำหะ", direction: .englishToThai, original: "tset"))
     }
 
     func testNone_Reject() {
@@ -55,15 +60,41 @@ final class ConversionValidatorTests: XCTestCase {
         XCTAssertFalse(ConversionValidator.shouldReplace(converted: ",bh'", direction: .thaiToEnglish, original: "มิ้ง"))
     }
 
-    /// แปลงแล้วไม่ใช่คำ (เช่น ''q จาก งงๆ) — ไม่แทนที่
+    /// แปลงแล้วไม่ใช่คำ (เช่น ''q จาก งงๆ, py'w'd จาก ยังไงก) — ไม่แทนที่ (convertedLooksLikeGarbageEnglish)
     func testThaiToEnglish_RejectGarbageLikeApostropheQ() {
         XCTAssertFalse(ConversionValidator.shouldReplace(converted: "'q", direction: .thaiToEnglish, original: "งงๆ"))
         XCTAssertFalse(ConversionValidator.shouldReplace(converted: "''q", direction: .thaiToEnglish, original: "งงๆ"))
     }
 
+    /// ยังไงก → py'w'd ไม่มีความหมาย (มี apostrophe หลายตัว) — ไม่แทนที่
+    func testThaiToEnglish_RejectYungNgak_ConvertedPyW_D() {
+        XCTAssertFalse(ConversionValidator.shouldReplace(converted: "py'w'd", direction: .thaiToEnglish, original: "ยังไงก"))
+    }
+
+    /// ยังไงก็ เป็นคำไทยที่รู้จัก — ไม่แปลง
+    func testThaiWordList_ContainsYungNgakKo() {
+        XCTAssertTrue(ThaiWordList.containsKnownThai("ยังไงก็"))
+        XCTAssertTrue(ThaiWordList.containsKnownThai("ยังไง"))
+    }
+
+    /// ต้นทางขึ้นต้นด้วยสระไทย (ะ้ำ) แปลงเป็น "the" — ยอมรับ (hasLeadingThaiVowelOrSign)
+    func testThaiToEnglish_AcceptShortWhenLeadingThaiVowelOrSign() {
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "the", direction: .thaiToEnglish, original: "ะ้ำ"))
+    }
+
     /// คำลงท้าย  ๆ (งงๆ) ถือว่าเป็นคำไทยที่รู้จัก — ไม่แปลง
     func testThaiWordList_ContainsKnownThaiWithRepetitionMark() {
         XCTAssertTrue(ThaiWordList.containsKnownThai("งงๆ"))
+    }
+
+    /// hasWordWithPrefix: prefix สั้นมาก (1 scalar) → false, prefix ที่เป็นต้นของคำใน list → true
+    func testThaiWordList_HasWordWithPrefix() {
+        // เก็ เป็น prefix ของ เก็บ (มีใน embedded)
+        XCTAssertTrue(ThaiWordList.hasWordWithPrefix("เก็"))
+        // 1 scalar ไม่พอ (ต้อง >= 2)
+        XCTAssertFalse(ThaiWordList.hasWordWithPrefix("ก"))
+        // prefix ที่ไม่มีคำใน list ขึ้นต้นด้วย
+        XCTAssertFalse(ThaiWordList.hasWordWithPrefix("zzz"))
     }
 
     func testEnglishToThai_AcceptWhenOriginalHasDigitsOrPunctuation() {

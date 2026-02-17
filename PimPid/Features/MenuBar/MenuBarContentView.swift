@@ -67,6 +67,8 @@ struct MenuBarContentView: View {
                     }
                 }
                 .toggleStyle(.switch)
+                .accessibilityLabel("เปิดใช้งาน PimPid")
+                .accessibilityHint("สลับการทำงานของ PimPid ทั้งหมด")
 
                 Toggle(isOn: $appState.autoCorrectEnabled) {
                     HStack {
@@ -79,6 +81,8 @@ struct MenuBarContentView: View {
                 }
                 .toggleStyle(.switch)
                 .disabled(!AccessibilityHelper.isAccessibilityTrusted)
+                .accessibilityLabel("เปิด Auto-Correct")
+                .accessibilityHint("แก้ไขข้อความอัตโนมัติเมื่อพิมพ์ผิดภาษา")
             }
 
             // Accessibility warning
@@ -106,6 +110,32 @@ struct MenuBarContentView: View {
                         .fill(Color.orange.opacity(0.1))
                 )
             }
+
+            Divider()
+
+            // Convert Selected Text
+            Button(action: {
+                TextReplacementService.convertSelectedText(
+                    excludeStore: ExcludeListStore.shared,
+                    enabled: appState.isEnabled,
+                    direction: nil
+                )
+            }) {
+                HStack {
+                    Image(systemName: "arrow.left.arrow.right")
+                        .font(.system(size: 12))
+                    Text("Convert Selected Text")
+                        .font(.system(size: 12, weight: .medium))
+                    Spacer()
+                    Text(KeyboardShortcutManager.shortcutDisplayString())
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.vertical, 4)
+            .disabled(!appState.isEnabled)
+            .accessibilityLabel("Convert Selected Text, \(KeyboardShortcutManager.shortcutDisplayString())")
 
             Divider()
 
@@ -149,6 +179,15 @@ struct MenuBarContentView: View {
             }
         }
         .padding(14)
-        .frame(minWidth: 320, maxWidth: 320)
+        .frame(minWidth: menuWidth, maxWidth: menuWidth)
+    }
+
+    private var menuWidth: CGFloat {
+        let base: CGFloat = 320
+        switch appState.appearanceFontSize {
+        case "small": return base * 0.95
+        case "large": return base * 1.1
+        default: return base
+        }
     }
 }

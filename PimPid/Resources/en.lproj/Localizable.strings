@@ -1,0 +1,19 @@
+/* Task 100: Localize — ข้อความหลักใน UI */
+"app.name" = "PimPid";
+"app.tagline" = "Thai ⇄ English Converter";
+"settings.general.title" = "General";
+"settings.shortcut.title" = "Shortcut";
+"settings.autocorrect.title" = "Auto-Correct";
+"settings.exclude.title" = "Exclude Words";
+"settings.appearance.title" = "Appearance";
+"settings.about.title" = "About";
+"menu.convert_selected" = "Convert Selected Text";
+"menu.quit" = "Quit PimPid";
+"menu.settings" = "Settings";
+"stats.today" = "Today";
+"stats.total" = "Total";
+"stats.times" = "times";
+"stats.last7days" = "Last 7 days";
+"button.use_defaults" = "Use defaults";
+"button.clear_recent" = "Clear recent";
+"button.undo_last" = "Undo last conversion";

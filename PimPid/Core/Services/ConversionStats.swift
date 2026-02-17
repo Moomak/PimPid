@@ -10,10 +10,13 @@ final class ConversionStats: ObservableObject {
     @Published private(set) var totalConversions: Int = 0
     @Published private(set) var todayConversions: Int = 0
     @Published private(set) var recentConversions: [ConversionRecord] = []
+    /// Task 66: จำนวนการแปลงต่อวัน (key = yyyy-MM-dd) เก็บสูงสุด 30 วัน
+    @Published private(set) var dailyCounts: [String: Int] = [:]
 
     // MARK: - Private Properties
     private let defaults = UserDefaults.standard
     private let maxRecentCount = 10
+    private let maxDailyCountsDays = 30
     private var lastResetDate: Date
 
     // MARK: - Keys
@@ -22,6 +25,7 @@ final class ConversionStats: ObservableObject {
         static let todayConversions = "pimpid.stats.todayConversions"
         static let lastResetDate = "pimpid.stats.lastResetDate"
         static let recentConversions = "pimpid.stats.recentConversions"
+        static let dailyCounts = "pimpid.stats.dailyCounts"
     }
 
     init() {
@@ -36,14 +40,51 @@ final class ConversionStats: ObservableObject {
             defaults.set(lastResetDate, forKey: Keys.lastResetDate)
         }
 
-        // Load recent conversions
+        // Load recent conversions (จำกัดจำนวนเพื่อไม่ให้ UserDefaults ใหญ่เกิน — task 68)
         if let data = defaults.data(forKey: Keys.recentConversions),
            let decoded = try? JSONDecoder().decode([ConversionRecord].self, from: data) {
-            self.recentConversions = decoded
+            self.recentConversions = Array(decoded.prefix(maxRecentCount))
+        }
+
+        if let data = defaults.data(forKey: Keys.dailyCounts),
+           let decoded = try? JSONDecoder().decode([String: Int].self, from: data) {
+            dailyCounts = trimDailyCounts(decoded)
         }
 
         // Reset daily count if it's a new day
         checkAndResetDaily()
+    }
+
+    /// สถิติ 7 วันล่าสุด เรียงจากเก่าไปใหม่ (สำหรับกราฟ — task 66). วันนี้ใช้ todayConversions
+    func last7DaysCounts() -> [(date: String, count: Int)] {
+        let cal = Calendar.current
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = cal.timeZone
+        let todayKey = formatter.string(from: Date())
+        var result: [(String, Int)] = []
+        for offset in (0..<7).reversed() {
+            guard let day = cal.date(byAdding: .day, value: -offset, to: Date()) else { continue }
+            let key = formatter.string(from: day)
+            let count = key == todayKey ? todayConversions : (dailyCounts[key] ?? 0)
+            result.append((key, count))
+        }
+        return result
+    }
+
+    private static func dateKey(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = Calendar.current.timeZone
+        return f.string(from: date)
+    }
+
+    private func trimDailyCounts(_ dict: [String: Int]) -> [String: Int] {
+        let sorted = dict.keys.sorted(by: >)
+        guard sorted.count > maxDailyCountsDays else { return dict }
+        var out = dict
+        for key in sorted.dropFirst(maxDailyCountsDays) { out.removeValue(forKey: key) }
+        return out
     }
 
     /// บันทึกการแปลงครั้งใหม่
@@ -58,11 +99,9 @@ final class ConversionStats: ObservableObject {
             timestamp: Date()
         )
 
-        // Add to recent conversions (keep only last N)
+        // Add to recent conversions (keep only last N — task 68)
         recentConversions.insert(record, at: 0)
-        if recentConversions.count > maxRecentCount {
-            recentConversions = Array(recentConversions.prefix(maxRecentCount))
-        }
+        recentConversions = Array(recentConversions.prefix(maxRecentCount))
 
         save()
     }
@@ -89,6 +128,7 @@ final class ConversionStats: ObservableObject {
         totalConversions = 0
         todayConversions = 0
         recentConversions = []
+        dailyCounts = [:]
         lastResetDate = Date()
         save()
     }
@@ -100,14 +140,28 @@ final class ConversionStats: ObservableObject {
         save()
     }
 
-    /// ตรวจสอบว่าต้องรีเซ็ตสถิติรายวันหรือไม่
+    /// ล้างเฉพาะรายการแปลงล่าสุด (ไม่กระทบ total/today)
+    func clearRecentConversions() {
+        recentConversions = []
+        save()
+    }
+
+    /// ตรวจสอบว่าต้องรีเซ็ตสถิติรายวันหรือไม่ (task 66: บันทึกวันก่อนเข้า dailyCounts)
     private func checkAndResetDaily() {
         let calendar = Calendar.current
         if !calendar.isDateInToday(lastResetDate) {
+            let previousKey = Self.dateKey(lastResetDate)
+            if todayConversions > 0 {
+                dailyCounts[previousKey] = todayConversions
+                dailyCounts = trimDailyCounts(dailyCounts)
+            }
             todayConversions = 0
             lastResetDate = Date()
             defaults.set(lastResetDate, forKey: Keys.lastResetDate)
             defaults.set(0, forKey: Keys.todayConversions)
+            if let encoded = try? JSONEncoder().encode(dailyCounts) {
+                defaults.set(encoded, forKey: Keys.dailyCounts)
+            }
         }
     }
 
@@ -119,6 +173,9 @@ final class ConversionStats: ObservableObject {
 
         if let encoded = try? JSONEncoder().encode(recentConversions) {
             defaults.set(encoded, forKey: Keys.recentConversions)
+        }
+        if let encoded = try? JSONEncoder().encode(dailyCounts) {
+            defaults.set(encoded, forKey: Keys.dailyCounts)
         }
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreGraphics
 
 /// แสดงสถิติการแปลงใน menu bar
 struct ConversionStatsView: View {
@@ -19,15 +20,41 @@ struct ConversionStatsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 StatRow(
                     icon: "calendar",
-                    label: "วันนี้",
-                    value: "\(stats.todayConversions) ครั้ง"
+                    label: String(localized: "stats.today"),
+                    value: "\(stats.todayConversions) " + String(localized: "stats.times")
                 )
 
                 StatRow(
                     icon: "sum",
-                    label: "ทั้งหมด",
-                    value: "\(stats.totalConversions) ครั้ง"
+                    label: String(localized: "stats.total"),
+                    value: "\(stats.totalConversions) " + String(localized: "stats.times")
                 )
+            }
+
+            // Task 66: กราฟ 7 วันล่าสุด
+            let days = stats.last7DaysCounts()
+            if !days.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(String(localized: "stats.last7days"))
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                    let maxCount = max(days.map(\.count).max() ?? 1, 1)
+                    HStack(alignment: .bottom, spacing: 4) {
+                        ForEach(Array(days.enumerated()), id: \.offset) { _, item in
+                            VStack(spacing: 2) {
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(Color.blue.opacity(0.6))
+                                    .frame(width: 20, height: max(2, CGFloat(item.count) / CGFloat(maxCount) * 24))
+                                Text(shortDayLabel(item.date))
+                                    .font(.system(size: 8))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .frame(height: 36)
+                }
             }
         }
         .padding(12)
@@ -36,6 +63,11 @@ struct ConversionStatsView: View {
                 .fill(Color(NSColor.controlBackgroundColor).opacity(0.5))
         )
     }
+}
+
+private func shortDayLabel(_ dateKey: String) -> String {
+    guard dateKey.count >= 10 else { return dateKey }
+    return String(dateKey.suffix(2))
 }
 
 /// แถวแสดงสถิติแต่ละรายการ
@@ -92,12 +124,49 @@ struct RecentConversionsView: View {
                     }
                 }
             }
+
+            HStack(spacing: 8) {
+                if !stats.recentConversions.isEmpty {
+                    Button(String(localized: "button.clear_recent")) {
+                        ConversionStats.shared.clearRecentConversions()
+                    }
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .buttonStyle(.plain)
+
+                    Button(String(localized: "button.undo_last")) {
+                        if ConversionStats.shared.undoLastConversion() != nil {
+                            UndoHelper.sendUndoKeyPress()
+                        }
+                    }
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.top, 4)
         }
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(NSColor.controlBackgroundColor).opacity(0.5))
         )
+    }
+}
+
+/// Task 67: ส่ง Cmd+Z เพื่อ undo การ paste ล่าสุดในแอปที่โฟกัส
+enum UndoHelper {
+    static func sendUndoKeyPress() {
+        let source = CGEventSource(stateID: .combinedSessionState)
+        let keyCode: UInt16 = 0x06
+        if let keyDown = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true) {
+            keyDown.flags = .maskCommand
+            keyDown.post(tap: .cghidEventTap)
+        }
+        if let keyUp = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false) {
+            keyUp.flags = .maskCommand
+            keyUp.post(tap: .cghidEventTap)
+        }
     }
 }
 
@@ -117,6 +186,7 @@ struct RecentConversionRow: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
+                    .truncationMode(.tail)
 
                 Image(systemName: "arrow.right")
                     .font(.system(size: 8))
@@ -126,6 +196,7 @@ struct RecentConversionRow: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.primary)
                     .lineLimit(1)
+                    .truncationMode(.tail)
             }
 
             Spacer(minLength: 0)

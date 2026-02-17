@@ -37,6 +37,13 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Task 8: หน้าต่างที่ exclude (รูปแบบ "bundleID:windowNumber")
+    @Published var excludedWindows: Set<String> {
+        didSet {
+            UserDefaults.standard.set(Array(excludedWindows), forKey: PimPidKeys.autoCorrectExcludedWindows)
+        }
+    }
+
     @Published var hasCompletedOnboarding: Bool {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: PimPidKeys.hasCompletedOnboarding) }
     }
@@ -85,6 +92,11 @@ final class AppState: ObservableObject {
             self.excludedApps = Set(apps)
         } else {
             self.excludedApps = []
+        }
+        if let wins = UserDefaults.standard.stringArray(forKey: PimPidKeys.autoCorrectExcludedWindows) {
+            self.excludedWindows = Set(wins)
+        } else {
+            self.excludedWindows = []
         }
 
         // Initialize onboarding

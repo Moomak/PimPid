@@ -58,6 +58,11 @@ enum TextReplacementService {
             case .englishToThai: InputSourceSwitcher.switchTo(.thai)
             case .none: break
             }
+            // แสดง toast เมื่อเปิดการแจ้งเตือน (task 60)
+            let style = UserDefaults.standard.string(forKey: PimPidKeys.notificationStyle) ?? "toast"
+            if style != "off" {
+                NotificationService.shared.showToast(message: "\(raw) → \(converted)", type: .success)
+            }
         }
     }
 

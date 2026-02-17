@@ -55,15 +55,20 @@ enum ConversionValidator {
         return isValidEnglish(trimmed)
     }
 
-    /// ผลลัพธ์ที่แปลงแล้วดูไม่ใช่คำ (เช่น ''q จาก งงๆ) — ไม่แทนที่
+    /// ผลลัพธ์ที่แปลงแล้วดูไม่ใช่คำ (เช่น ''q จาก งงๆ, py'w'd จาก ยังไงก) — ไม่แทนที่
     private static func convertedLooksLikeGarbageEnglish(_ text: String) -> Bool {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let words = t.split(separator: " ").map(String.init).filter { !$0.isEmpty }
         guard words.count == 1, let single = words.first else { return false }
-        if single.count > 3 { return false }
-        let lettersOnly = single.filter(\.isLetter)
-        if lettersOnly.count > 1 { return false }
-        return single.contains("'") || single.contains("`")
+        // คำสั้นมาก + มี apostrophe/backtick (เช่น ''q จาก งงๆ)
+        if single.count <= 3 {
+            let lettersOnly = single.filter(\.isLetter)
+            if lettersOnly.count <= 1 && (single.contains("'") || single.contains("`")) { return true }
+        }
+        // มี apostrophe/backtick มากกว่า 1 ตัว มักเป็นผลจากสระไทย (เช่น py'w'd จาก ยังไงก) — ไม่มีความหมาย
+        let apostropheCount = single.filter { $0 == "'" || $0 == "`" }.count
+        if apostropheCount >= 2 { return true }
+        return false
     }
 
     /// ผลลัพธ์อังกฤษที่มีตัวพิมพ์ใหญ่กลางคำ (เช่น gdH จาก เก็) มักมาจาก shift+key ในไทย — ไม่ใช้แทนที่
@@ -90,8 +95,15 @@ enum ConversionValidator {
         return (v >= 0x0E01 && v <= 0x0E5B) && (v > 0x0E2E)
     }
 
-    /// ตรวจว่าข้อความเป็นคำอังกฤษที่ยอมรับได้ (ใช้ NSSpellChecker)
-    /// ต้องเรียกจาก main thread
+    /// Cache ผล spell check ต่อคำ (task 17) — ลดการเรียก NSSpellChecker ซ้ำ
+    private static let spellCacheLock = NSLock()
+    private static var spellCache: [String: Bool] = [:]
+    private static let spellCacheMax = 500
+
+    /// Timeout สำหรับ spell check (task 18) — ไม่ให้คำยาวหรือข้อความใหญ่ค้าง
+    private static let spellCheckTimeoutSeconds: TimeInterval = 2.0
+
+    /// ตรวจว่าข้อความเป็นคำอังกฤษที่ยอมรับได้ (ใช้ NSSpellChecker + cache, มี timeout)
     private static func isValidEnglish(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
@@ -99,14 +111,43 @@ enum ConversionValidator {
         let words = trimmed.split(separator: " ").map(String.init).filter { !$0.isEmpty }
         guard !words.isEmpty else { return true }
 
+        if words.contains(where: { $0.count > 50 }) { return false }
+
+        var result = true
+        let semaphore = DispatchSemaphore(value: 0)
+        DispatchQueue.global(qos: .userInitiated).async {
+            result = isValidEnglishImpl(words: words)
+            semaphore.signal()
+        }
+        if semaphore.wait(timeout: .now() + spellCheckTimeoutSeconds) == .timedOut { return false }
+        return result
+    }
+
+    private static func isValidEnglishImpl(words: [String]) -> Bool {
         let checker = NSSpellChecker.shared
         checker.setLanguage("en")
 
         for word in words {
-            let range = checker.checkSpelling(of: word, startingAt: 0)
-            if range.location != NSNotFound {
-                return false
+            let lower = word.lowercased()
+            spellCacheLock.lock()
+            if let cached = spellCache[lower] {
+                spellCacheLock.unlock()
+                if !cached { return false }
+                continue
             }
+            spellCacheLock.unlock()
+
+            let range = checker.checkSpelling(of: word, startingAt: 0)
+            let valid = range.location == NSNotFound
+
+            spellCacheLock.lock()
+            if spellCache.count >= spellCacheMax, let first = spellCache.keys.first {
+                spellCache.removeValue(forKey: first)
+            }
+            spellCache[lower] = valid
+            spellCacheLock.unlock()
+
+            if !valid { return false }
         }
         return true
     }

@@ -11,7 +11,12 @@ final class NotificationService: ObservableObject {
     @Published var toastQueue: [ToastMessage] = []
 
     private var isShowingToast = false
-    private let toastDuration: TimeInterval = 2.0
+
+    /// อ่านจาก UserDefaults (วินาที), ค่าเริ่มต้น 2.0
+    private var toastDuration: TimeInterval {
+        let d = UserDefaults.standard.double(forKey: PimPidKeys.toastDuration)
+        return d > 0 ? d : 2.0
+    }
 
     private init() {}
 
@@ -34,14 +39,14 @@ final class NotificationService: ObservableObject {
         currentToast = toast
 
         // Auto-dismiss after duration
-        Task {
+        Task { @MainActor in
             try? await Task.sleep(nanoseconds: UInt64(toastDuration * 1_000_000_000))
-            await dismissCurrentToast()
+            dismissCurrentToast()
         }
     }
 
-    /// ปิด toast ปัจจุบันและแสดงอันถัดไป (ถ้ามี)
-    private func dismissCurrentToast() {
+    /// ปิด toast ปัจจุบันและแสดงอันถัดไป (ถ้ามี) — เรียกจาก UI ได้ (เช่น tap to dismiss)
+    func dismissCurrentToast() {
         currentToast = nil
         isShowingToast = false
 

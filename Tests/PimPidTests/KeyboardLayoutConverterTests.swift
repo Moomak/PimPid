@@ -47,4 +47,26 @@ final class KeyboardLayoutConverterTests: XCTestCase {
         XCTAssertEqual(zeroYo.unicodeScalars.count, 3)
         XCTAssertTrue(zeroYo.allSatisfy { KeyboardLayoutConverter.isThai($0) })
     }
+
+    /// ทดสอบ shifted keys ตรงกับ Kedmanee (Q→๐, !→+, ฯลฯ)
+    func testShiftedKeysMapping() {
+        XCTAssertEqual(KeyboardLayoutConverter.convertEnglishToThai("Q"), "๐")
+        XCTAssertEqual(KeyboardLayoutConverter.convertEnglishToThai("!"), "+")
+        XCTAssertEqual(KeyboardLayoutConverter.convertEnglishToThai("A"), "ฤ")
+        XCTAssertEqual(KeyboardLayoutConverter.convertThaiToEnglish("๐"), "Q")
+        XCTAssertEqual(KeyboardLayoutConverter.convertThaiToEnglish("ฤ"), "A")
+    }
+
+    /// ตัวอักษรไทยที่มีสระ/วรรณยุกต์รวมกับพยัญชนะ (grapheme cluster) ต้องแปลงถูกทิศทาง
+    func testThaiGraphemeClusterConversion() {
+        // ก + sara am (ั) = กั — ใช้ unicodeScalars จึงแมปทีละ scalar ได้
+        let thaiWithVowel = "กั"
+        XCTAssertEqual(KeyboardLayoutConverter.dominantLanguage(thaiWithVowel), .thaiToEnglish)
+        let converted = KeyboardLayoutConverter.convertThaiToEnglish(thaiWithVowel)
+        XCTAssertEqual(converted.unicodeScalars.count, thaiWithVowel.unicodeScalars.count)
+        // คำไทยที่มี mai tho (้) รวมกับตัวอักษร
+        let wordWithTone = "ไม้"
+        XCTAssertEqual(KeyboardLayoutConverter.dominantLanguage(wordWithTone), .thaiToEnglish)
+        XCTAssertFalse(KeyboardLayoutConverter.convertThaiToEnglish(wordWithTone).isEmpty)
+    }
 }

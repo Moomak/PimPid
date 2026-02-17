@@ -1,7 +1,10 @@
 import SwiftUI
+import AppKit
 
 /// About view with app information and quick start guide
 struct AboutView: View {
+    @ObservedObject private var thaiWordLoader = ThaiWordListLoader.shared
+
     var body: some View {
         Form {
             Section {
@@ -22,7 +25,7 @@ struct AboutView: View {
                         Text("PimPid")
                             .font(.system(size: 24, weight: .bold))
 
-                        Text("เวอร์ชัน \(Bundle.main.appVersion)")
+                        Text("เวอร์ชัน \(Bundle.main.appVersion) (\(Bundle.main.buildNumber))")
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
                     }
@@ -100,6 +103,58 @@ struct AboutView: View {
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
+
+                    Link(destination: URL(string: "https://github.com/Moomak/PimPid/releases")!) {
+                        HStack {
+                            Image(systemName: "arrow.down.circle")
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                                .frame(width: 20)
+                            Text("ตรวจสอบการอัปเดต")
+                                .font(.system(size: 12, weight: .medium))
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 10))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: copyDiagnosticInfo) {
+                        HStack {
+                            Image(systemName: "doc.on.clipboard")
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                                .frame(width: 20)
+                            Text("Copy diagnostic info")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: exportStatsAsJSON) {
+                        HStack {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                                .frame(width: 20)
+                            Text("Export สถิติ (JSON)")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: exportStatsAsCSV) {
+                        HStack {
+                            Image(systemName: "tablecells")
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                                .frame(width: 20)
+                            Text("Export สถิติ (CSV)")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                    }
+                    .buttonStyle(.plain)
                 }
             } header: {
                 Text("ข้อมูลเพิ่มเติม")
@@ -108,6 +163,18 @@ struct AboutView: View {
 
             Section {
                 VStack(alignment: .leading, spacing: 8) {
+                    if thaiWordLoader.loadProgress < 1.0 {
+                        HStack(spacing: 8) {
+                            ProgressView(value: thaiWordLoader.loadProgress)
+                                .frame(maxWidth: 120)
+                            Text("โหลดคำไทย... \(Int(thaiWordLoader.loadProgress * 100))%")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Text("รายการคำไทย: wannaphong/thai-wordlist, korakot/thainlp (Apache 2.0)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     Text("© 2025 PimPid · MIT License")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -120,6 +187,68 @@ struct AboutView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("เกี่ยวกับ")
+    }
+
+    private func copyDiagnosticInfo() {
+        let version = Bundle.main.appVersion
+        let build = Bundle.main.buildNumber
+        let os = ProcessInfo.processInfo.operatingSystemVersion
+        let accessibility = AccessibilityHelper.isAccessibilityTrusted ? "yes" : "no"
+        let text = """
+        PimPid \(version) (\(build))
+        macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion)
+        Accessibility: \(accessibility)
+        """
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    private func exportStatsAsJSON() {
+        let stats = ConversionStats.shared
+        let payload: [String: Any] = [
+            "totalConversions": stats.totalConversions,
+            "todayConversions": stats.todayConversions,
+            "recentConversions": stats.recentConversions.map { r in
+                [
+                    "original": r.original,
+                    "converted": r.converted,
+                    "direction": r.direction.rawValue,
+                    "timestamp": ISO8601DateFormatter().string(from: r.timestamp)
+                ] as [String: Any]
+            }
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys]) else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "pimpid-stats.json"
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            try? data.write(to: url)
+        }
+    }
+
+    private func exportStatsAsCSV() {
+        let stats = ConversionStats.shared
+        var lines: [String] = [
+            "totalConversions,\(stats.totalConversions)",
+            "todayConversions,\(stats.todayConversions)",
+            "",
+            "original,converted,direction,timestamp"
+        ]
+        let formatter = ISO8601DateFormatter()
+        for r in stats.recentConversions {
+            let escaped = { (s: String) in s.contains(",") || s.contains("\"") ? "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : s }
+            lines.append("\(escaped(r.original)),\(escaped(r.converted)),\(r.direction.rawValue),\(formatter.string(from: r.timestamp))")
+        }
+        let csv = lines.joined(separator: "\n")
+        guard let data = csv.data(using: .utf8) else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText]
+        panel.nameFieldStringValue = "pimpid-stats.csv"
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            try? data.write(to: url)
+        }
     }
 }
 

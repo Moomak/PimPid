@@ -7,6 +7,15 @@ struct PimPidApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var showOnboarding = false
 
+    private var menuBarIconName: String {
+        appState.isEnabled ? "character.bubble.fill" : "character.bubble"
+    }
+
+    private var menuBarIconColor: Color {
+        if appState.isEnabled, appState.autoCorrectEnabled { return .orange }
+        return .primary
+    }
+
     var body: some Scene {
         Settings {
             SettingsView()
@@ -17,7 +26,8 @@ struct PimPidApp: App {
             MenuBarContentView()
                 .environmentObject(appState)
         } label: {
-            Image(systemName: appState.isEnabled ? "character.bubble.fill" : "character.bubble")
+            Image(systemName: menuBarIconName)
+                .foregroundStyle(menuBarIconColor)
         }
         .menuBarExtraStyle(.window)
 
@@ -33,8 +43,10 @@ struct PimPidApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowObservers: [NSObjectProtocol] = []
+    private let serviceProvider = PimPidServiceProvider()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApplication.shared.servicesProvider = serviceProvider
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
@@ -68,10 +80,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AutoCorrectionEngine.shared.start()
         }
 
-        // โหลดรายการคำไทยและ warm spell checker ล่วงหน้า เพื่อไม่ให้การแปลงครั้งแรกค้าง
-        DispatchQueue.global(qos: .utility).async {
-            _ = ThaiWordList.words
-        }
+        KeyboardShortcutManager.shared.start()
+
+        // Task 19: โหลดคำไทยใน background พร้อม progress
+        ThaiWordListLoader.shared.beginLoading()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             let checker = NSSpellChecker.shared
             checker.setLanguage("en")
@@ -89,10 +101,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+
+        // แจ้งเตือนเมื่อเปิด Auto-Correct แต่ยังไม่มีสิทธิ์ Accessibility (task 64)
+        if UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled), !AccessibilityHelper.isAccessibilityTrusted {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                Task { @MainActor in
+                    NotificationService.shared.showToast(message: "ต้องการสิทธิ์ Accessibility เพื่อให้ Auto-Correct ทำงาน", type: .warning)
+                }
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         AutoCorrectionEngine.shared.stop()
+        KeyboardShortcutManager.shared.stop()
         windowObservers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 

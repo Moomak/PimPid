@@ -9,13 +9,18 @@ enum ThaiWordList {
         lock.lock()
         defer { lock.unlock() }
         if let w = _words { return w }
+        if let cached = ThaiWordListLoader.cachedWordsIfAvailable {
+            _words = cached
+            return cached
+        }
         var set = Set(embeddedWords)
         if let extra = loadFromBundle() { set.formUnion(extra) }
         _words = set
         return set
     }
 
-    /// ตัวอักษร  ๆ (ไม้ยมก / repetition mark) — ถ้าต่อท้ายคำ ให้ถือว่าเป็นคำเดียวกัน (งงๆ = งง)
+    /// ตัวอักษร  ๆ (ไม้ยมก U+0E46 / repetition mark) — ถ้าต่อท้ายคำ ให้ถือว่าเป็นคำเดียวกัน (งงๆ = งง)
+    /// Task 24: รูปแบบอื่นของไม้ยมกถ้ามีใน Unicode สามารถเพิ่มในเช็คเดียวกันได้
     private static let thaiRepetitionMark = "\u{0E46}"
 
     /// ตรวจว่าข้อความเป็นคำไทยที่รู้จัก (ทั้งก้อนหรือทุกคำในข้อความ)
@@ -76,8 +81,8 @@ enum ThaiWordList {
     }
 }
 
-/// คำไทยที่ฝังในแอป — แก้ไข/เพิ่มได้ที่ไฟล์นี้ หรือใช้ ThaiWords.txt ใน bundle
-private enum EmbeddedThaiWords {
+/// คำไทยที่ฝังในแอป — แก้ไข/เพิ่มได้ที่ไฟล์นี้ หรือใช้ ThaiWords.txt ใน bundle (internal สำหรับ ThaiWordListLoader)
+enum EmbeddedThaiWords {
     static let list: [String] = embeddedString
         .split(separator: "\n")
         .map { $0.trimmingCharacters(in: .whitespaces) }
@@ -135,6 +140,8 @@ private enum EmbeddedThaiWords {
 ผม
 คุณ
 ใคร
+ยังไง
+ยังไงก็
 อย่างไร
 เพราะ
 เนื่องจาก

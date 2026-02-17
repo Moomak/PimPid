@@ -3,6 +3,8 @@ import CoreGraphics
 import AppKit
 import os
 
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.pimpid", category: "AutoCorrect")
+
 /// เครื่องมือแก้ไขอัตโนมัติแบบ real-time ใช้ CGEventTap ตรวจจับการพิมพ์และแปลงทันที
 /// แก้คำอัตโนมัติเมื่อหยุดพิมพ์ โดยใช้ debounce ตามค่า delay ที่ตั้งไว้ (default 200ms)
 final class AutoCorrectionEngine {
@@ -21,8 +23,12 @@ final class AutoCorrectionEngine {
 
     private let replacementQueue = DispatchQueue(label: "com.pimpid.autocorrect.replacement")
 
-    /// จำนวนตัวอักษรขั้นต่ำก่อนจะเริ่มตรวจ
-    private let minBufferLength = 3
+    /// จำนวนตัวอักษรขั้นต่ำก่อนจะเริ่มตรวจ — อ่านจาก settings (2–5), ค่าเริ่มต้น 3
+    private var minBufferLength: Int {
+        let n = UserDefaults.standard.object(forKey: PimPidKeys.autoCorrectMinChars).flatMap { $0 as? NSNumber }.map(\.intValue)
+        guard let v = n, (2...5).contains(v) else { return 3 }
+        return v
+    }
 
     /// Default debounce ถ้า user ไม่ได้ตั้ง delay (200ms)
     private let defaultDebounce: TimeInterval = 0.2
@@ -44,8 +50,8 @@ final class AutoCorrectionEngine {
     // Whitespace = word boundary
     private let wordBreakers: Set<Character> = [" ", "\n", "\r", "\t"]
 
-    // Navigation keycodes that clear the buffer
-    private let navigationKeyCodes: Set<UInt16> = [
+    // Navigation keycodes that clear the buffer (Task 2: ใช้ใน shouldClearBuffer สำหรับ unit test)
+    private static let navigationKeyCodes: Set<UInt16> = [
         0x7B, 0x7C, 0x7D, 0x7E, // arrow keys
         0x35,                     // escape
         0x24,                     // return
@@ -54,6 +60,14 @@ final class AutoCorrectionEngine {
         0x73, 0x77,              // home, end
         0x74, 0x79,              // page up, page down
     ]
+
+    /// Task 2: ตรวจว่า key นี้ควร clear buffer หรือไม่ (modifier หรือ navigation) — ใช้ใน unit test
+    static func shouldClearBuffer(keyCode: UInt16, flags: CGEventFlags) -> Bool {
+        if flags.contains(.maskCommand) || flags.contains(.maskControl) || flags.contains(.maskAlternate) {
+            return true
+        }
+        return navigationKeyCodes.contains(keyCode)
+    }
 
     private init() {}
 
@@ -69,7 +83,7 @@ final class AutoCorrectionEngine {
 
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         guard AXIsProcessTrustedWithOptions(options) else {
-            print("[AutoCorrect] Accessibility permission not granted")
+            logger.warning("Accessibility permission not granted")
             return
         }
 
@@ -82,7 +96,7 @@ final class AutoCorrectionEngine {
             callback: autoCorrectionCallback,
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
-            print("[AutoCorrect] Failed to create event tap")
+            logger.error("Failed to create event tap")
             return
         }
 
@@ -95,7 +109,7 @@ final class AutoCorrectionEngine {
         _isRunning = true
         os_unfair_lock_unlock(&_lock)
 
-        print("[AutoCorrect] Started (minChars=\(minBufferLength))")
+        logger.info("Started (minChars=\(self.minBufferLength))")
     }
 
     func stop() {
@@ -120,7 +134,7 @@ final class AutoCorrectionEngine {
             runLoopSource = nil
         }
 
-        print("[AutoCorrect] Stopped")
+        logger.info("Stopped")
     }
 
     // MARK: - Event Handling
@@ -136,14 +150,7 @@ final class AutoCorrectionEngine {
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
 
-        // Modifier keys → clear
-        if flags.contains(.maskCommand) || flags.contains(.maskControl) || flags.contains(.maskAlternate) {
-            cancelAndClear()
-            return Unmanaged.passUnretained(event)
-        }
-
-        // Navigation keys → clear
-        if navigationKeyCodes.contains(keyCode) {
+        if Self.shouldClearBuffer(keyCode: keyCode, flags: flags) {
             cancelAndClear()
             return Unmanaged.passUnretained(event)
         }
@@ -175,9 +182,12 @@ final class AutoCorrectionEngine {
             return Unmanaged.passUnretained(event)
         }
 
-        // Regular character → append + schedule debounce
+        // Regular character → append (จำกัดความยาว buffer สูงสุด 64 — task 97) + schedule debounce
         os_unfair_lock_lock(&_lock)
         _wordBuffer.append(character)
+        if _wordBuffer.unicodeScalars.count > 64 {
+            _wordBuffer = String(_wordBuffer.unicodeScalars.suffix(64))
+        }
         let buf = _wordBuffer
         os_unfair_lock_unlock(&_lock)
 
@@ -223,6 +233,18 @@ final class AutoCorrectionEngine {
         let word = _wordBuffer
         os_unfair_lock_unlock(&_lock)
 
+        // Task 4: กด Option (Alt) ค้างไว้ = ไม่แก้คำล่าสุด (ปิดการทำงานชั่วคราวสำหรับคำนี้)
+        var optionHeld = false
+        if Thread.isMainThread {
+            optionHeld = NSEvent.modifierFlags.contains(.option)
+        } else {
+            DispatchQueue.main.sync { optionHeld = NSEvent.modifierFlags.contains(.option) }
+        }
+        if optionHeld {
+            cancelAndClear()
+            return
+        }
+
         // Check if replacement needed
         guard let info = checkReplacement(word) else { return }
 
@@ -239,13 +261,15 @@ final class AutoCorrectionEngine {
         let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
         let deleteCount = trimmed.unicodeScalars.count
 
-        print("[AutoCorrect] \"\(trimmed)\" → \"\(info.converted)\"")
+        logger.debug("\"\(trimmed)\" → \"\(info.converted)\"")
 
         // Perform replacement (still on replacementQueue)
         TextManipulator.replaceWithClipboard(deleteCount: deleteCount, text: info.converted)
 
-        // Wait for paste to complete (ลดจาก 50ms เพื่อไม่ให้รู้สึกค้าง)
-        usleep(25000) // 25ms
+        // Wait for paste to complete — อ่านจาก settings (ms), ค่าเริ่มต้น 25
+        let delayMs = UserDefaults.standard.object(forKey: PimPidKeys.autoCorrectPostReplaceDelayMs).flatMap { $0 as? NSNumber }.map(\.intValue)
+        let delayUs = UInt32((delayMs.map { max(0, min(100, $0)) } ?? 25) * 1000)
+        usleep(delayUs)
 
         // Switch keyboard + stats on main thread (Carbon API requires main thread)
         let direction = info.direction
@@ -267,6 +291,13 @@ final class AutoCorrectionEngine {
             ConversionStats.shared.recordConversion(from: trimmed, to: converted, direction: statsDir)
             if playSound {
                 NSSound.beep()
+            }
+            // แสดง toast เมื่อเปิด visual feedback (task 59)
+            if UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectVisualFeedback) {
+                let style = UserDefaults.standard.string(forKey: PimPidKeys.notificationStyle) ?? "toast"
+                if style != "off" {
+                    NotificationService.shared.showToast(message: "\(trimmed) → \(converted)", type: .success)
+                }
             }
 
             // Clear processing flag AFTER main thread work is done
@@ -295,6 +326,7 @@ final class AutoCorrectionEngine {
         )
         if excludeWords.contains(trimmed.lowercased()) { return nil }
         if isCurrentAppExcluded() { return nil }
+        if isCurrentWindowExcluded() { return nil }
 
         let direction = KeyboardLayoutConverter.dominantLanguage(trimmed)
         guard direction != .none else { return nil }
@@ -303,8 +335,12 @@ final class AutoCorrectionEngine {
         guard converted != trimmed else { return nil }
 
         var shouldReplace = false
-        DispatchQueue.main.sync {
+        if Thread.isMainThread {
             shouldReplace = ConversionValidator.shouldReplace(converted: converted, direction: direction, original: trimmed)
+        } else {
+            DispatchQueue.main.sync {
+                shouldReplace = ConversionValidator.shouldReplace(converted: converted, direction: direction, original: trimmed)
+            }
         }
         guard shouldReplace else { return nil }
 
@@ -316,6 +352,13 @@ final class AutoCorrectionEngine {
               let bundleID = frontApp.bundleIdentifier else { return false }
         let excludedApps = Set(UserDefaults.standard.stringArray(forKey: PimPidKeys.autoCorrectExcludedApps) ?? [])
         return excludedApps.contains(bundleID)
+    }
+
+    /// Task 8: ตรวจว่าหน้าต่างที่โฟกัสอยู่ถูก exclude ต่อ window หรือไม่
+    private func isCurrentWindowExcluded() -> Bool {
+        guard let key = FrontmostWindowHelper.frontmostWindowKey() else { return false }
+        let excluded = Set(UserDefaults.standard.stringArray(forKey: PimPidKeys.autoCorrectExcludedWindows) ?? [])
+        return excluded.contains(key)
     }
 }
 
@@ -334,7 +377,15 @@ private func autoCorrectionCallback(
         if let tap = engine.eventTap {
             CGEvent.tapEnable(tap: tap, enable: true)
         }
-        print("[AutoCorrect] Event tap re-enabled")
+        logger.info("Event tap re-enabled")
+        DispatchQueue.main.async {
+            Task { @MainActor in
+                NotificationService.shared.showToast(
+                    message: "Auto-Correct ถูกปิดชั่วคราว — เปิดใช้งานใหม่แล้ว",
+                    type: .info
+                )
+            }
+        }
         return Unmanaged.passUnretained(event)
     }
 

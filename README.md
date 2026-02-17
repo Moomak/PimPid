@@ -48,21 +48,31 @@ swift run PimPid
 
 ```
 PimPid/
-├── PimPidApp.swift                # จุดเข้า + MenuBarExtra + Settings
+├── PimPidApp.swift                     # จุดเข้า + MenuBarExtra + Settings + Onboarding
 ├── Core/
 │   ├── AppState.swift
+│   ├── PimPidKeys.swift                # UserDefaults keys
 │   └── Services/
-│       ├── KeyboardLayoutConverter.swift   # แมปไทย↔อังกฤษ (Kedmanee/QWERTY)
-│       ├── ExcludeListStore.swift          # เก็บคำที่ exclude
-│       ├── TextReplacementService.swift    # Copy → แปลง → Paste
-│       └── KeyboardShortcutManager.swift   # Global shortcut ⌘⇧L
+│       ├── AutoCorrectionEngine.swift  # CGEventTap + debounce แก้คำอัตโนมัติ
+│       ├── KeyboardLayoutConverter.swift
+│       ├── ExcludeListStore.swift
+│       ├── TextReplacementService.swift
+│       ├── TextManipulator.swift       # Backspace + clipboard replace
+│       ├── KeyboardShortcutManager.swift # Global shortcut ⌘⇧L
+│       ├── InputSourceSwitcher.swift   # สลับคีย์บอร์ดไทย/อังกฤษ
+│       ├── ConversionValidator.swift
+│       ├── ConversionStats.swift
+│       ├── NotificationService.swift
+│       ├── PimPidServiceProvider.swift # NSServices menu
+│       └── ...
 ├── Features/
 │   ├── MenuBar/
-│   │   └── MenuBarContentView.swift
-│   └── Settings/
-│       └── SettingsView.swift              # ตั้งค่า + รายการ Exclude
-├── PimPid.entitlements
-└── README.md
+│   ├── Settings/                       # Sidebar: ทั่วไป, Shortcut, Auto-Correct, Exclude, รูปลักษณ์, เกี่ยวกับ
+│   ├── Onboarding/
+│   └── Feedback/                       # Toast
+├── Resources/
+│   └── ThaiWords.txt
+└── ...
 ```
 
 ## รายการคำไทย (Thai word list)

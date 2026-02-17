@@ -1,10 +1,15 @@
 import SwiftUI
+import AppKit
 
 /// Toast notification overlay แสดงผลการแปลงแบบสวยงาม (รองรับขนาดตัวอักษรและสไตล์จาก Settings)
 struct ToastNotificationView: View {
     let toast: ToastMessage
 
     @State private var isVisible = false
+
+    private static var reduceMotion: Bool {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
 
     private static var fontSizeScale: CGFloat {
         let key = UserDefaults.standard.string(forKey: PimPidKeys.appearanceFontSize) ?? "medium"
@@ -51,11 +56,15 @@ struct ToastNotificationView: View {
         .frame(maxWidth: minimal ? 260 : 300)
         .offset(y: isVisible ? 0 : -50)
         .opacity(isVisible ? 1 : 0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isVisible)
+        .animation(Self.reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7), value: isVisible)
         .onAppear {
-            withAnimation {
+            withAnimation(Self.reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7)) {
                 isVisible = true
             }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            NotificationService.shared.dismissCurrentToast()
         }
     }
 }

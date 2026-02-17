@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Onboarding view shown on first launch
 struct OnboardingView: View {
@@ -12,6 +13,12 @@ struct OnboardingView: View {
             title: "ยินดีต้อนรับสู่ PimPid",
             description: "แอปที่ช่วยแปลงข้อความไทย ⇄ อังกฤษ ตามตำแหน่งปุ่มคีย์บอร์ด",
             color: .blue
+        ),
+        OnboardingStep(
+            icon: "command",
+            title: "Shortcut ⌘⇧L",
+            description: "เลือกข้อความที่พิมพ์ผิดภาษาแล้วกด ⌘⇧L เพื่อแปลงทันที (เปลี่ยน shortcut ได้ใน Settings)",
+            color: .indigo
         ),
         OnboardingStep(
             icon: "bolt.fill",
@@ -29,14 +36,19 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Progress indicator
-            HStack(spacing: 8) {
-                ForEach(0..<steps.count, id: \.self) { index in
-                    Capsule()
-                        .fill(index <= currentStep ? steps[index].color : Color.gray.opacity(0.3))
-                        .frame(height: 4)
-                        .animation(.easeInOut(duration: 0.3), value: currentStep)
+            // Progress indicator + step number
+            HStack(spacing: 12) {
+                HStack(spacing: 8) {
+                    ForEach(0..<steps.count, id: \.self) { index in
+                        Capsule()
+                            .fill(index <= currentStep ? steps[index].color : Color.gray.opacity(0.3))
+                            .frame(height: 4)
+                            .animation(.easeInOut(duration: 0.3), value: currentStep)
+                    }
                 }
+                Text("\(currentStep + 1) / \(steps.count)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 40)
             .padding(.top, 30)
@@ -61,7 +73,11 @@ struct OnboardingView: View {
                     }
                     .buttonStyle(.bordered)
                 } else {
-                    Spacer()
+                    Button("ข้าม") {
+                        finishOnboarding()
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
                 }
 
                 Spacer()
@@ -77,10 +93,22 @@ struct OnboardingView: View {
                 } else {
                     VStack(spacing: 8) {
                         Button("เปิด System Settings") {
+                            UserDefaults.standard.set(true, forKey: PimPidKeys.onboardingDidOpenAccessibilitySettings)
                             AccessibilityHelper.openAccessibilitySettings()
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.green)
+
+                        if UserDefaults.standard.bool(forKey: PimPidKeys.onboardingDidOpenAccessibilitySettings) {
+                            Text("ถ้าให้สิทธิ์แล้ว ให้กลับมาแล้วกด เสร็จสิ้น")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Button("เปิดการตั้งค่า PimPid") {
+                            NSApplication.shared.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                        }
+                        .buttonStyle(.bordered)
 
                         Button("เสร็จสิ้น") {
                             finishOnboarding()

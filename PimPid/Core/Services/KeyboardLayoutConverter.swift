@@ -1,10 +1,12 @@
 import Foundation
 
 /// แปลงข้อความระหว่างภาษาไทย (คีย์บอร์ด Kedmanee) กับอังกฤษ (QWERTY) ตามตำแหน่งปุ่มเดียวกัน
+/// Task 101: โครงสร้างรองรับ layout อังกฤษอื่น (เช่น Dvorak) — เพิ่ม mapping อื่นได้โดยไม่แตะ Kedmanee
 ///
-/// IMPORTANT: Thai combining marks (sara am ั, sara ii ี, mai ek ่, etc.) combine with preceding
-/// consonants into grapheme clusters in Swift's `Character` type. We use `Unicode.Scalar` keys
-/// to ensure each code point is looked up individually.
+/// Unicode Thai block (U+0E01–U+0E5B):
+/// - Consonants: U+0E01–U+0E2E (ก–ฮ)
+/// - Vowels / tone marks: U+0E2F–U+0E5B (ฯ–๛); ตัวเหล่านี้รวมกับพยัญชนะหน้าเป็น grapheme cluster
+/// เราจึงใช้ `Unicode.Scalar` เป็น key ในการแมป ไม่ใช้ `Character`
 struct KeyboardLayoutConverter {
 
     // MARK: - Kedmanee Layout Mapping (English key → Thai character)
@@ -63,6 +65,72 @@ struct KeyboardLayoutConverter {
         return map
     }()
 
+    /// Task 13 + Task 9: โหลด mapping ตามชื่อ layout (KeyboardLayout.plist หรือ KeyboardLayout-<name>.plist)
+    private static let overlayCacheLock = NSLock()
+    private static var overlayCache: [String: [Unicode.Scalar: Unicode.Scalar]?] = [:]
+
+    private static func loadBundleMapping(forLayoutName name: String?) -> [Unicode.Scalar: Unicode.Scalar]? {
+        let key = name ?? "kedmanee"
+        overlayCacheLock.lock()
+        if let cached = overlayCache[key] {
+            overlayCacheLock.unlock()
+            return cached
+        }
+        overlayCacheLock.unlock()
+
+        let baseName = (key == "kedmanee" || key.isEmpty) ? "KeyboardLayout" : "KeyboardLayout-\(key)"
+        let dict: [String: String]?
+        if let url = Bundle.main.url(forResource: baseName, withExtension: "plist"),
+           let plist = NSDictionary(contentsOf: url) as? [String: String] {
+            dict = plist
+        } else if let url = Bundle.main.url(forResource: baseName, withExtension: "json"),
+                  let data = try? Data(contentsOf: url),
+                  let decoded = try? JSONDecoder().decode([String: String].self, from: data) {
+            dict = decoded
+        } else {
+            dict = nil
+        }
+        var result: [Unicode.Scalar: Unicode.Scalar]? = nil
+        if let d = dict, !d.isEmpty {
+            var overlay: [Unicode.Scalar: Unicode.Scalar] = [:]
+            for (k, v) in d {
+                guard let kScalar = k.unicodeScalars.first, k.unicodeScalars.count == 1,
+                      let vScalar = v.unicodeScalars.first, v.unicodeScalars.count == 1 else { continue }
+                overlay[kScalar] = vScalar
+            }
+            result = overlay.isEmpty ? nil : overlay
+        }
+        overlayCacheLock.lock()
+        overlayCache[key] = result
+        overlayCacheLock.unlock()
+        return result
+    }
+
+    /// ชื่อ layout ไทยจาก settings (ค่าเริ่มต้น kedmanee)
+    private static var currentThaiLayoutName: String {
+        UserDefaults.standard.string(forKey: PimPidKeys.thaiKeyboardLayout) ?? "kedmanee"
+    }
+
+    /// English → Thai ที่ใช้จริง (built-in + bundle overlay ตาม layout ที่เลือก)
+    private static var effectiveEnglishToThai: [Unicode.Scalar: Unicode.Scalar] {
+        let overlay = loadBundleMapping(forLayoutName: currentThaiLayoutName)
+        guard let o = overlay else { return englishToThai }
+        var map = englishToThai
+        for (k, v) in o {
+            map[k] = v
+        }
+        return map
+    }
+
+    /// Thai → English ที่ใช้จริง (inverted จาก effectiveEnglishToThai)
+    private static var effectiveThaiToEnglish: [Unicode.Scalar: Unicode.Scalar] {
+        var map: [Unicode.Scalar: Unicode.Scalar] = [:]
+        for (eng, thai) in effectiveEnglishToThai {
+            map[thai] = eng
+        }
+        return map
+    }
+
     /// ตรวจว่าเป็นตัวอักษรไทย (ช่วง Unicode Thai)
     static func isThai(_ c: Character) -> Bool {
         guard let scalar = c.unicodeScalars.first else { return false }
@@ -70,7 +138,7 @@ struct KeyboardLayoutConverter {
         return (v >= 0x0E01 && v <= 0x0E5B)
     }
 
-    /// ตรวจว่า Unicode scalar เป็นภาษาไทย
+    /// ตรวจว่า Unicode scalar เป็นภาษาไทย (U+0E01–U+0E5B: พยัญชนะ + สระ + วรรณยุกต์)
     private static func isThai(_ scalar: Unicode.Scalar) -> Bool {
         let v = scalar.value
         return (v >= 0x0E01 && v <= 0x0E5B)
@@ -85,6 +153,9 @@ struct KeyboardLayoutConverter {
     static func isEnglish(_ c: Character) -> Bool {
         c.isASCII && (c.isLetter || c.isNumber || "`-=[];',./ ~!@#$%^&*()_+{}|:\"<>?\\".contains(c))
     }
+
+    /// Task 14: ตัวเลขและสัญลักษณ์ — ผ่านการแมปตามตาราง layout (มีใน englishToThai/thaiToEnglish)
+    /// ส่วนที่ไม่มีในตารางจะไม่ถูกแปลง (append scalar เดิม) ดังนั้นข้อความผสมตัวเลขจะแปลงเฉพาะตัวอักษร
 
     /// ตรวจว่าข้อความส่วนใหญ่เป็นภาษาไหน (ใช้ตัดสินใจทิศทางแปลง)
     /// ใช้ unicodeScalars เพื่อนับ combining marks แยกจากตัวอักษรหลัก
@@ -111,9 +182,10 @@ struct KeyboardLayoutConverter {
     /// แปลงไทย → อังกฤษ (ตามตำแหน่งปุ่ม)
     /// ใช้ unicodeScalars เพราะ Thai combining marks รวมกับ consonant เป็น grapheme cluster
     static func convertThaiToEnglish(_ text: String) -> String {
+        let map = effectiveThaiToEnglish
         var result = ""
         for scalar in text.unicodeScalars {
-            if let mapped = thaiToEnglish[scalar] {
+            if let mapped = map[scalar] {
                 result.unicodeScalars.append(mapped)
             } else {
                 result.unicodeScalars.append(scalar)
@@ -124,9 +196,10 @@ struct KeyboardLayoutConverter {
 
     /// แปลงอังกฤษ → ไทย (ตามตำแหน่งปุ่ม)
     static func convertEnglishToThai(_ text: String) -> String {
+        let map = effectiveEnglishToThai
         var result = ""
         for scalar in text.unicodeScalars {
-            if let mapped = englishToThai[scalar] {
+            if let mapped = map[scalar] {
                 result.unicodeScalars.append(mapped)
             } else {
                 result.unicodeScalars.append(scalar)

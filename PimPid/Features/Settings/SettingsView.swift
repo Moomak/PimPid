@@ -13,7 +13,10 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        SettingsNavigationView()
+        ZStack(alignment: .top) {
+            SettingsNavigationView()
+            ToastOverlayView()
+        }
         .preferredColorScheme(colorScheme)
     }
 }
