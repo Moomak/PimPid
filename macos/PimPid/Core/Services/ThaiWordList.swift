@@ -26,6 +26,7 @@ enum ThaiWordList {
     /// ตรวจว่าข้อความเป็นคำไทยที่รู้จัก (ทั้งก้อนหรือทุกคำในข้อความ)
     /// ถ้าใช่ = ไม่ควรแปลง Thai→English
     /// รองรับคำลงท้าย  ๆ เช่น งงๆ (ถือว่าเป็นคำว่า งง)
+    /// รองรับคำไทยติดกันไม่มีเว้นวรรค เช่น ไม่เป็น = ไม่ + เป็น (greedy longest-match)
     static func containsKnownThai(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
@@ -38,8 +39,69 @@ enum ThaiWordList {
                 let base = String(token.dropLast(thaiRepetitionMark.count))
                 if !base.isEmpty, w.contains(base) { return true }
             }
+            // Thai word segmentation: ลองแยกคำไทยติดกัน (greedy longest-match)
+            if canDecomposeIntoKnownWords(token, wordSet: w) { return true }
             return false
         }
+    }
+
+    /// แยกข้อความไทยที่ไม่มีเว้นวรรคเป็นคำที่รู้จัก (dynamic programming)
+    /// เช่น "ไม่เป็น" → "ไม่" + "เป็น"
+    /// กำหนดให้แต่ละ segment ต้องยาว ≥ 2 ตัวอักษร (ป้องกัน false positive จากคำ 1 ตัว)
+    private static func canDecomposeIntoKnownWords(_ text: String, wordSet w: Set<String>) -> Bool {
+        let chars = Array(text)
+        let n = chars.count
+        guard n >= 4 else { return false } // ต้องแยกเป็น 2+ คำ แต่ละคำ ≥ 2 ตัว
+
+        let maxWordLen = min(n, 20)
+        let minWordLen = 2
+
+        // dp[i] = true ถ้า chars[0..<i] แยกเป็นคำ (≥ 2 ตัว) ที่รู้จักได้ทั้งหมด
+        var dp = [Bool](repeating: false, count: n + 1)
+        dp[0] = true
+
+        for i in minWordLen...n {
+            for j in stride(from: i - minWordLen, through: 0, by: -1) {
+                guard dp[j] else { continue }
+                if i - j > maxWordLen { break }
+                let sub = String(chars[j..<i])
+                if w.contains(sub) {
+                    dp[i] = true
+                    break
+                }
+            }
+        }
+
+        guard dp[n] else { return false }
+
+        // ต้องมี split point ระหว่างทาง (ไม่ใช่ match ทั้งก้อน ซึ่ง handled แล้วข้างบน)
+        for mid in minWordLen...(n - minWordLen) {
+            if dp[mid] {
+                let suffixChars = Array(chars[mid...])
+                if decomposeAll(suffixChars, wordSet: w, minLen: minWordLen, maxLen: maxWordLen) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    private static func decomposeAll(_ chars: [Character], wordSet w: Set<String>, minLen: Int, maxLen: Int) -> Bool {
+        let n = chars.count
+        guard n >= minLen else { return false }
+        var dp = [Bool](repeating: false, count: n + 1)
+        dp[0] = true
+        for i in minLen...n {
+            for j in stride(from: i - minLen, through: 0, by: -1) {
+                guard dp[j] else { continue }
+                if i - j > maxLen { break }
+                if w.contains(String(chars[j..<i])) {
+                    dp[i] = true
+                    break
+                }
+            }
+        }
+        return dp[n]
     }
 
     /// ตรวจว่ามีคำไทยที่รู้จักที่ขึ้นต้นด้วย prefix นี้ (เช่น เก็ เป็นต้นของ เก็บ) — กำลังพิมพ์อยู่ ไม่แปลง

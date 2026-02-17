@@ -1,0 +1,48 @@
+{
+  "name": "pimpid-windows",
+  "version": "1.5.10",
+  "description": "PimPid — Thai ⇄ English Keyboard Layout Converter for Windows",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron .",
+    "dist": "npm run build && electron-builder --win portable",
+    "dist:nsis": "npm run build && electron-builder --win nsis"
+  },
+  "author": "PimPid",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.6.0"
+  },
+  "build": {
+    "appId": "com.pimpid.windows",
+    "productName": "PimPid",
+    "npmRebuild": false,
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    },
+    "portable": {
+      "artifactName": "PimPid-${version}-Windows.exe"
+    },
+    "files": [
+      "dist/**/*",
+      "src/icon.png",
+      "node_modules/uiohook-napi/**/*"
+    ],
+    "asarUnpack": [
+      "**/node_modules/uiohook-napi/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    }
+  },
+  "optionalDependencies": {
+    "uiohook-napi": "^1.5.4"
+  },
+  "dependencies": {}
+}

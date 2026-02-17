@@ -17,7 +17,8 @@ final class ConversionValidatorTests: XCTestCase {
     }
 
     func testThaiToEnglish_AcceptValidEnglish() {
-        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "hello", direction: .thaiToEnglish, original: "อะไรก็ได้"))
+        // ใช้ original ที่ไม่ใช่คำไทยที่รู้จัก (ข้อความที่เกิดจากพิมพ์ผิดภาษา)
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "hello", direction: .thaiToEnglish, original: "สำววนำ"))
         XCTAssertTrue(ConversionValidator.shouldReplace(converted: "world", direction: .thaiToEnglish, original: "ฟสวฟก"))
     }
 

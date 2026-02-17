@@ -1,24 +1,29 @@
-# Build
-.build/
+# === macOS (Swift) ===
+macos/.build/
 DerivedData/
 *.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
-
-# Swift Package Manager
 .swiftpm/
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Xcode user state (ไม่ push การตั้งค่าส่วนตัว)
 *.xcuserstate
 xcuserdata/
 *.moved-aside
 *.pbxuser
 !default.pbxuser
+macos/PimPid/Icon/AppIcon.iconset/
+macos/PimPid/Icon/icon_1024.png
 
-# ไม่ push โฟลเดอร์/ไฟล์จากเครื่องมือภายนอก หรือที่อาจมีข้อมูลเฉพาะเครื่อง
+# === Windows (Electron) ===
+windows/node_modules/
+windows/dist/
+windows/release/
+windows/create-icons.js
+
+# === OS ===
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# === AI/IDE tool configs ===
 .adal
 .agent/
 .agents/
@@ -52,7 +57,7 @@ xcuserdata/
 .zencoder/
 skills/
 
-# ความลับ / env (ถ้ามีเพิ่มภายหลัง)
+# === Secrets ===
 .env
 .env.*
 !.env.example
@@ -60,7 +65,3 @@ skills/
 *credentials*
 *secrets*
 *.key
-
-# Icon build (เก็บแค่ .icns + script)
-PimPid/Icon/AppIcon.iconset/
-PimPid/Icon/icon_1024.png

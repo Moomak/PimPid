@@ -2,37 +2,44 @@
 
 # PimPid Release Build Script
 # Build และสร้าง .app bundle สำหรับ macOS
-# Task 86: อ่านเวอร์ชันจากด้านบน — แก้แค่ที่นี้แล้วใช้ใน plist
+# รันจากโฟลเดอร์ macos/ หรือจาก root ของโปรเจกต์
 
-set -e  # หยุดทันทีถ้ามี error
+set -e
 
-VERSION="${PIMPID_VERSION:-1.5.9}"
-BUILD="${PIMPID_BUILD:-15}"
+VERSION="${PIMPID_VERSION:-1.5.10}"
+BUILD="${PIMPID_BUILD:-16}"
+
+# หา root directory ของโปรเจกต์
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+MACOS_DIR="$SCRIPT_DIR"
+RELEASE_DIR="$PROJECT_ROOT/releases/macos"
 
 echo "🔨 Building PimPid release ($VERSION / $BUILD)..."
 
-# 1. Build release binary
+# 1. Build release binary (ต้องอยู่ในโฟลเดอร์ที่มี Package.swift)
 echo "📦 Building release binary..."
+cd "$MACOS_DIR"
 swift build -c release
 
 # 2. สร้างโครงสร้าง .app bundle
 echo "🗂️  Creating .app bundle structure..."
-rm -rf release/PimPid.app
-mkdir -p release/PimPid.app/Contents/MacOS
-mkdir -p release/PimPid.app/Contents/Resources
+rm -rf "$RELEASE_DIR/PimPid.app"
+mkdir -p "$RELEASE_DIR/PimPid.app/Contents/MacOS"
+mkdir -p "$RELEASE_DIR/PimPid.app/Contents/Resources"
 
 # 3. Copy executable
 echo "📋 Copying executable..."
-cp .build/release/PimPid release/PimPid.app/Contents/MacOS/
+cp "$MACOS_DIR/.build/release/PimPid" "$RELEASE_DIR/PimPid.app/Contents/MacOS/"
 
-# 4. Copy Info.plist (task 102: ใช้ PimPid/Info.plist ถ้ามี แล้วตั้ง version/build)
+# 4. Copy Info.plist
 echo "📋 Creating Info.plist..."
-if [[ -f PimPid/Info.plist ]]; then
-  cp PimPid/Info.plist release/PimPid.app/Contents/Info.plist
-  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" release/PimPid.app/Contents/Info.plist
-  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" release/PimPid.app/Contents/Info.plist
+if [[ -f "$MACOS_DIR/PimPid/Info.plist" ]]; then
+  cp "$MACOS_DIR/PimPid/Info.plist" "$RELEASE_DIR/PimPid.app/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$RELEASE_DIR/PimPid.app/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" "$RELEASE_DIR/PimPid.app/Contents/Info.plist"
 else
-  cat > release/PimPid.app/Contents/Info.plist << EOF
+  cat > "$RELEASE_DIR/PimPid.app/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -79,10 +86,10 @@ fi
 
 # 5. Copy icon
 echo "🎨 Copying icon..."
-cp PimPid/Icon/PimPid.icns release/PimPid.app/Contents/Resources/
+cp "$MACOS_DIR/PimPid/Icon/PimPid.icns" "$RELEASE_DIR/PimPid.app/Contents/Resources/"
 
-# 5b. Copy Thai words list (optional; แอปมีคำในตัวอยู่แล้ว)
-[ -f PimPid/Resources/ThaiWords.txt ] && cp PimPid/Resources/ThaiWords.txt release/PimPid.app/Contents/Resources/
+# 5b. Copy Thai words list (optional)
+[ -f "$MACOS_DIR/PimPid/Resources/ThaiWords.txt" ] && cp "$MACOS_DIR/PimPid/Resources/ThaiWords.txt" "$RELEASE_DIR/PimPid.app/Contents/Resources/"
 
 # 6. Refresh Services registration
 echo "🔄 Refreshing Services registration..."
@@ -91,8 +98,8 @@ echo "🔄 Refreshing Services registration..."
 # 7. แสดงข้อมูล
 echo ""
 echo "✅ Build complete!"
-echo "📍 Location: release/PimPid.app"
+echo "📍 Location: $RELEASE_DIR/PimPid.app"
 echo ""
-ls -lh release/PimPid.app/Contents/MacOS/PimPid
+ls -lh "$RELEASE_DIR/PimPid.app/Contents/MacOS/PimPid"
 echo ""
-echo "🚀 To run: open release/PimPid.app"
+echo "🚀 To run: open $RELEASE_DIR/PimPid.app"
