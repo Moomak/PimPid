@@ -30,7 +30,7 @@ struct SettingsNavigationView: View {
             List(SettingsSection.allCases, selection: $selectedSection) { section in
                 NavigationLink(value: section) {
                     Label {
-                        Text(section.title)
+                        Text(section.title(in: appState.localizedBundle))
                             .font(.system(size: 13 * fontScale, weight: .medium))
                     } icon: {
                         Image(systemName: section.icon)
@@ -78,14 +78,14 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    func title(in bundle: Bundle) -> String {
         switch self {
-        case .general: return String(localized: "settings.general.title", bundle: .module)
+        case .general: return String(localized: "settings.general.title", bundle: bundle)
         case .shortcut: return "Shortcut"
         case .autoCorrect: return "Auto-Correct"
-        case .exclude: return String(localized: "settings.exclude.title", bundle: .module)
-        case .appearance: return String(localized: "settings.appearance.title", bundle: .module)
-        case .about: return String(localized: "settings.about.title", bundle: .module)
+        case .exclude: return String(localized: "settings.exclude.title", bundle: bundle)
+        case .appearance: return String(localized: "settings.appearance.title", bundle: bundle)
+        case .about: return String(localized: "settings.about.title", bundle: bundle)
         }
     }
 
@@ -122,42 +122,43 @@ struct GeneralSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle(String(localized: "general.toggle", bundle: .module), isOn: $appState.isEnabled)
+                Toggle(String(localized: "general.toggle", bundle: appState.localizedBundle), isOn: $appState.isEnabled)
                     .toggleStyle(.switch)
 
-                Text(String(localized: "general.description", bundle: .module))
+                Text(String(localized: "general.description", bundle: appState.localizedBundle))
                     .font(.system(size: 12 * fontScale))
                     .foregroundStyle(.secondary)
             } header: {
-                Text(String(localized: "general.section.basic", bundle: .module))
+                Text(String(localized: "general.section.basic", bundle: appState.localizedBundle))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             }
 
             Section {
-                LabeledContent(String(localized: "general.version", bundle: .module), value: Bundle.main.appVersion)
-                LabeledContent(String(localized: "general.status", bundle: .module), value: appState.isEnabled ? String(localized: "general.status.active", bundle: .module) : String(localized: "general.status.paused", bundle: .module))
+                LabeledContent(String(localized: "general.version", bundle: appState.localizedBundle), value: Bundle.main.appVersion)
+                LabeledContent(String(localized: "general.status", bundle: appState.localizedBundle), value: appState.isEnabled ? String(localized: "general.status.active", bundle: appState.localizedBundle) : String(localized: "general.status.paused", bundle: appState.localizedBundle))
             } header: {
-                Text(String(localized: "section.info", bundle: .module))
+                Text(String(localized: "section.info", bundle: appState.localizedBundle))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             }
 
             Section {
-                Button(String(localized: "button.use_defaults", bundle: .module)) {
+                Button(String(localized: "button.use_defaults", bundle: appState.localizedBundle)) {
                     appState.isEnabled = true
                 }
                 .buttonStyle(.bordered)
             } header: {
-                Text(String(localized: "section.reset", bundle: .module))
+                Text(String(localized: "section.reset", bundle: appState.localizedBundle))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(String(localized: "general.nav_title", bundle: .module))
+        .navigationTitle(String(localized: "general.nav_title", bundle: appState.localizedBundle))
     }
 }
 
 /// Shortcut settings section — แสดง shortcut ปัจจุบันและปุ่มใช้ค่าเริ่มต้น (⌘⇧L)
 struct ShortcutSettingsView: View {
+    @EnvironmentObject var appState: AppState
     @Environment(\.settingsFontScale) private var fontScale
     @State private var displayShortcut = KeyboardShortcutManager.shortcutDisplayString()
     @State private var currentLayoutName: String? = InputSourceSwitcher.currentLayoutName()
@@ -165,7 +166,7 @@ struct ShortcutSettingsView: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent(String(localized: "shortcut.current", bundle: .module), value: displayShortcut)
+                LabeledContent(String(localized: "shortcut.current", bundle: appState.localizedBundle), value: displayShortcut)
                     .font(.system(size: 13 * fontScale, weight: .medium))
 
                 if let name = currentLayoutName {
@@ -174,7 +175,7 @@ struct ShortcutSettingsView: View {
                 }
 
                 if InputSourceSwitcher.hasPreviousLayout {
-                    Button(String(localized: "shortcut.switch_back", bundle: .module)) {
+                    Button(String(localized: "shortcut.switch_back", bundle: appState.localizedBundle)) {
                         InputSourceSwitcher.switchBackToPrevious()
                         currentLayoutName = InputSourceSwitcher.currentLayoutName()
                     }
@@ -192,7 +193,7 @@ struct ShortcutSettingsView: View {
                 Text("Convert Selected Text")
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             } footer: {
-                Text(String(localized: "shortcut.footer", bundle: .module))
+                Text(String(localized: "shortcut.footer", bundle: appState.localizedBundle))
                     .font(.system(size: 12 * fontScale))
             }
         }
@@ -207,6 +208,7 @@ struct ShortcutSettingsView: View {
 
 /// Exclude list settings section
 struct ExcludeSettingsView: View {
+    @EnvironmentObject var appState: AppState
     @Environment(\.settingsFontScale) private var fontScale
     @StateObject private var store = ExcludeListStore.shared
     @State private var newWord = ""
@@ -226,13 +228,13 @@ struct ExcludeSettingsView: View {
         Form {
             Section {
                 HStack {
-                    TextField(String(localized: "exclude.placeholder", bundle: .module), text: $newWord)
+                    TextField(String(localized: "exclude.placeholder", bundle: appState.localizedBundle), text: $newWord)
                         .textFieldStyle(.roundedBorder)
                         .onSubmit {
                             addWord()
                         }
 
-                    Button(String(localized: "button.add", bundle: .module)) {
+                    Button(String(localized: "button.add", bundle: appState.localizedBundle)) {
                         addWord()
                     }
                     .buttonStyle(.borderedProminent)
@@ -251,19 +253,19 @@ struct ExcludeSettingsView: View {
                         .foregroundStyle(.orange)
                 }
 
-                Text(String(localized: "exclude.hint", bundle: .module))
+                Text(String(localized: "exclude.hint", bundle: appState.localizedBundle))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
-                Text(String(localized: "exclude.section.add", bundle: .module))
+                Text(String(localized: "exclude.section.add", bundle: appState.localizedBundle))
                     .font(.headline)
             }
 
             Section {
                 if !store.words.isEmpty {
-                    TextField(String(localized: "exclude.search", bundle: .module), text: $searchText)
+                    TextField(String(localized: "exclude.search", bundle: appState.localizedBundle), text: $searchText)
                         .textFieldStyle(.roundedBorder)
-                    Picker(String(localized: "exclude.sort", bundle: .module), selection: $sortAscending) {
+                    Picker(String(localized: "exclude.sort", bundle: appState.localizedBundle), selection: $sortAscending) {
                         Text("A → Z").tag(true)
                         Text("Z → A").tag(false)
                     }
@@ -275,11 +277,11 @@ struct ExcludeSettingsView: View {
                     .buttonStyle(.bordered)
                 }
                 if store.words.isEmpty {
-                    Text(String(localized: "exclude.no_words", bundle: .module))
+                    Text(String(localized: "exclude.no_words", bundle: appState.localizedBundle))
                         .foregroundStyle(.secondary)
                         .font(.caption)
                 } else if filteredWords.isEmpty {
-                    Text(String(format: String(localized: "exclude.no_match", bundle: .module), searchText))
+                    Text(String(format: String(localized: "exclude.no_match", bundle: appState.localizedBundle), searchText))
                         .foregroundStyle(.secondary)
                         .font(.caption)
                 } else {
@@ -300,12 +302,12 @@ struct ExcludeSettingsView: View {
                     }
                 }
             } header: {
-                Text(String(format: String(localized: "exclude.section.list", bundle: .module), store.words.count))
+                Text(String(format: String(localized: "exclude.section.list", bundle: appState.localizedBundle), store.words.count))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(String(localized: "exclude.nav_title", bundle: .module))
+        .navigationTitle(String(localized: "exclude.nav_title", bundle: appState.localizedBundle))
     }
 
     private func addWord() {
@@ -313,7 +315,7 @@ struct ExcludeSettingsView: View {
         let trimmed = newWord.trimmingCharacters(in: .whitespaces).lowercased()
         guard !trimmed.isEmpty else { return }
         if store.contains(trimmed) {
-            duplicateMessage = String(localized: "exclude.duplicate", bundle: .module)
+            duplicateMessage = String(localized: "exclude.duplicate", bundle: appState.localizedBundle)
             return
         }
         store.add(trimmed)
@@ -332,7 +334,7 @@ struct ExcludeSettingsView: View {
             }
         }
         if added < lines.count && lines.count > 0 {
-            duplicateMessage = String(format: String(localized: "exclude.paste_result", bundle: .module), added, lines.count - added)
+            duplicateMessage = String(format: String(localized: "exclude.paste_result", bundle: appState.localizedBundle), added, lines.count - added)
         }
     }
 
@@ -340,7 +342,7 @@ struct ExcludeSettingsView: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.plainText]
         panel.nameFieldStringValue = "pimpid-exclude.txt"
-        panel.message = String(localized: "exclude.export_message", bundle: .module)
+        panel.message = String(localized: "exclude.export_message", bundle: appState.localizedBundle)
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
             let text = Array(store.words).sorted().joined(separator: "\n")
@@ -364,7 +366,7 @@ struct ExcludeSettingsView: View {
                     added += 1
                 }
             }
-            duplicateMessage = String(format: String(localized: "exclude.import_result", bundle: .module), added)
+            duplicateMessage = String(format: String(localized: "exclude.import_result", bundle: appState.localizedBundle), added)
         }
     }
 }

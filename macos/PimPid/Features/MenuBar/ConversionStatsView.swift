@@ -3,6 +3,7 @@ import CoreGraphics
 
 /// แสดงสถิติการแปลงใน menu bar
 struct ConversionStatsView: View {
+    @EnvironmentObject var appState: AppState
     @ObservedObject var stats = ConversionStats.shared
 
     var body: some View {
@@ -12,7 +13,7 @@ struct ConversionStatsView: View {
                 Image(systemName: "chart.bar.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.blue)
-                Text(String(localized: "stats.header", bundle: .module))
+                Text(String(localized: "stats.header", bundle: appState.localizedBundle))
                     .font(.system(size: 13, weight: .semibold))
             }
 
@@ -20,14 +21,14 @@ struct ConversionStatsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 StatRow(
                     icon: "calendar",
-                    label: String(localized: "stats.today", bundle: .module),
-                    value: "\(stats.todayConversions) " + String(localized: "stats.times", bundle: .module)
+                    label: String(localized: "stats.today", bundle: appState.localizedBundle),
+                    value: "\(stats.todayConversions) " + String(localized: "stats.times", bundle: appState.localizedBundle)
                 )
 
                 StatRow(
                     icon: "sum",
-                    label: String(localized: "stats.total", bundle: .module),
-                    value: "\(stats.totalConversions) " + String(localized: "stats.times", bundle: .module)
+                    label: String(localized: "stats.total", bundle: appState.localizedBundle),
+                    value: "\(stats.totalConversions) " + String(localized: "stats.times", bundle: appState.localizedBundle)
                 )
             }
 
@@ -35,7 +36,7 @@ struct ConversionStatsView: View {
             let days = stats.last7DaysCounts()
             if !days.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "stats.last7days", bundle: .module))
+                    Text(String(localized: "stats.last7days", bundle: appState.localizedBundle))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                     let maxCount = max(days.map(\.count).max() ?? 1, 1)
@@ -98,6 +99,7 @@ struct StatRow: View {
 
 /// แสดงรายการแปลงล่าสุด
 struct RecentConversionsView: View {
+    @EnvironmentObject var appState: AppState
     @ObservedObject var stats = ConversionStats.shared
 
     var body: some View {
@@ -107,13 +109,13 @@ struct RecentConversionsView: View {
                 Image(systemName: "clock.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.orange)
-                Text(String(localized: "recent.header", bundle: .module))
+                Text(String(localized: "recent.header", bundle: appState.localizedBundle))
                     .font(.system(size: 13, weight: .semibold))
             }
 
             // Recent conversions list
             if stats.recentConversions.isEmpty {
-                Text(String(localized: "recent.no_history", bundle: .module))
+                Text(String(localized: "recent.no_history", bundle: appState.localizedBundle))
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .padding(.vertical, 8)
@@ -127,14 +129,14 @@ struct RecentConversionsView: View {
 
             HStack(spacing: 8) {
                 if !stats.recentConversions.isEmpty {
-                    Button(String(localized: "button.clear_recent", bundle: .module)) {
+                    Button(String(localized: "button.clear_recent", bundle: appState.localizedBundle)) {
                         ConversionStats.shared.clearRecentConversions()
                     }
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
                     .buttonStyle(.plain)
 
-                    Button(String(localized: "button.undo_last", bundle: .module)) {
+                    Button(String(localized: "button.undo_last", bundle: appState.localizedBundle)) {
                         if ConversionStats.shared.undoLastConversion() != nil {
                             UndoHelper.sendUndoKeyPress()
                         }
@@ -172,6 +174,7 @@ enum UndoHelper {
 
 /// แถวแสดงการแปลงแต่ละรายการ
 struct RecentConversionRow: View {
+    @EnvironmentObject var appState: AppState
     let record: ConversionRecord
 
     var body: some View {
@@ -212,13 +215,13 @@ struct RecentConversionRow: View {
     private func timeAgo(from date: Date) -> String {
         let interval = Date().timeIntervalSince(date)
         if interval < 60 {
-            return String(localized: "time.just_now", bundle: .module)
+            return String(localized: "time.just_now", bundle: appState.localizedBundle)
         } else if interval < 3600 {
-            return String(format: String(localized: "time.minutes_ago", bundle: .module), Int(interval / 60))
+            return String(format: String(localized: "time.minutes_ago", bundle: appState.localizedBundle), Int(interval / 60))
         } else if interval < 86400 {
-            return String(format: String(localized: "time.hours_ago", bundle: .module), Int(interval / 3600))
+            return String(format: String(localized: "time.hours_ago", bundle: appState.localizedBundle), Int(interval / 3600))
         } else {
-            return String(format: String(localized: "time.days_ago", bundle: .module), Int(interval / 86400))
+            return String(format: String(localized: "time.days_ago", bundle: appState.localizedBundle), Int(interval / 86400))
         }
     }
 }

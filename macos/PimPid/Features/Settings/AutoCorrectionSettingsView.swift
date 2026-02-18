@@ -9,11 +9,11 @@ struct AutoCorrectionSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle(String(localized: "autocorrect.toggle", bundle: .module), isOn: $appState.autoCorrectEnabled)
+                Toggle(String(localized: "autocorrect.toggle", bundle: appState.localizedBundle), isOn: $appState.autoCorrectEnabled)
                     .toggleStyle(.switch)
                     .disabled(!AccessibilityHelper.isAccessibilityTrusted)
 
-                Text(String(localized: "autocorrect.description", bundle: .module))
+                Text(String(localized: "autocorrect.description", bundle: appState.localizedBundle))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -21,21 +21,21 @@ struct AutoCorrectionSettingsView: View {
                     HStack {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.orange)
-                        Text(String(localized: "accessibility.warning", bundle: .module))
+                        Text(String(localized: "accessibility.warning", bundle: appState.localizedBundle))
                             .font(.caption)
                             .foregroundColor(.orange)
                     }
                     .padding(.top, 4)
                 }
             } header: {
-                Text(String(localized: "autocorrect.section.enable", bundle: .module))
+                Text(String(localized: "autocorrect.section.enable", bundle: appState.localizedBundle))
                     .font(.headline)
             }
 
             Section {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text(String(localized: "autocorrect.delay", bundle: .module))
+                        Text(String(localized: "autocorrect.delay", bundle: appState.localizedBundle))
                             .font(.system(size: 13))
                         Spacer()
                         Text("\(Int(appState.autoCorrectDelay))ms")
@@ -46,12 +46,12 @@ struct AutoCorrectionSettingsView: View {
                     Slider(value: $appState.autoCorrectDelay, in: 0...1000, step: 50)
                         .disabled(!appState.autoCorrectEnabled)
 
-                    Text(String(localized: "autocorrect.delay_hint", bundle: .module))
+                    Text(String(localized: "autocorrect.delay_hint", bundle: appState.localizedBundle))
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
                     HStack {
-                        Text(String(localized: "autocorrect.min_chars", bundle: .module))
+                        Text(String(localized: "autocorrect.min_chars", bundle: appState.localizedBundle))
                             .font(.system(size: 13))
                         Spacer()
                         Picker("", selection: Binding(
@@ -61,26 +61,26 @@ struct AutoCorrectionSettingsView: View {
                             },
                             set: { UserDefaults.standard.set($0, forKey: PimPidKeys.autoCorrectMinChars) }
                         )) {
-                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: .module), 2)).tag(2)
-                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: .module), 3)).tag(3)
-                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: .module), 4)).tag(4)
-                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: .module), 5)).tag(5)
+                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: appState.localizedBundle), 2)).tag(2)
+                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: appState.localizedBundle), 3)).tag(3)
+                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: appState.localizedBundle), 4)).tag(4)
+                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: appState.localizedBundle), 5)).tag(5)
                         }
                         .pickerStyle(.menu)
                         .frame(width: 100)
                         .disabled(!appState.autoCorrectEnabled)
                     }
-                    Text(String(localized: "autocorrect.min_chars_hint", bundle: .module))
+                    Text(String(localized: "autocorrect.min_chars_hint", bundle: appState.localizedBundle))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                Text(String(localized: "autocorrect.section.settings", bundle: .module))
+                Text(String(localized: "autocorrect.section.settings", bundle: appState.localizedBundle))
                     .font(.headline)
             }
 
             Section {
-                Picker(String(localized: "autocorrect.layout_picker", bundle: .module), selection: Binding(
+                Picker(String(localized: "autocorrect.layout_picker", bundle: appState.localizedBundle), selection: Binding(
                     get: { UserDefaults.standard.string(forKey: PimPidKeys.thaiKeyboardLayout) ?? "kedmanee" },
                     set: { UserDefaults.standard.set($0, forKey: PimPidKeys.thaiKeyboardLayout) }
                 )) {
@@ -88,55 +88,55 @@ struct AutoCorrectionSettingsView: View {
                     Text("Patta Choti").tag("pattachoti")
                 }
                 .pickerStyle(.menu)
-                Text(String(localized: "autocorrect.layout_hint", bundle: .module))
+                Text(String(localized: "autocorrect.layout_hint", bundle: appState.localizedBundle))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
-                Text(String(localized: "autocorrect.section.layout", bundle: .module))
+                Text(String(localized: "autocorrect.section.layout", bundle: appState.localizedBundle))
                     .font(.headline)
             }
 
             Section {
-                Toggle(String(localized: "autocorrect.sound", bundle: .module), isOn: $appState.autoCorrectSoundEnabled)
+                Toggle(String(localized: "autocorrect.sound", bundle: appState.localizedBundle), isOn: $appState.autoCorrectSoundEnabled)
                     .toggleStyle(.switch)
                     .disabled(!appState.autoCorrectEnabled)
 
-                Toggle(String(localized: "autocorrect.visual_feedback", bundle: .module), isOn: $appState.autoCorrectVisualFeedback)
+                Toggle(String(localized: "autocorrect.visual_feedback", bundle: appState.localizedBundle), isOn: $appState.autoCorrectVisualFeedback)
                     .toggleStyle(.switch)
                     .disabled(!appState.autoCorrectEnabled)
             } header: {
-                Text(String(localized: "autocorrect.section.notification", bundle: .module))
+                Text(String(localized: "autocorrect.section.notification", bundle: appState.localizedBundle))
                     .font(.headline)
             }
 
             Section {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        TextField(String(localized: "autocorrect.bundle_placeholder", bundle: .module), text: $newAppBundleID)
+                        TextField(String(localized: "autocorrect.bundle_placeholder", bundle: appState.localizedBundle), text: $newAppBundleID)
                             .textFieldStyle(.roundedBorder)
                             .onSubmit {
                                 addExcludedApp()
                             }
 
-                        Button(String(localized: "button.add", bundle: .module)) {
+                        Button(String(localized: "button.add", bundle: appState.localizedBundle)) {
                             addExcludedApp()
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(newAppBundleID.trimmingCharacters(in: .whitespaces).isEmpty)
 
-                        Button(String(localized: "autocorrect.add_from_running", bundle: .module)) {
+                        Button(String(localized: "autocorrect.add_from_running", bundle: appState.localizedBundle)) {
                             showRunningAppPicker = true
                         }
                         .buttonStyle(.bordered)
                     }
 
-                    Text(String(localized: "autocorrect.exclude_hint", bundle: .module))
+                    Text(String(localized: "autocorrect.exclude_hint", bundle: appState.localizedBundle))
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
                     // List of excluded apps (แสดงชื่อแอปถ้าได้ — task 44)
                     if appState.excludedApps.isEmpty {
-                        Text(String(localized: "autocorrect.no_excluded_apps", bundle: .module))
+                        Text(String(localized: "autocorrect.no_excluded_apps", bundle: appState.localizedBundle))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.vertical, 8)
@@ -176,7 +176,7 @@ struct AutoCorrectionSettingsView: View {
             }
 
             Section {
-                Button(String(localized: "autocorrect.exclude_window", bundle: .module)) {
+                Button(String(localized: "autocorrect.exclude_window", bundle: appState.localizedBundle)) {
                     if let key = FrontmostWindowHelper.frontmostWindowKey() {
                         appState.excludedWindows.insert(key)
                     }
@@ -184,12 +184,12 @@ struct AutoCorrectionSettingsView: View {
                 .buttonStyle(.bordered)
                 .disabled(!appState.autoCorrectEnabled)
 
-                Text(String(localized: "autocorrect.exclude_window_hint", bundle: .module))
+                Text(String(localized: "autocorrect.exclude_window_hint", bundle: appState.localizedBundle))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 if appState.excludedWindows.isEmpty {
-                    Text(String(localized: "autocorrect.no_excluded_windows", bundle: .module))
+                    Text(String(localized: "autocorrect.no_excluded_windows", bundle: appState.localizedBundle))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 8)
@@ -219,7 +219,7 @@ struct AutoCorrectionSettingsView: View {
             }
 
             Section {
-                Button(String(localized: "button.use_defaults", bundle: .module)) {
+                Button(String(localized: "button.use_defaults", bundle: appState.localizedBundle)) {
                     appState.autoCorrectDelay = 0
                     UserDefaults.standard.set(3, forKey: PimPidKeys.autoCorrectMinChars)
                     appState.autoCorrectSoundEnabled = false
@@ -229,7 +229,7 @@ struct AutoCorrectionSettingsView: View {
                 }
                 .buttonStyle(.bordered)
             } header: {
-                Text(String(localized: "section.reset", bundle: .module))
+                Text(String(localized: "section.reset", bundle: appState.localizedBundle))
                     .font(.headline)
             }
 
@@ -238,26 +238,26 @@ struct AutoCorrectionSettingsView: View {
                     InfoRow(
                         icon: "lightbulb.fill",
                         color: .yellow,
-                        title: String(localized: "info.howto.title", bundle: .module),
-                        description: String(localized: "info.howto.desc", bundle: .module)
+                        title: String(localized: "info.howto.title", bundle: appState.localizedBundle),
+                        description: String(localized: "info.howto.desc", bundle: appState.localizedBundle)
                     )
 
                     InfoRow(
                         icon: "checkmark.circle.fill",
                         color: .green,
-                        title: String(localized: "info.benefit.title", bundle: .module),
-                        description: String(localized: "info.benefit.desc", bundle: .module)
+                        title: String(localized: "info.benefit.title", bundle: appState.localizedBundle),
+                        description: String(localized: "info.benefit.desc", bundle: appState.localizedBundle)
                     )
 
                     InfoRow(
                         icon: "exclamationmark.triangle.fill",
                         color: .orange,
-                        title: String(localized: "info.note.title", bundle: .module),
-                        description: String(localized: "info.note.desc", bundle: .module)
+                        title: String(localized: "info.note.title", bundle: appState.localizedBundle),
+                        description: String(localized: "info.note.desc", bundle: appState.localizedBundle)
                     )
                 }
             } header: {
-                Text(String(localized: "section.info", bundle: .module))
+                Text(String(localized: "section.info", bundle: appState.localizedBundle))
                     .font(.headline)
             }
         }
@@ -331,6 +331,7 @@ struct InfoRow: View {
 // MARK: - Running App Picker (Task 45)
 
 struct RunningAppPickerView: View {
+    @EnvironmentObject var appState: AppState
     @Binding var excludedApps: Set<String>
     var onDismiss: () -> Void
 
@@ -351,7 +352,7 @@ struct RunningAppPickerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text(String(localized: "autocorrect.pick_app_title", bundle: .module))
+            Text(String(localized: "autocorrect.pick_app_title", bundle: appState.localizedBundle))
                 .font(.headline)
                 .padding()
 
@@ -380,7 +381,7 @@ struct RunningAppPickerView: View {
 
             HStack {
                 Spacer()
-                Button(String(localized: "button.close", bundle: .module)) { onDismiss() }
+                Button(String(localized: "button.close", bundle: appState.localizedBundle)) { onDismiss() }
                     .buttonStyle(.borderedProminent)
                     .padding()
             }

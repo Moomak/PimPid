@@ -47,7 +47,7 @@ struct MenuBarContentView: View {
                         .frame(width: 8, height: 8)
                 }
 
-                Text(String(localized: "app.tagline", bundle: .module))
+                Text(String(localized: "app.tagline", bundle: appState.localizedBundle))
                     .font(.system(size: 11 * fontScale))
                     .foregroundStyle(.secondary)
             }
@@ -62,13 +62,13 @@ struct MenuBarContentView: View {
                         Image(systemName: "power")
                             .font(.system(size: 12))
                             .foregroundColor(appState.isEnabled ? .green : .gray)
-                        Text(String(localized: "toggle.enable", bundle: .module))
+                        Text(String(localized: "toggle.enable", bundle: appState.localizedBundle))
                             .font(.system(size: 12, weight: .medium))
                     }
                 }
                 .toggleStyle(.switch)
-                .accessibilityLabel(String(localized: "a11y.toggle_enable", bundle: .module))
-                .accessibilityHint(String(localized: "a11y.toggle_hint", bundle: .module))
+                .accessibilityLabel(String(localized: "a11y.toggle_enable", bundle: appState.localizedBundle))
+                .accessibilityHint(String(localized: "a11y.toggle_hint", bundle: appState.localizedBundle))
 
                 Toggle(isOn: $appState.autoCorrectEnabled) {
                     HStack {
@@ -81,8 +81,8 @@ struct MenuBarContentView: View {
                 }
                 .toggleStyle(.switch)
                 .disabled(!AccessibilityHelper.isAccessibilityTrusted)
-                .accessibilityLabel(String(localized: "a11y.autocorrect_label", bundle: .module))
-                .accessibilityHint(String(localized: "a11y.autocorrect_hint", bundle: .module))
+                .accessibilityLabel(String(localized: "a11y.autocorrect_label", bundle: appState.localizedBundle))
+                .accessibilityHint(String(localized: "a11y.autocorrect_hint", bundle: appState.localizedBundle))
             }
 
             // Accessibility warning
@@ -92,12 +92,12 @@ struct MenuBarContentView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 12))
                             .foregroundColor(.orange)
-                        Text(String(localized: "accessibility.warning", bundle: .module))
+                        Text(String(localized: "accessibility.warning", bundle: appState.localizedBundle))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.orange)
                     }
 
-                    Button(String(localized: "accessibility.open_settings", bundle: .module)) {
+                    Button(String(localized: "accessibility.open_settings", bundle: appState.localizedBundle)) {
                         AccessibilityHelper.openAccessibilitySettings()
                     }
                     .buttonStyle(.borderedProminent)
@@ -153,7 +153,7 @@ struct MenuBarContentView: View {
                     HStack {
                         Image(systemName: "gearshape.fill")
                             .font(.system(size: 12))
-                        Text(String(localized: "menu.settings", bundle: .module))
+                        Text(String(localized: "menu.settings", bundle: appState.localizedBundle))
                             .font(.system(size: 12, weight: .medium))
                         Spacer()
                         Image(systemName: "chevron.right")

@@ -3,6 +3,7 @@ import AppKit
 
 /// About view with app information and quick start guide
 struct AboutView: View {
+    @EnvironmentObject var appState: AppState
     @ObservedObject private var thaiWordLoader = ThaiWordListLoader.shared
 
     var body: some View {
@@ -25,18 +26,18 @@ struct AboutView: View {
                         Text("PimPid")
                             .font(.system(size: 24, weight: .bold))
 
-                        Text(String(format: String(localized: "about.version", bundle: .module), Bundle.main.appVersion, Bundle.main.buildNumber))
+                        Text(String(format: String(localized: "about.version", bundle: appState.localizedBundle), Bundle.main.appVersion, Bundle.main.buildNumber))
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
                     }
 
                     // Description
-                    Text(String(localized: "about.description1", bundle: .module))
+                    Text(String(localized: "about.description1", bundle: appState.localizedBundle))
                         .font(.system(size: 13))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
 
-                    Text(String(localized: "about.description2", bundle: .module))
+                    Text(String(localized: "about.description2", bundle: appState.localizedBundle))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -49,20 +50,20 @@ struct AboutView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     QuickStartStep(
                         number: 1,
-                        title: String(localized: "about.quickstart.step1.title", bundle: .module),
-                        description: String(localized: "about.quickstart.step1.desc", bundle: .module)
+                        title: String(localized: "about.quickstart.step1.title", bundle: appState.localizedBundle),
+                        description: String(localized: "about.quickstart.step1.desc", bundle: appState.localizedBundle)
                     )
 
                     QuickStartStep(
                         number: 2,
-                        title: String(localized: "about.quickstart.step2.title", bundle: .module),
-                        description: String(localized: "about.quickstart.step2.desc", bundle: .module)
+                        title: String(localized: "about.quickstart.step2.title", bundle: appState.localizedBundle),
+                        description: String(localized: "about.quickstart.step2.desc", bundle: appState.localizedBundle)
                     )
 
                     QuickStartStep(
                         number: 3,
-                        title: String(localized: "about.quickstart.step3.title", bundle: .module),
-                        description: String(localized: "about.quickstart.step3.desc", bundle: .module)
+                        title: String(localized: "about.quickstart.step3.title", bundle: appState.localizedBundle),
+                        description: String(localized: "about.quickstart.step3.desc", bundle: appState.localizedBundle)
                     )
                 }
             } header: {
@@ -110,7 +111,7 @@ struct AboutView: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                                 .frame(width: 20)
-                            Text(String(localized: "about.check_update", bundle: .module))
+                            Text(String(localized: "about.check_update", bundle: appState.localizedBundle))
                                 .font(.system(size: 12, weight: .medium))
                             Spacer()
                             Image(systemName: "arrow.up.right")
@@ -138,7 +139,7 @@ struct AboutView: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                                 .frame(width: 20)
-                            Text(String(localized: "about.export_json", bundle: .module))
+                            Text(String(localized: "about.export_json", bundle: appState.localizedBundle))
                                 .font(.system(size: 12, weight: .medium))
                         }
                     }
@@ -150,14 +151,14 @@ struct AboutView: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                                 .frame(width: 20)
-                            Text(String(localized: "about.export_csv", bundle: .module))
+                            Text(String(localized: "about.export_csv", bundle: appState.localizedBundle))
                                 .font(.system(size: 12, weight: .medium))
                         }
                     }
                     .buttonStyle(.plain)
                 }
             } header: {
-                Text(String(localized: "about.section.more", bundle: .module))
+                Text(String(localized: "about.section.more", bundle: appState.localizedBundle))
                     .font(.headline)
             }
 
@@ -167,12 +168,12 @@ struct AboutView: View {
                         HStack(spacing: 8) {
                             ProgressView(value: thaiWordLoader.loadProgress)
                                 .frame(maxWidth: 120)
-                            Text(String(format: String(localized: "about.loading_thai", bundle: .module), Int(thaiWordLoader.loadProgress * 100)))
+                            Text(String(format: String(localized: "about.loading_thai", bundle: appState.localizedBundle), Int(thaiWordLoader.loadProgress * 100)))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                     }
-                    Text(String(localized: "about.thai_credit", bundle: .module))
+                    Text(String(localized: "about.thai_credit", bundle: appState.localizedBundle))
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Text("© 2025 PimPid · MIT License")
@@ -186,7 +187,7 @@ struct AboutView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(String(localized: "about.nav_title", bundle: .module))
+        .navigationTitle(String(localized: "about.nav_title", bundle: appState.localizedBundle))
     }
 
     private func copyDiagnosticInfo() {
@@ -317,4 +318,5 @@ struct AboutLink: View {
 
 #Preview {
     AboutView()
+        .environmentObject(AppState())
 }

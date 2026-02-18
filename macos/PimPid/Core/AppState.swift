@@ -62,13 +62,29 @@ final class AppState: ObservableObject {
     @Published var appLanguage: String {
         didSet {
             UserDefaults.standard.set(appLanguage, forKey: PimPidKeys.appLanguage)
-            // Apply language override immediately (takes full effect on next launch)
+            // Update localizedBundle immediately → views re-render without app restart
+            localizedBundle = Self.makeLocalizedBundle(for: appLanguage)
+            // Keep AppleLanguages in sync for system-level formatting (dates, numbers)
             if appLanguage == "system" {
                 UserDefaults.standard.removeObject(forKey: "AppleLanguages")
             } else {
                 UserDefaults.standard.set([appLanguage], forKey: "AppleLanguages")
             }
         }
+    }
+
+    /// The explicit .lproj bundle for the current language.
+    /// Views must use `bundle: appState.localizedBundle` instead of `bundle: .module`
+    /// so that language changes take effect immediately (no restart needed).
+    @Published private(set) var localizedBundle: Bundle = .module
+
+    /// Loads the .lproj bundle for `language` directly, bypassing Apple's cached
+    /// bundle localization system. Falls back to `.module` if not found.
+    static func makeLocalizedBundle(for language: String) -> Bundle {
+        guard language != "system", !language.isEmpty else { return .module }
+        guard let path = Bundle.module.path(forResource: language, ofType: "lproj"),
+              let bundle = Bundle(path: path) else { return .module }
+        return bundle
     }
 
     init() {
@@ -128,6 +144,8 @@ final class AppState: ObservableObject {
         }
         self.notificationStyle = UserDefaults.standard.string(forKey: PimPidKeys.notificationStyle) ?? "toast"
 
-        self.appLanguage = UserDefaults.standard.string(forKey: PimPidKeys.appLanguage) ?? "th"
+        let savedLanguage = UserDefaults.standard.string(forKey: PimPidKeys.appLanguage) ?? "th"
+        self.appLanguage = savedLanguage
+        self.localizedBundle = Self.makeLocalizedBundle(for: savedLanguage)
     }
 }

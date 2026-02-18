@@ -7,32 +7,32 @@ struct OnboardingView: View {
     @State private var currentStep = 0
     @Environment(\.dismiss) private var dismiss
 
-    private let steps: [OnboardingStep] = [
+    private var steps: [OnboardingStep] {[
         OnboardingStep(
             icon: "hand.wave.fill",
-            title: String(localized: "onboarding.welcome.title", bundle: .module),
-            description: String(localized: "onboarding.welcome.desc", bundle: .module),
+            title: String(localized: "onboarding.welcome.title", bundle: appState.localizedBundle),
+            description: String(localized: "onboarding.welcome.desc", bundle: appState.localizedBundle),
             color: .blue
         ),
         OnboardingStep(
             icon: "command",
-            title: String(localized: "onboarding.shortcut.title", bundle: .module),
-            description: String(localized: "onboarding.shortcut.desc", bundle: .module),
+            title: String(localized: "onboarding.shortcut.title", bundle: appState.localizedBundle),
+            description: String(localized: "onboarding.shortcut.desc", bundle: appState.localizedBundle),
             color: .indigo
         ),
         OnboardingStep(
             icon: "bolt.fill",
-            title: String(localized: "onboarding.autocorrect.title", bundle: .module),
-            description: String(localized: "onboarding.autocorrect.desc", bundle: .module),
+            title: String(localized: "onboarding.autocorrect.title", bundle: appState.localizedBundle),
+            description: String(localized: "onboarding.autocorrect.desc", bundle: appState.localizedBundle),
             color: .orange
         ),
         OnboardingStep(
             icon: "lock.shield.fill",
-            title: String(localized: "onboarding.accessibility.title", bundle: .module),
-            description: String(localized: "onboarding.accessibility.desc", bundle: .module),
+            title: String(localized: "onboarding.accessibility.title", bundle: appState.localizedBundle),
+            description: String(localized: "onboarding.accessibility.desc", bundle: appState.localizedBundle),
             color: .green
         )
-    ]
+    ]}
 
     var body: some View {
         VStack(spacing: 0) {
@@ -66,14 +66,14 @@ struct OnboardingView: View {
             // Navigation buttons
             HStack(spacing: 16) {
                 if currentStep > 0 {
-                    Button(String(localized: "onboarding.back", bundle: .module)) {
+                    Button(String(localized: "onboarding.back", bundle: appState.localizedBundle)) {
                         withAnimation {
                             currentStep -= 1
                         }
                     }
                     .buttonStyle(.bordered)
                 } else {
-                    Button(String(localized: "onboarding.skip", bundle: .module)) {
+                    Button(String(localized: "onboarding.skip", bundle: appState.localizedBundle)) {
                         finishOnboarding()
                     }
                     .buttonStyle(.plain)
@@ -83,7 +83,7 @@ struct OnboardingView: View {
                 Spacer()
 
                 if currentStep < steps.count - 1 {
-                    Button(String(localized: "onboarding.next", bundle: .module)) {
+                    Button(String(localized: "onboarding.next", bundle: appState.localizedBundle)) {
                         withAnimation {
                             currentStep += 1
                         }
@@ -92,7 +92,7 @@ struct OnboardingView: View {
                     .tint(steps[currentStep].color)
                 } else {
                     VStack(spacing: 8) {
-                        Button(String(localized: "onboarding.open_system_settings", bundle: .module)) {
+                        Button(String(localized: "onboarding.open_system_settings", bundle: appState.localizedBundle)) {
                             UserDefaults.standard.set(true, forKey: PimPidKeys.onboardingDidOpenAccessibilitySettings)
                             AccessibilityHelper.openAccessibilitySettings()
                         }
@@ -100,17 +100,17 @@ struct OnboardingView: View {
                         .tint(.green)
 
                         if UserDefaults.standard.bool(forKey: PimPidKeys.onboardingDidOpenAccessibilitySettings) {
-                            Text(String(localized: "onboarding.granted_hint", bundle: .module))
+                            Text(String(localized: "onboarding.granted_hint", bundle: appState.localizedBundle))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
 
-                        Button(String(localized: "onboarding.open_pimpid_settings", bundle: .module)) {
+                        Button(String(localized: "onboarding.open_pimpid_settings", bundle: appState.localizedBundle)) {
                             NSApplication.shared.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
                         }
                         .buttonStyle(.bordered)
 
-                        Button(String(localized: "onboarding.done", bundle: .module)) {
+                        Button(String(localized: "onboarding.done", bundle: appState.localizedBundle)) {
                             finishOnboarding()
                         }
                         .buttonStyle(.bordered)
