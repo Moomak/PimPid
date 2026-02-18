@@ -222,6 +222,7 @@ struct AboutView: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "pimpid-stats.json"
+        panel.directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
             try? data.write(to: url)
@@ -246,6 +247,7 @@ struct AboutView: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.plainText]
         panel.nameFieldStringValue = "pimpid-stats.csv"
+        panel.directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
             try? data.write(to: url)

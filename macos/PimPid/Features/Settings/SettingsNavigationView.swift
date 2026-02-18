@@ -343,6 +343,7 @@ struct ExcludeSettingsView: View {
         panel.allowedContentTypes = [.plainText]
         panel.nameFieldStringValue = "pimpid-exclude.txt"
         panel.message = String(localized: "exclude.export_message", bundle: appState.localizedBundle)
+        panel.directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
             let text = Array(store.words).sorted().joined(separator: "\n")
@@ -355,6 +356,7 @@ struct ExcludeSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.allowedContentTypes = [.plainText]
+        panel.directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         panel.begin { response in
             guard response == .OK, let url = panel.url,
                   let text = try? String(contentsOf: url, encoding: .utf8) else { return }
