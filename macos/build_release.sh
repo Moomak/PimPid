@@ -6,7 +6,7 @@
 
 set -e
 
-VERSION="${PIMPID_VERSION:-1.6.0}"
+VERSION="${PIMPID_VERSION:-1.6.1}"
 BUILD="${PIMPID_BUILD:-17}"
 
 # หา root directory ของโปรเจกต์
