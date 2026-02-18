@@ -17,3 +17,144 @@
 "button.use_defaults" = "Use defaults";
 "button.clear_recent" = "Clear recent";
 "button.undo_last" = "Undo last conversion";
+"button.add" = "Add";
+"button.close" = "Close";
+
+/* ConversionStatsView */
+"stats.header" = "Statistics";
+"recent.header" = "Recent Conversions";
+"recent.no_history" = "No history yet";
+"time.just_now" = "Just now";
+"time.minutes_ago" = "%dm ago";
+"time.hours_ago" = "%dh ago";
+"time.days_ago" = "%dd ago";
+
+/* MenuBarContentView */
+"toggle.enable" = "Enable";
+"a11y.toggle_enable" = "Enable PimPid";
+"a11y.toggle_hint" = "Toggle all PimPid functionality";
+"a11y.autocorrect_label" = "Enable Auto-Correct";
+"a11y.autocorrect_hint" = "Auto-correct text when typing in wrong language";
+"accessibility.warning" = "Accessibility permission required";
+"accessibility.open_settings" = "Open Settings";
+
+/* AutoCorrectionSettingsView */
+"autocorrect.toggle" = "Enable Auto-Correct";
+"autocorrect.description" = "Automatically correct text when typing in the wrong language";
+"autocorrect.section.enable" = "Enable";
+"autocorrect.delay" = "Delay:";
+"autocorrect.delay_hint" = "Wait time before auto-correcting (0–1000 ms, 0 = default 200 ms)";
+"autocorrect.min_chars" = "Minimum characters:";
+"autocorrect.chars_unit" = "%d chars";
+"autocorrect.min_chars_hint" = "Minimum characters to type before auto-correction starts";
+"autocorrect.section.settings" = "Correction Settings";
+"autocorrect.layout_picker" = "Thai keyboard layout";
+"autocorrect.layout_hint" = "Use mapping based on selected layout (Patta Choti requires KeyboardLayout-PattaChoti.plist in app)";
+"autocorrect.section.layout" = "Thai Layout";
+"autocorrect.sound" = "Sound notification";
+"autocorrect.visual_feedback" = "Show notification on auto-correct";
+"autocorrect.section.notification" = "Sound & Notifications";
+"autocorrect.bundle_placeholder" = "Bundle ID (e.g. com.apple.Safari)";
+"autocorrect.add_from_running" = "Add from running apps…";
+"autocorrect.exclude_hint" = "Add Bundle IDs of apps to exclude from auto-correct";
+"autocorrect.no_excluded_apps" = "No excluded apps yet";
+"autocorrect.exclude_window" = "Exclude this window";
+"autocorrect.exclude_window_hint" = "Excludes only the focused window (not the entire app)";
+"autocorrect.no_excluded_windows" = "No excluded windows yet";
+"autocorrect.pick_app_title" = "Select an app to add to Excluded Apps";
+"section.reset" = "Reset";
+"section.info" = "Info";
+"info.howto.title" = "How to use";
+"info.howto.desc" = "Auto-correct triggers when you type a word and press Space or Enter";
+"info.benefit.title" = "Benefit";
+"info.benefit.desc" = "Just keep typing — PimPid will auto-correct when it detects wrong-language typing";
+"info.note.title" = "Note";
+"info.note.desc" = "Auto-correct may slightly slow typing in some apps";
+
+/* AppearanceSettingsView */
+"appearance.theme_auto" = "System";
+"appearance.theme_light" = "Light";
+"appearance.theme_dark" = "Dark";
+"appearance.font_small" = "Small";
+"appearance.font_medium" = "Medium";
+"appearance.font_large" = "Large";
+"appearance.notify_minimal" = "Minimal";
+"appearance.notify_off" = "Off";
+"appearance.toast_sec" = "%@ sec";
+"appearance.theme_picker" = "Color theme";
+"appearance.theme_hint" = "Choose app color scheme (Settings → About and Menu)";
+"appearance.section.theme" = "Color Theme";
+"appearance.font_picker" = "Font size";
+"appearance.font_hint" = "Applied to menu and settings pages";
+"appearance.section.font" = "Font Size";
+"appearance.notify_picker" = "Notification style";
+"appearance.notify_hint" = "Toast = show text after conversion, Minimal = shorter, Off = hidden";
+"appearance.section.notify" = "Notifications";
+"appearance.toast_picker" = "Toast display duration";
+"appearance.section.toast" = "Toast Duration";
+"appearance.nav_title" = "Appearance";
+
+/* SettingsNavigationView — General */
+"general.toggle" = "Enable PimPid";
+"general.description" = "When enabled, PimPid runs in the background and is ready to convert text";
+"general.section.basic" = "Basic Operation";
+"general.version" = "Version";
+"general.status" = "Status";
+"general.status.active" = "✅ Active";
+"general.status.paused" = "⏸️ Paused";
+"general.nav_title" = "General";
+
+/* SettingsNavigationView — Shortcut */
+"shortcut.current" = "Current shortcut";
+"shortcut.switch_back" = "Switch back to previous layout";
+"shortcut.footer" = "Select mistyped text and press the shortcut to convert by key position (Kedmanee ↔ QWERTY). If the shortcut conflicts with another app, change it in Settings.";
+
+/* SettingsNavigationView — Exclude */
+"exclude.placeholder" = "Word to exclude from conversion";
+"exclude.hint" = "Enter words you don't want PimPid to convert (e.g. names, brands, jargon)";
+"exclude.section.add" = "Add Word";
+"exclude.no_words" = "No excluded words yet";
+"exclude.no_match" = "No words matching \"%@\"";
+"exclude.section.list" = "Exclude List (%d words)";
+"exclude.search" = "Search list";
+"exclude.sort" = "Sort";
+"exclude.duplicate" = "This word is already in the list";
+"exclude.paste_result" = "Added %d words (skipped %d duplicates)";
+"exclude.import_result" = "Imported %d words";
+"exclude.export_message" = "Save exclude list (one word per line)";
+"exclude.nav_title" = "Exclude Words";
+
+/* AboutView */
+"about.version" = "Version %@ (%@)";
+"about.description1" = "Convert Thai ⇄ English text by keyboard key position (Kedmanee / QWERTY)";
+"about.description2" = "Supports Auto-Correct while typing and exclude word list";
+"about.quickstart.step1.title" = "Enable PimPid";
+"about.quickstart.step1.desc" = "Click the menu bar icon and toggle 'PimPid Enable'";
+"about.quickstart.step2.title" = "Grant Accessibility";
+"about.quickstart.step2.desc" = "Allow PimPid keyboard access in System Settings";
+"about.quickstart.step3.title" = "Enable Auto-Correct";
+"about.quickstart.step3.desc" = "Turn on Auto-Correct for automatic correction when wrong-language typing is detected";
+"about.check_update" = "Check for updates";
+"about.section.more" = "More Info";
+"about.loading_thai" = "Loading Thai words... %d%%";
+"about.thai_credit" = "Thai word list: wannaphong/thai-wordlist, korakot/thainlp (Apache 2.0)";
+"about.export_json" = "Export Stats (JSON)";
+"about.export_csv" = "Export Stats (CSV)";
+"about.nav_title" = "About";
+
+/* OnboardingView */
+"onboarding.welcome.title" = "Welcome to PimPid";
+"onboarding.welcome.desc" = "An app that converts Thai ⇄ English text by keyboard key position";
+"onboarding.shortcut.title" = "Shortcut ⌘⇧L";
+"onboarding.shortcut.desc" = "Select mistyped text and press ⌘⇧L to convert instantly (change shortcut in Settings)";
+"onboarding.autocorrect.title" = "Auto-Correct";
+"onboarding.autocorrect.desc" = "Enable Auto-Correct for PimPid to automatically fix wrong-language typing as you type";
+"onboarding.accessibility.title" = "Grant Accessibility";
+"onboarding.accessibility.desc" = "PimPid needs Accessibility permission for Auto-Correct to work";
+"onboarding.back" = "Back";
+"onboarding.skip" = "Skip";
+"onboarding.next" = "Next";
+"onboarding.open_system_settings" = "Open System Settings";
+"onboarding.granted_hint" = "If permission is granted, come back and press Done";
+"onboarding.open_pimpid_settings" = "Open PimPid Settings";
+"onboarding.done" = "Done";

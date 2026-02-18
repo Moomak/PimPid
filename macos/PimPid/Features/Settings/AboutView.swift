@@ -25,18 +25,18 @@ struct AboutView: View {
                         Text("PimPid")
                             .font(.system(size: 24, weight: .bold))
 
-                        Text("เวอร์ชัน \(Bundle.main.appVersion) (\(Bundle.main.buildNumber))")
+                        Text(String(format: String(localized: "about.version", bundle: .module), Bundle.main.appVersion, Bundle.main.buildNumber))
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
                     }
 
                     // Description
-                    Text("แปลงข้อความไทย ⇄ อังกฤษ ตามตำแหน่งปุ่มคีย์บอร์ด (Kedmanee / QWERTY)")
+                    Text(String(localized: "about.description1", bundle: .module))
                         .font(.system(size: 13))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
 
-                    Text("รองรับ Auto-Correct ขณะพิมพ์ และรายการคำ exclude")
+                    Text(String(localized: "about.description2", bundle: .module))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -49,20 +49,20 @@ struct AboutView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     QuickStartStep(
                         number: 1,
-                        title: "เปิดใช้งาน PimPid",
-                        description: "คลิก menu bar icon และเปิด toggle 'PimPid เปิดใช้งาน'"
+                        title: String(localized: "about.quickstart.step1.title", bundle: .module),
+                        description: String(localized: "about.quickstart.step1.desc", bundle: .module)
                     )
 
                     QuickStartStep(
                         number: 2,
-                        title: "ให้สิทธิ์ Accessibility",
-                        description: "อนุญาตให้ PimPid เข้าถึงคีย์บอร์ดใน System Settings"
+                        title: String(localized: "about.quickstart.step2.title", bundle: .module),
+                        description: String(localized: "about.quickstart.step2.desc", bundle: .module)
                     )
 
                     QuickStartStep(
                         number: 3,
-                        title: "เปิด Auto-Correct",
-                        description: "เปิดใช้ Auto-Correct เพื่อแก้ไขอัตโนมัติขณะพิมพ์เมื่อตรวจพบการพิมพ์ผิดภาษา"
+                        title: String(localized: "about.quickstart.step3.title", bundle: .module),
+                        description: String(localized: "about.quickstart.step3.desc", bundle: .module)
                     )
                 }
             } header: {
@@ -110,7 +110,7 @@ struct AboutView: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                                 .frame(width: 20)
-                            Text("ตรวจสอบการอัปเดต")
+                            Text(String(localized: "about.check_update", bundle: .module))
                                 .font(.system(size: 12, weight: .medium))
                             Spacer()
                             Image(systemName: "arrow.up.right")
@@ -138,7 +138,7 @@ struct AboutView: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                                 .frame(width: 20)
-                            Text("Export สถิติ (JSON)")
+                            Text(String(localized: "about.export_json", bundle: .module))
                                 .font(.system(size: 12, weight: .medium))
                         }
                     }
@@ -150,14 +150,14 @@ struct AboutView: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                                 .frame(width: 20)
-                            Text("Export สถิติ (CSV)")
+                            Text(String(localized: "about.export_csv", bundle: .module))
                                 .font(.system(size: 12, weight: .medium))
                         }
                     }
                     .buttonStyle(.plain)
                 }
             } header: {
-                Text("ข้อมูลเพิ่มเติม")
+                Text(String(localized: "about.section.more", bundle: .module))
                     .font(.headline)
             }
 
@@ -167,12 +167,12 @@ struct AboutView: View {
                         HStack(spacing: 8) {
                             ProgressView(value: thaiWordLoader.loadProgress)
                                 .frame(maxWidth: 120)
-                            Text("โหลดคำไทย... \(Int(thaiWordLoader.loadProgress * 100))%")
+                            Text(String(format: String(localized: "about.loading_thai", bundle: .module), Int(thaiWordLoader.loadProgress * 100)))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                     }
-                    Text("รายการคำไทย: wannaphong/thai-wordlist, korakot/thainlp (Apache 2.0)")
+                    Text(String(localized: "about.thai_credit", bundle: .module))
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Text("© 2025 PimPid · MIT License")
@@ -186,7 +186,7 @@ struct AboutView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("เกี่ยวกับ")
+        .navigationTitle(String(localized: "about.nav_title", bundle: .module))
     }
 
     private func copyDiagnosticInfo() {

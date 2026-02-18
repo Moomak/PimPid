@@ -4,78 +4,78 @@ import SwiftUI
 struct AppearanceSettingsView: View {
     @EnvironmentObject var appState: AppState
 
-    private static let themeOptions: [(id: String, label: String)] = [
-        ("auto", "ตามระบบ"),
-        ("light", "สว่าง"),
-        ("dark", "มืด"),
-    ]
-    private static let fontSizeOptions: [(id: String, label: String)] = [
-        ("small", "เล็ก"),
-        ("medium", "ปกติ"),
-        ("large", "ใหญ่"),
-    ]
-    private static let notificationStyleOptions: [(id: String, label: String)] = [
+    private var themeOptions: [(id: String, label: String)] {[
+        ("auto", String(localized: "appearance.theme_auto", bundle: .module)),
+        ("light", String(localized: "appearance.theme_light", bundle: .module)),
+        ("dark", String(localized: "appearance.theme_dark", bundle: .module)),
+    ]}
+    private var fontSizeOptions: [(id: String, label: String)] {[
+        ("small", String(localized: "appearance.font_small", bundle: .module)),
+        ("medium", String(localized: "appearance.font_medium", bundle: .module)),
+        ("large", String(localized: "appearance.font_large", bundle: .module)),
+    ]}
+    private var notificationStyleOptions: [(id: String, label: String)] {[
         ("toast", "Toast"),
-        ("minimal", "แบบย่อ"),
-        ("off", "ปิด"),
-    ]
-    private static let toastDurationOptions: [(id: Double, label: String)] = [
-        (1.5, "1.5 วินาที"),
-        (2.0, "2 วินาที"),
-        (3.0, "3 วินาที"),
-    ]
+        ("minimal", String(localized: "appearance.notify_minimal", bundle: .module)),
+        ("off", String(localized: "appearance.notify_off", bundle: .module)),
+    ]}
+    private var toastDurationOptions: [(id: Double, label: String)] {[
+        (1.5, String(format: String(localized: "appearance.toast_sec", bundle: .module), "1.5")),
+        (2.0, String(format: String(localized: "appearance.toast_sec", bundle: .module), "2")),
+        (3.0, String(format: String(localized: "appearance.toast_sec", bundle: .module), "3")),
+    ]}
     var body: some View {
         Form {
             Section {
-                Picker("ธีมสี", selection: $appState.appearanceTheme) {
-                    ForEach(Self.themeOptions, id: \.id) { option in
+                Picker(String(localized: "appearance.theme_picker", bundle: .module), selection: $appState.appearanceTheme) {
+                    ForEach(themeOptions, id: \.id) { option in
                         Text(option.label).tag(option.id)
                     }
                 }
                 .pickerStyle(.menu)
 
-                Text("เลือกโทนสีของแอป (ตั้งค่า → เกี่ยวกับ และเมนู)")
+                Text(String(localized: "appearance.theme_hint", bundle: .module))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
-                Text("ธีมสี")
+                Text(String(localized: "appearance.section.theme", bundle: .module))
                     .font(.headline)
             }
 
             Section {
-                Picker("ขนาดตัวอักษร", selection: $appState.appearanceFontSize) {
-                    ForEach(Self.fontSizeOptions, id: \.id) { option in
+                Picker(String(localized: "appearance.font_picker", bundle: .module), selection: $appState.appearanceFontSize) {
+                    ForEach(fontSizeOptions, id: \.id) { option in
                         Text(option.label).tag(option.id)
                     }
                 }
                 .pickerStyle(.menu)
 
-                Text("ใช้กับเมนูและหน้าตั้งค่า")
+                Text(String(localized: "appearance.font_hint", bundle: .module))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
-                Text("ขนาดตัวอักษร")
+                Text(String(localized: "appearance.section.font", bundle: .module))
                     .font(.headline)
             }
 
             Section {
-                Picker("สไตล์การแจ้งเตือน", selection: $appState.notificationStyle) {
-                    ForEach(Self.notificationStyleOptions, id: \.id) { option in
+                Picker(String(localized: "appearance.notify_picker", bundle: .module), selection: $appState.notificationStyle) {
+                    ForEach(notificationStyleOptions, id: \.id) { option in
                         Text(option.label).tag(option.id)
                     }
                 }
                 .pickerStyle(.menu)
 
-                Text("Toast = แสดงข้อความหลังแปลง, แบบย่อ = สั้นลง, ปิด = ไม่แสดง")
+                Text(String(localized: "appearance.notify_hint", bundle: .module))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
-                Text("การแจ้งเตือน")
+                Text(String(localized: "appearance.section.notify", bundle: .module))
                     .font(.headline)
             }
 
             Section {
-                Button("ใช้ค่าเริ่มต้น") {
+                Button(String(localized: "button.use_defaults", bundle: .module)) {
                     appState.appearanceTheme = "auto"
                     appState.appearanceFontSize = "medium"
                     appState.notificationStyle = "toast"
@@ -83,30 +83,30 @@ struct AppearanceSettingsView: View {
                 }
                 .buttonStyle(.bordered)
             } header: {
-                Text("รีเซ็ต")
+                Text(String(localized: "section.reset", bundle: .module))
                     .font(.headline)
             }
 
             Section {
-                Picker("ระยะเวลาแสดง Toast", selection: Binding(
+                Picker(String(localized: "appearance.toast_picker", bundle: .module), selection: Binding(
                     get: {
                         let d = UserDefaults.standard.double(forKey: PimPidKeys.toastDuration)
                         return d > 0 ? d : 2.0
                     },
                     set: { UserDefaults.standard.set($0, forKey: PimPidKeys.toastDuration) }
                 )) {
-                    ForEach(Self.toastDurationOptions, id: \.id) { option in
+                    ForEach(toastDurationOptions, id: \.id) { option in
                         Text(option.label).tag(option.id)
                     }
                 }
                 .pickerStyle(.menu)
             } header: {
-                Text("ระยะเวลา Toast")
+                Text(String(localized: "appearance.section.toast", bundle: .module))
                     .font(.headline)
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("รูปลักษณ์")
+        .navigationTitle(String(localized: "appearance.nav_title", bundle: .module))
     }
 }
 

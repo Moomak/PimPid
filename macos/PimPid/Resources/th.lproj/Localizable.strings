@@ -17,3 +17,144 @@
 "button.use_defaults" = "ใช้ค่าเริ่มต้น";
 "button.clear_recent" = "ล้างรายการล่าสุด";
 "button.undo_last" = "ยกเลิกการแปลงล่าสุด";
+"button.add" = "เพิ่ม";
+"button.close" = "ปิด";
+
+/* ConversionStatsView */
+"stats.header" = "สถิติ";
+"recent.header" = "แปลงล่าสุด";
+"recent.no_history" = "ยังไม่มีประวัติ";
+"time.just_now" = "เมื่อสักครู่";
+"time.minutes_ago" = "%dน. ที่แล้ว";
+"time.hours_ago" = "%dชม. ที่แล้ว";
+"time.days_ago" = "%dวัน ที่แล้ว";
+
+/* MenuBarContentView */
+"toggle.enable" = "เปิดใช้งาน";
+"a11y.toggle_enable" = "เปิดใช้งาน PimPid";
+"a11y.toggle_hint" = "สลับการทำงานของ PimPid ทั้งหมด";
+"a11y.autocorrect_label" = "เปิด Auto-Correct";
+"a11y.autocorrect_hint" = "แก้ไขข้อความอัตโนมัติเมื่อพิมพ์ผิดภาษา";
+"accessibility.warning" = "ต้องการสิทธิ์ Accessibility";
+"accessibility.open_settings" = "เปิดการตั้งค่า";
+
+/* AutoCorrectionSettingsView */
+"autocorrect.toggle" = "เปิดใช้งาน Auto-Correct";
+"autocorrect.description" = "แก้ไขข้อความอัตโนมัติทันทีที่พิมพ์ผิดภาษา";
+"autocorrect.section.enable" = "การเปิดใช้งาน";
+"autocorrect.delay" = "ความล่าช้า:";
+"autocorrect.delay_hint" = "เวลารอก่อนแก้ไขอัตโนมัติ (0–1000 ms, 0 = ใช้ค่าเริ่มต้น 200 ms)";
+"autocorrect.min_chars" = "จำนวนตัวอักษรขั้นต่ำ:";
+"autocorrect.chars_unit" = "%d ตัว";
+"autocorrect.min_chars_hint" = "ต้องพิมพ์อย่างน้อยกี่ตัวอักษรก่อนจะเริ่มแก้ไขอัตโนมัติ";
+"autocorrect.section.settings" = "ตั้งค่าการแก้ไข";
+"autocorrect.layout_picker" = "Layout คีย์บอร์ดไทย";
+"autocorrect.layout_hint" = "ใช้ mapping ตาม layout ที่เลือก (Patta Choti ต้องมีไฟล์ KeyboardLayout-PattaChoti.plist ในแอป)";
+"autocorrect.section.layout" = "Layout ไทย";
+"autocorrect.sound" = "เสียงแจ้งเตือน";
+"autocorrect.visual_feedback" = "แสดงการแจ้งเตือนเมื่อแก้ไขอัตโนมัติ";
+"autocorrect.section.notification" = "เสียง และการแจ้งเตือน";
+"autocorrect.bundle_placeholder" = "Bundle ID (เช่น com.apple.Safari)";
+"autocorrect.add_from_running" = "เพิ่มจากแอปที่เปิดอยู่…";
+"autocorrect.exclude_hint" = "เพิ่ม Bundle ID ของแอปที่ไม่ต้องการให้ auto-correct ทำงาน";
+"autocorrect.no_excluded_apps" = "ยังไม่มีแอปที่ถูก exclude";
+"autocorrect.exclude_window" = "Exclude หน้าต่างนี้";
+"autocorrect.exclude_window_hint" = "เพิ่มเฉพาะหน้าต่างที่โฟกัสอยู่ (ไม่ใช่ทั้งแอป)";
+"autocorrect.no_excluded_windows" = "ยังไม่มีหน้าต่างที่ exclude";
+"autocorrect.pick_app_title" = "เลือกแอปเพื่อเพิ่มเข้า Excluded Apps";
+"section.reset" = "รีเซ็ต";
+"section.info" = "ข้อมูล";
+"info.howto.title" = "วิธีใช้งาน";
+"info.howto.desc" = "Auto-correct จะทำงานทันทีเมื่อคุณพิมพ์คำและกด Space หรือ Enter";
+"info.benefit.title" = "ประโยชน์";
+"info.benefit.desc" = "แค่พิมพ์ไปเรื่อยๆ PimPid จะแก้ไขอัตโนมัติเมื่อตรวจพบการพิมพ์ผิดภาษา";
+"info.note.title" = "หมายเหตุ";
+"info.note.desc" = "Auto-correct อาจทำให้การพิมพ์ช้าลงเล็กน้อยในบางแอป";
+
+/* AppearanceSettingsView */
+"appearance.theme_auto" = "ตามระบบ";
+"appearance.theme_light" = "สว่าง";
+"appearance.theme_dark" = "มืด";
+"appearance.font_small" = "เล็ก";
+"appearance.font_medium" = "ปกติ";
+"appearance.font_large" = "ใหญ่";
+"appearance.notify_minimal" = "แบบย่อ";
+"appearance.notify_off" = "ปิด";
+"appearance.toast_sec" = "%@ วินาที";
+"appearance.theme_picker" = "ธีมสี";
+"appearance.theme_hint" = "เลือกโทนสีของแอป (ตั้งค่า → เกี่ยวกับ และเมนู)";
+"appearance.section.theme" = "ธีมสี";
+"appearance.font_picker" = "ขนาดตัวอักษร";
+"appearance.font_hint" = "ใช้กับเมนูและหน้าตั้งค่า";
+"appearance.section.font" = "ขนาดตัวอักษร";
+"appearance.notify_picker" = "สไตล์การแจ้งเตือน";
+"appearance.notify_hint" = "Toast = แสดงข้อความหลังแปลง, แบบย่อ = สั้นลง, ปิด = ไม่แสดง";
+"appearance.section.notify" = "การแจ้งเตือน";
+"appearance.toast_picker" = "ระยะเวลาแสดง Toast";
+"appearance.section.toast" = "ระยะเวลา Toast";
+"appearance.nav_title" = "รูปลักษณ์";
+
+/* SettingsNavigationView — General */
+"general.toggle" = "เปิดใช้งาน PimPid";
+"general.description" = "เมื่อเปิดใช้งาน PimPid จะทำงานในเบื้องหลังและพร้อมแปลงข้อความ";
+"general.section.basic" = "การทำงานพื้นฐาน";
+"general.version" = "เวอร์ชัน";
+"general.status" = "สถานะ";
+"general.status.active" = "✅ ใช้งาน";
+"general.status.paused" = "⏸️ หยุดชั่วคราว";
+"general.nav_title" = "ทั่วไป";
+
+/* SettingsNavigationView — Shortcut */
+"shortcut.current" = "Shortcut ปัจจุบัน";
+"shortcut.switch_back" = "กลับไป layout เดิม";
+"shortcut.footer" = "เลือกข้อความที่พิมพ์ผิดภาษาแล้วกด shortcut เพื่อแปลงตามตำแหน่งปุ่ม (Kedmanee ↔ QWERTY). ถ้า shortcut ชนกับแอปอื่น ให้เปลี่ยน key ใน Settings นี้";
+
+/* SettingsNavigationView — Exclude */
+"exclude.placeholder" = "คำที่ไม่ต้องการให้แปลง";
+"exclude.hint" = "ป้อนคำที่ไม่ต้องการให้ PimPid แปลง เช่น ชื่อ, แบรนด์, คำศัพท์เฉพาะ";
+"exclude.section.add" = "เพิ่มคำ";
+"exclude.no_words" = "ยังไม่มีคำที่ exclude";
+"exclude.no_match" = "ไม่มีคำที่ตรงกับ \"%@\"";
+"exclude.section.list" = "รายการ Exclude (%d คำ)";
+"exclude.search" = "ค้นหาในรายการ";
+"exclude.sort" = "เรียง";
+"exclude.duplicate" = "คำนี้มีอยู่แล้วในรายการ";
+"exclude.paste_result" = "เพิ่ม %d คำ (ข้ามคำซ้ำ %d คำ)";
+"exclude.import_result" = "นำเข้า %d คำ";
+"exclude.export_message" = "บันทึกรายการ exclude (บรรทัดละคำ)";
+"exclude.nav_title" = "Exclude คำ";
+
+/* AboutView */
+"about.version" = "เวอร์ชัน %@ (%@)";
+"about.description1" = "แปลงข้อความไทย ⇄ อังกฤษ ตามตำแหน่งปุ่มคีย์บอร์ด (Kedmanee / QWERTY)";
+"about.description2" = "รองรับ Auto-Correct ขณะพิมพ์ และรายการคำ exclude";
+"about.quickstart.step1.title" = "เปิดใช้งาน PimPid";
+"about.quickstart.step1.desc" = "คลิก menu bar icon และเปิด toggle 'PimPid เปิดใช้งาน'";
+"about.quickstart.step2.title" = "ให้สิทธิ์ Accessibility";
+"about.quickstart.step2.desc" = "อนุญาตให้ PimPid เข้าถึงคีย์บอร์ดใน System Settings";
+"about.quickstart.step3.title" = "เปิด Auto-Correct";
+"about.quickstart.step3.desc" = "เปิดใช้ Auto-Correct เพื่อแก้ไขอัตโนมัติขณะพิมพ์เมื่อตรวจพบการพิมพ์ผิดภาษา";
+"about.check_update" = "ตรวจสอบการอัปเดต";
+"about.section.more" = "ข้อมูลเพิ่มเติม";
+"about.loading_thai" = "โหลดคำไทย... %d%%";
+"about.thai_credit" = "รายการคำไทย: wannaphong/thai-wordlist, korakot/thainlp (Apache 2.0)";
+"about.export_json" = "Export สถิติ (JSON)";
+"about.export_csv" = "Export สถิติ (CSV)";
+"about.nav_title" = "เกี่ยวกับ";
+
+/* OnboardingView */
+"onboarding.welcome.title" = "ยินดีต้อนรับสู่ PimPid";
+"onboarding.welcome.desc" = "แอปที่ช่วยแปลงข้อความไทย ⇄ อังกฤษ ตามตำแหน่งปุ่มคีย์บอร์ด";
+"onboarding.shortcut.title" = "Shortcut ⌘⇧L";
+"onboarding.shortcut.desc" = "เลือกข้อความที่พิมพ์ผิดภาษาแล้วกด ⌘⇧L เพื่อแปลงทันที (เปลี่ยน shortcut ได้ใน Settings)";
+"onboarding.autocorrect.title" = "Auto-Correct";
+"onboarding.autocorrect.desc" = "เปิดใช้ Auto-Correct เพื่อให้ PimPid แก้ไขอัตโนมัติขณะพิมพ์เมื่อตรวจพบการพิมพ์ผิดภาษา";
+"onboarding.accessibility.title" = "ให้สิทธิ์ Accessibility";
+"onboarding.accessibility.desc" = "PimPid ต้องการสิทธิ์ Accessibility เพื่อให้ Auto-Correct ทำงานได้";
+"onboarding.back" = "ย้อนกลับ";
+"onboarding.skip" = "ข้าม";
+"onboarding.next" = "ถัดไป";
+"onboarding.open_system_settings" = "เปิด System Settings";
+"onboarding.granted_hint" = "ถ้าให้สิทธิ์แล้ว ให้กลับมาแล้วกด เสร็จสิ้น";
+"onboarding.open_pimpid_settings" = "เปิดการตั้งค่า PimPid";
+"onboarding.done" = "เสร็จสิ้น";

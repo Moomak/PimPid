@@ -12,7 +12,7 @@ struct ConversionStatsView: View {
                 Image(systemName: "chart.bar.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.blue)
-                Text("สถิติ")
+                Text(String(localized: "stats.header", bundle: .module))
                     .font(.system(size: 13, weight: .semibold))
             }
 
@@ -20,14 +20,14 @@ struct ConversionStatsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 StatRow(
                     icon: "calendar",
-                    label: String(localized: "stats.today"),
-                    value: "\(stats.todayConversions) " + String(localized: "stats.times")
+                    label: String(localized: "stats.today", bundle: .module),
+                    value: "\(stats.todayConversions) " + String(localized: "stats.times", bundle: .module)
                 )
 
                 StatRow(
                     icon: "sum",
-                    label: String(localized: "stats.total"),
-                    value: "\(stats.totalConversions) " + String(localized: "stats.times")
+                    label: String(localized: "stats.total", bundle: .module),
+                    value: "\(stats.totalConversions) " + String(localized: "stats.times", bundle: .module)
                 )
             }
 
@@ -35,7 +35,7 @@ struct ConversionStatsView: View {
             let days = stats.last7DaysCounts()
             if !days.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "stats.last7days"))
+                    Text(String(localized: "stats.last7days", bundle: .module))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                     let maxCount = max(days.map(\.count).max() ?? 1, 1)
@@ -107,13 +107,13 @@ struct RecentConversionsView: View {
                 Image(systemName: "clock.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.orange)
-                Text("แปลงล่าสุด")
+                Text(String(localized: "recent.header", bundle: .module))
                     .font(.system(size: 13, weight: .semibold))
             }
 
             // Recent conversions list
             if stats.recentConversions.isEmpty {
-                Text("ยังไม่มีประวัติ")
+                Text(String(localized: "recent.no_history", bundle: .module))
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .padding(.vertical, 8)
@@ -127,14 +127,14 @@ struct RecentConversionsView: View {
 
             HStack(spacing: 8) {
                 if !stats.recentConversions.isEmpty {
-                    Button(String(localized: "button.clear_recent")) {
+                    Button(String(localized: "button.clear_recent", bundle: .module)) {
                         ConversionStats.shared.clearRecentConversions()
                     }
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
                     .buttonStyle(.plain)
 
-                    Button(String(localized: "button.undo_last")) {
+                    Button(String(localized: "button.undo_last", bundle: .module)) {
                         if ConversionStats.shared.undoLastConversion() != nil {
                             UndoHelper.sendUndoKeyPress()
                         }
@@ -212,13 +212,13 @@ struct RecentConversionRow: View {
     private func timeAgo(from date: Date) -> String {
         let interval = Date().timeIntervalSince(date)
         if interval < 60 {
-            return "เมื่อสักครู่"
+            return String(localized: "time.just_now", bundle: .module)
         } else if interval < 3600 {
-            return "\(Int(interval / 60))น. ที่แล้ว"
+            return String(format: String(localized: "time.minutes_ago", bundle: .module), Int(interval / 60))
         } else if interval < 86400 {
-            return "\(Int(interval / 3600))ชม. ที่แล้ว"
+            return String(format: String(localized: "time.hours_ago", bundle: .module), Int(interval / 3600))
         } else {
-            return "\(Int(interval / 86400))วัน ที่แล้ว"
+            return String(format: String(localized: "time.days_ago", bundle: .module), Int(interval / 86400))
         }
     }
 }

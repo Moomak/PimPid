@@ -10,26 +10,26 @@ struct OnboardingView: View {
     private let steps: [OnboardingStep] = [
         OnboardingStep(
             icon: "hand.wave.fill",
-            title: "ยินดีต้อนรับสู่ PimPid",
-            description: "แอปที่ช่วยแปลงข้อความไทย ⇄ อังกฤษ ตามตำแหน่งปุ่มคีย์บอร์ด",
+            title: String(localized: "onboarding.welcome.title", bundle: .module),
+            description: String(localized: "onboarding.welcome.desc", bundle: .module),
             color: .blue
         ),
         OnboardingStep(
             icon: "command",
-            title: "Shortcut ⌘⇧L",
-            description: "เลือกข้อความที่พิมพ์ผิดภาษาแล้วกด ⌘⇧L เพื่อแปลงทันที (เปลี่ยน shortcut ได้ใน Settings)",
+            title: String(localized: "onboarding.shortcut.title", bundle: .module),
+            description: String(localized: "onboarding.shortcut.desc", bundle: .module),
             color: .indigo
         ),
         OnboardingStep(
             icon: "bolt.fill",
-            title: "Auto-Correct",
-            description: "เปิดใช้ Auto-Correct เพื่อให้ PimPid แก้ไขอัตโนมัติขณะพิมพ์เมื่อตรวจพบการพิมพ์ผิดภาษา",
+            title: String(localized: "onboarding.autocorrect.title", bundle: .module),
+            description: String(localized: "onboarding.autocorrect.desc", bundle: .module),
             color: .orange
         ),
         OnboardingStep(
             icon: "lock.shield.fill",
-            title: "ให้สิทธิ์ Accessibility",
-            description: "PimPid ต้องการสิทธิ์ Accessibility เพื่อให้ Auto-Correct ทำงานได้",
+            title: String(localized: "onboarding.accessibility.title", bundle: .module),
+            description: String(localized: "onboarding.accessibility.desc", bundle: .module),
             color: .green
         )
     ]
@@ -66,14 +66,14 @@ struct OnboardingView: View {
             // Navigation buttons
             HStack(spacing: 16) {
                 if currentStep > 0 {
-                    Button("ย้อนกลับ") {
+                    Button(String(localized: "onboarding.back", bundle: .module)) {
                         withAnimation {
                             currentStep -= 1
                         }
                     }
                     .buttonStyle(.bordered)
                 } else {
-                    Button("ข้าม") {
+                    Button(String(localized: "onboarding.skip", bundle: .module)) {
                         finishOnboarding()
                     }
                     .buttonStyle(.plain)
@@ -83,7 +83,7 @@ struct OnboardingView: View {
                 Spacer()
 
                 if currentStep < steps.count - 1 {
-                    Button("ถัดไป") {
+                    Button(String(localized: "onboarding.next", bundle: .module)) {
                         withAnimation {
                             currentStep += 1
                         }
@@ -92,7 +92,7 @@ struct OnboardingView: View {
                     .tint(steps[currentStep].color)
                 } else {
                     VStack(spacing: 8) {
-                        Button("เปิด System Settings") {
+                        Button(String(localized: "onboarding.open_system_settings", bundle: .module)) {
                             UserDefaults.standard.set(true, forKey: PimPidKeys.onboardingDidOpenAccessibilitySettings)
                             AccessibilityHelper.openAccessibilitySettings()
                         }
@@ -100,17 +100,17 @@ struct OnboardingView: View {
                         .tint(.green)
 
                         if UserDefaults.standard.bool(forKey: PimPidKeys.onboardingDidOpenAccessibilitySettings) {
-                            Text("ถ้าให้สิทธิ์แล้ว ให้กลับมาแล้วกด เสร็จสิ้น")
+                            Text(String(localized: "onboarding.granted_hint", bundle: .module))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
 
-                        Button("เปิดการตั้งค่า PimPid") {
+                        Button(String(localized: "onboarding.open_pimpid_settings", bundle: .module)) {
                             NSApplication.shared.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
                         }
                         .buttonStyle(.bordered)
 
-                        Button("เสร็จสิ้น") {
+                        Button(String(localized: "onboarding.done", bundle: .module)) {
                             finishOnboarding()
                         }
                         .buttonStyle(.bordered)

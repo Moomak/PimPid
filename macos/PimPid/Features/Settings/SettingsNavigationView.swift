@@ -80,12 +80,12 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .general: return "ทั่วไป"
+        case .general: return String(localized: "settings.general.title", bundle: .module)
         case .shortcut: return "Shortcut"
         case .autoCorrect: return "Auto-Correct"
-        case .exclude: return "Exclude คำ"
-        case .appearance: return "รูปลักษณ์"
-        case .about: return "เกี่ยวกับ"
+        case .exclude: return String(localized: "settings.exclude.title", bundle: .module)
+        case .appearance: return String(localized: "settings.appearance.title", bundle: .module)
+        case .about: return String(localized: "settings.about.title", bundle: .module)
         }
     }
 
@@ -122,37 +122,37 @@ struct GeneralSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("เปิดใช้งาน PimPid", isOn: $appState.isEnabled)
+                Toggle(String(localized: "general.toggle", bundle: .module), isOn: $appState.isEnabled)
                     .toggleStyle(.switch)
 
-                Text("เมื่อเปิดใช้งาน PimPid จะทำงานในเบื้องหลังและพร้อมแปลงข้อความ")
+                Text(String(localized: "general.description", bundle: .module))
                     .font(.system(size: 12 * fontScale))
                     .foregroundStyle(.secondary)
             } header: {
-                Text("การทำงานพื้นฐาน")
+                Text(String(localized: "general.section.basic", bundle: .module))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             }
 
             Section {
-                LabeledContent("เวอร์ชัน", value: Bundle.main.appVersion)
-                LabeledContent("สถานะ", value: appState.isEnabled ? "✅ ใช้งาน" : "⏸️ หยุดชั่วคราว")
+                LabeledContent(String(localized: "general.version", bundle: .module), value: Bundle.main.appVersion)
+                LabeledContent(String(localized: "general.status", bundle: .module), value: appState.isEnabled ? String(localized: "general.status.active", bundle: .module) : String(localized: "general.status.paused", bundle: .module))
             } header: {
-                Text("ข้อมูล")
+                Text(String(localized: "section.info", bundle: .module))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             }
 
             Section {
-                Button("ใช้ค่าเริ่มต้น") {
+                Button(String(localized: "button.use_defaults", bundle: .module)) {
                     appState.isEnabled = true
                 }
                 .buttonStyle(.bordered)
             } header: {
-                Text("รีเซ็ต")
+                Text(String(localized: "section.reset", bundle: .module))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("ทั่วไป")
+        .navigationTitle(String(localized: "general.nav_title", bundle: .module))
     }
 }
 
@@ -165,7 +165,7 @@ struct ShortcutSettingsView: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent("Shortcut ปัจจุบัน", value: displayShortcut)
+                LabeledContent(String(localized: "shortcut.current", bundle: .module), value: displayShortcut)
                     .font(.system(size: 13 * fontScale, weight: .medium))
 
                 if let name = currentLayoutName {
@@ -174,7 +174,7 @@ struct ShortcutSettingsView: View {
                 }
 
                 if InputSourceSwitcher.hasPreviousLayout {
-                    Button("กลับไป layout เดิม") {
+                    Button(String(localized: "shortcut.switch_back", bundle: .module)) {
                         InputSourceSwitcher.switchBackToPrevious()
                         currentLayoutName = InputSourceSwitcher.currentLayoutName()
                     }
@@ -192,7 +192,7 @@ struct ShortcutSettingsView: View {
                 Text("Convert Selected Text")
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             } footer: {
-                Text("เลือกข้อความที่พิมพ์ผิดภาษาแล้วกด shortcut เพื่อแปลงตามตำแหน่งปุ่ม (Kedmanee ↔ QWERTY). ถ้า shortcut ชนกับแอปอื่น ให้เปลี่ยน key ใน Settings นี้")
+                Text(String(localized: "shortcut.footer", bundle: .module))
                     .font(.system(size: 12 * fontScale))
             }
         }
@@ -226,13 +226,13 @@ struct ExcludeSettingsView: View {
         Form {
             Section {
                 HStack {
-                    TextField("คำที่ไม่ต้องการให้แปลง", text: $newWord)
+                    TextField(String(localized: "exclude.placeholder", bundle: .module), text: $newWord)
                         .textFieldStyle(.roundedBorder)
                         .onSubmit {
                             addWord()
                         }
 
-                    Button("เพิ่ม") {
+                    Button(String(localized: "button.add", bundle: .module)) {
                         addWord()
                     }
                     .buttonStyle(.borderedProminent)
@@ -251,19 +251,19 @@ struct ExcludeSettingsView: View {
                         .foregroundStyle(.orange)
                 }
 
-                Text("ป้อนคำที่ไม่ต้องการให้ PimPid แปลง เช่น ชื่อ, แบรนด์, คำศัพท์เฉพาะ")
+                Text(String(localized: "exclude.hint", bundle: .module))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
-                Text("เพิ่มคำ")
+                Text(String(localized: "exclude.section.add", bundle: .module))
                     .font(.headline)
             }
 
             Section {
                 if !store.words.isEmpty {
-                    TextField("ค้นหาในรายการ", text: $searchText)
+                    TextField(String(localized: "exclude.search", bundle: .module), text: $searchText)
                         .textFieldStyle(.roundedBorder)
-                    Picker("เรียง", selection: $sortAscending) {
+                    Picker(String(localized: "exclude.sort", bundle: .module), selection: $sortAscending) {
                         Text("A → Z").tag(true)
                         Text("Z → A").tag(false)
                     }
@@ -275,11 +275,11 @@ struct ExcludeSettingsView: View {
                     .buttonStyle(.bordered)
                 }
                 if store.words.isEmpty {
-                    Text("ยังไม่มีคำที่ exclude")
+                    Text(String(localized: "exclude.no_words", bundle: .module))
                         .foregroundStyle(.secondary)
                         .font(.caption)
                 } else if filteredWords.isEmpty {
-                    Text("ไม่มีคำที่ตรงกับ \"\(searchText)\"")
+                    Text(String(format: String(localized: "exclude.no_match", bundle: .module), searchText))
                         .foregroundStyle(.secondary)
                         .font(.caption)
                 } else {
@@ -300,12 +300,12 @@ struct ExcludeSettingsView: View {
                     }
                 }
             } header: {
-                Text("รายการ Exclude (\(store.words.count) คำ)")
+                Text(String(format: String(localized: "exclude.section.list", bundle: .module), store.words.count))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Exclude คำ")
+        .navigationTitle(String(localized: "exclude.nav_title", bundle: .module))
     }
 
     private func addWord() {
@@ -313,7 +313,7 @@ struct ExcludeSettingsView: View {
         let trimmed = newWord.trimmingCharacters(in: .whitespaces).lowercased()
         guard !trimmed.isEmpty else { return }
         if store.contains(trimmed) {
-            duplicateMessage = "คำนี้มีอยู่แล้วในรายการ"
+            duplicateMessage = String(localized: "exclude.duplicate", bundle: .module)
             return
         }
         store.add(trimmed)
@@ -332,7 +332,7 @@ struct ExcludeSettingsView: View {
             }
         }
         if added < lines.count && lines.count > 0 {
-            duplicateMessage = "เพิ่ม \(added) คำ (ข้ามคำซ้ำ \(lines.count - added) คำ)"
+            duplicateMessage = String(format: String(localized: "exclude.paste_result", bundle: .module), added, lines.count - added)
         }
     }
 
@@ -340,7 +340,7 @@ struct ExcludeSettingsView: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.plainText]
         panel.nameFieldStringValue = "pimpid-exclude.txt"
-        panel.message = "บันทึกรายการ exclude (บรรทัดละคำ)"
+        panel.message = String(localized: "exclude.export_message", bundle: .module)
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
             let text = Array(store.words).sorted().joined(separator: "\n")
@@ -364,7 +364,7 @@ struct ExcludeSettingsView: View {
                     added += 1
                 }
             }
-            duplicateMessage = "นำเข้า \(added) คำ"
+            duplicateMessage = String(format: String(localized: "exclude.import_result", bundle: .module), added)
         }
     }
 }

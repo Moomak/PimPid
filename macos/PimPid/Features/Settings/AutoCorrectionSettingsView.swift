@@ -9,11 +9,11 @@ struct AutoCorrectionSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("เปิดใช้งาน Auto-Correct", isOn: $appState.autoCorrectEnabled)
+                Toggle(String(localized: "autocorrect.toggle", bundle: .module), isOn: $appState.autoCorrectEnabled)
                     .toggleStyle(.switch)
                     .disabled(!AccessibilityHelper.isAccessibilityTrusted)
 
-                Text("แก้ไขข้อความอัตโนมัติทันทีที่พิมพ์ผิดภาษา")
+                Text(String(localized: "autocorrect.description", bundle: .module))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -21,21 +21,21 @@ struct AutoCorrectionSettingsView: View {
                     HStack {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.orange)
-                        Text("ต้องการสิทธิ์ Accessibility")
+                        Text(String(localized: "accessibility.warning", bundle: .module))
                             .font(.caption)
                             .foregroundColor(.orange)
                     }
                     .padding(.top, 4)
                 }
             } header: {
-                Text("การเปิดใช้งาน")
+                Text(String(localized: "autocorrect.section.enable", bundle: .module))
                     .font(.headline)
             }
 
             Section {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("ความล่าช้า:")
+                        Text(String(localized: "autocorrect.delay", bundle: .module))
                             .font(.system(size: 13))
                         Spacer()
                         Text("\(Int(appState.autoCorrectDelay))ms")
@@ -46,12 +46,12 @@ struct AutoCorrectionSettingsView: View {
                     Slider(value: $appState.autoCorrectDelay, in: 0...1000, step: 50)
                         .disabled(!appState.autoCorrectEnabled)
 
-                    Text("เวลารอก่อนแก้ไขอัตโนมัติ (0–1000 ms, 0 = ใช้ค่าเริ่มต้น 200 ms)")
+                    Text(String(localized: "autocorrect.delay_hint", bundle: .module))
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
                     HStack {
-                        Text("จำนวนตัวอักษรขั้นต่ำ:")
+                        Text(String(localized: "autocorrect.min_chars", bundle: .module))
                             .font(.system(size: 13))
                         Spacer()
                         Picker("", selection: Binding(
@@ -61,26 +61,26 @@ struct AutoCorrectionSettingsView: View {
                             },
                             set: { UserDefaults.standard.set($0, forKey: PimPidKeys.autoCorrectMinChars) }
                         )) {
-                            Text("2 ตัว").tag(2)
-                            Text("3 ตัว").tag(3)
-                            Text("4 ตัว").tag(4)
-                            Text("5 ตัว").tag(5)
+                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: .module), 2)).tag(2)
+                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: .module), 3)).tag(3)
+                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: .module), 4)).tag(4)
+                            Text(String(format: String(localized: "autocorrect.chars_unit", bundle: .module), 5)).tag(5)
                         }
                         .pickerStyle(.menu)
                         .frame(width: 100)
                         .disabled(!appState.autoCorrectEnabled)
                     }
-                    Text("ต้องพิมพ์อย่างน้อยกี่ตัวอักษรก่อนจะเริ่มแก้ไขอัตโนมัติ")
+                    Text(String(localized: "autocorrect.min_chars_hint", bundle: .module))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                Text("ตั้งค่าการแก้ไข")
+                Text(String(localized: "autocorrect.section.settings", bundle: .module))
                     .font(.headline)
             }
 
             Section {
-                Picker("Layout คีย์บอร์ดไทย", selection: Binding(
+                Picker(String(localized: "autocorrect.layout_picker", bundle: .module), selection: Binding(
                     get: { UserDefaults.standard.string(forKey: PimPidKeys.thaiKeyboardLayout) ?? "kedmanee" },
                     set: { UserDefaults.standard.set($0, forKey: PimPidKeys.thaiKeyboardLayout) }
                 )) {
@@ -88,55 +88,55 @@ struct AutoCorrectionSettingsView: View {
                     Text("Patta Choti").tag("pattachoti")
                 }
                 .pickerStyle(.menu)
-                Text("ใช้ mapping ตาม layout ที่เลือก (Patta Choti ต้องมีไฟล์ KeyboardLayout-PattaChoti.plist ในแอป)")
+                Text(String(localized: "autocorrect.layout_hint", bundle: .module))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
-                Text("Layout ไทย")
+                Text(String(localized: "autocorrect.section.layout", bundle: .module))
                     .font(.headline)
             }
 
             Section {
-                Toggle("เสียงแจ้งเตือน", isOn: $appState.autoCorrectSoundEnabled)
+                Toggle(String(localized: "autocorrect.sound", bundle: .module), isOn: $appState.autoCorrectSoundEnabled)
                     .toggleStyle(.switch)
                     .disabled(!appState.autoCorrectEnabled)
 
-                Toggle("แสดงการแจ้งเตือนเมื่อแก้ไขอัตโนมัติ", isOn: $appState.autoCorrectVisualFeedback)
+                Toggle(String(localized: "autocorrect.visual_feedback", bundle: .module), isOn: $appState.autoCorrectVisualFeedback)
                     .toggleStyle(.switch)
                     .disabled(!appState.autoCorrectEnabled)
             } header: {
-                Text("เสียง และการแจ้งเตือน")
+                Text(String(localized: "autocorrect.section.notification", bundle: .module))
                     .font(.headline)
             }
 
             Section {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        TextField("Bundle ID (เช่น com.apple.Safari)", text: $newAppBundleID)
+                        TextField(String(localized: "autocorrect.bundle_placeholder", bundle: .module), text: $newAppBundleID)
                             .textFieldStyle(.roundedBorder)
                             .onSubmit {
                                 addExcludedApp()
                             }
 
-                        Button("เพิ่ม") {
+                        Button(String(localized: "button.add", bundle: .module)) {
                             addExcludedApp()
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(newAppBundleID.trimmingCharacters(in: .whitespaces).isEmpty)
 
-                        Button("เพิ่มจากแอปที่เปิดอยู่…") {
+                        Button(String(localized: "autocorrect.add_from_running", bundle: .module)) {
                             showRunningAppPicker = true
                         }
                         .buttonStyle(.bordered)
                     }
 
-                    Text("เพิ่ม Bundle ID ของแอปที่ไม่ต้องการให้ auto-correct ทำงาน")
+                    Text(String(localized: "autocorrect.exclude_hint", bundle: .module))
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
                     // List of excluded apps (แสดงชื่อแอปถ้าได้ — task 44)
                     if appState.excludedApps.isEmpty {
-                        Text("ยังไม่มีแอปที่ถูก exclude")
+                        Text(String(localized: "autocorrect.no_excluded_apps", bundle: .module))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.vertical, 8)
@@ -176,7 +176,7 @@ struct AutoCorrectionSettingsView: View {
             }
 
             Section {
-                Button("Exclude หน้าต่างนี้") {
+                Button(String(localized: "autocorrect.exclude_window", bundle: .module)) {
                     if let key = FrontmostWindowHelper.frontmostWindowKey() {
                         appState.excludedWindows.insert(key)
                     }
@@ -184,12 +184,12 @@ struct AutoCorrectionSettingsView: View {
                 .buttonStyle(.bordered)
                 .disabled(!appState.autoCorrectEnabled)
 
-                Text("เพิ่มเฉพาะหน้าต่างที่โฟกัสอยู่ (ไม่ใช่ทั้งแอป)")
+                Text(String(localized: "autocorrect.exclude_window_hint", bundle: .module))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 if appState.excludedWindows.isEmpty {
-                    Text("ยังไม่มีหน้าต่างที่ exclude")
+                    Text(String(localized: "autocorrect.no_excluded_windows", bundle: .module))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 8)
@@ -219,7 +219,7 @@ struct AutoCorrectionSettingsView: View {
             }
 
             Section {
-                Button("ใช้ค่าเริ่มต้น") {
+                Button(String(localized: "button.use_defaults", bundle: .module)) {
                     appState.autoCorrectDelay = 0
                     UserDefaults.standard.set(3, forKey: PimPidKeys.autoCorrectMinChars)
                     appState.autoCorrectSoundEnabled = false
@@ -229,7 +229,7 @@ struct AutoCorrectionSettingsView: View {
                 }
                 .buttonStyle(.bordered)
             } header: {
-                Text("รีเซ็ต")
+                Text(String(localized: "section.reset", bundle: .module))
                     .font(.headline)
             }
 
@@ -238,26 +238,26 @@ struct AutoCorrectionSettingsView: View {
                     InfoRow(
                         icon: "lightbulb.fill",
                         color: .yellow,
-                        title: "วิธีใช้งาน",
-                        description: "Auto-correct จะทำงานทันทีเมื่อคุณพิมพ์คำและกด Space หรือ Enter"
+                        title: String(localized: "info.howto.title", bundle: .module),
+                        description: String(localized: "info.howto.desc", bundle: .module)
                     )
 
                     InfoRow(
                         icon: "checkmark.circle.fill",
                         color: .green,
-                        title: "ประโยชน์",
-                        description: "แค่พิมพ์ไปเรื่อยๆ PimPid จะแก้ไขอัตโนมัติเมื่อตรวจพบการพิมพ์ผิดภาษา"
+                        title: String(localized: "info.benefit.title", bundle: .module),
+                        description: String(localized: "info.benefit.desc", bundle: .module)
                     )
 
                     InfoRow(
                         icon: "exclamationmark.triangle.fill",
                         color: .orange,
-                        title: "หมายเหตุ",
-                        description: "Auto-correct อาจทำให้การพิมพ์ช้าลงเล็กน้อยในบางแอป"
+                        title: String(localized: "info.note.title", bundle: .module),
+                        description: String(localized: "info.note.desc", bundle: .module)
                     )
                 }
             } header: {
-                Text("ข้อมูล")
+                Text(String(localized: "section.info", bundle: .module))
                     .font(.headline)
             }
         }
@@ -351,7 +351,7 @@ struct RunningAppPickerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("เลือกแอปเพื่อเพิ่มเข้า Excluded Apps")
+            Text(String(localized: "autocorrect.pick_app_title", bundle: .module))
                 .font(.headline)
                 .padding()
 
@@ -380,7 +380,7 @@ struct RunningAppPickerView: View {
 
             HStack {
                 Spacer()
-                Button("ปิด") { onDismiss() }
+                Button(String(localized: "button.close", bundle: .module)) { onDismiss() }
                     .buttonStyle(.borderedProminent)
                     .padding()
             }

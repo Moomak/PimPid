@@ -47,7 +47,7 @@ struct MenuBarContentView: View {
                         .frame(width: 8, height: 8)
                 }
 
-                Text("ไทย ⇄ English Converter")
+                Text(String(localized: "app.tagline", bundle: .module))
                     .font(.system(size: 11 * fontScale))
                     .foregroundStyle(.secondary)
             }
@@ -62,13 +62,13 @@ struct MenuBarContentView: View {
                         Image(systemName: "power")
                             .font(.system(size: 12))
                             .foregroundColor(appState.isEnabled ? .green : .gray)
-                        Text("เปิดใช้งาน")
+                        Text(String(localized: "toggle.enable", bundle: .module))
                             .font(.system(size: 12, weight: .medium))
                     }
                 }
                 .toggleStyle(.switch)
-                .accessibilityLabel("เปิดใช้งาน PimPid")
-                .accessibilityHint("สลับการทำงานของ PimPid ทั้งหมด")
+                .accessibilityLabel(String(localized: "a11y.toggle_enable", bundle: .module))
+                .accessibilityHint(String(localized: "a11y.toggle_hint", bundle: .module))
 
                 Toggle(isOn: $appState.autoCorrectEnabled) {
                     HStack {
@@ -81,8 +81,8 @@ struct MenuBarContentView: View {
                 }
                 .toggleStyle(.switch)
                 .disabled(!AccessibilityHelper.isAccessibilityTrusted)
-                .accessibilityLabel("เปิด Auto-Correct")
-                .accessibilityHint("แก้ไขข้อความอัตโนมัติเมื่อพิมพ์ผิดภาษา")
+                .accessibilityLabel(String(localized: "a11y.autocorrect_label", bundle: .module))
+                .accessibilityHint(String(localized: "a11y.autocorrect_hint", bundle: .module))
             }
 
             // Accessibility warning
@@ -92,12 +92,12 @@ struct MenuBarContentView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 12))
                             .foregroundColor(.orange)
-                        Text("ต้องการสิทธิ์ Accessibility")
+                        Text(String(localized: "accessibility.warning", bundle: .module))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.orange)
                     }
 
-                    Button("เปิดการตั้งค่า") {
+                    Button(String(localized: "accessibility.open_settings", bundle: .module)) {
                         AccessibilityHelper.openAccessibilitySettings()
                     }
                     .buttonStyle(.borderedProminent)
@@ -153,7 +153,7 @@ struct MenuBarContentView: View {
                     HStack {
                         Image(systemName: "gearshape.fill")
                             .font(.system(size: 12))
-                        Text("ตั้งค่า")
+                        Text(String(localized: "menu.settings", bundle: .module))
                             .font(.system(size: 12, weight: .medium))
                         Spacer()
                         Image(systemName: "chevron.right")
