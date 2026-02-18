@@ -7,6 +7,20 @@ struct PimPidApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var showOnboarding = false
 
+    init() {
+        // Apply language setting before UI loads — default: Thai
+        let saved = UserDefaults.standard.string(forKey: PimPidKeys.appLanguage)
+        let lang = saved ?? "th"
+        if saved == nil {
+            UserDefaults.standard.set("th", forKey: PimPidKeys.appLanguage)
+        }
+        if lang == "system" {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.set([lang], forKey: "AppleLanguages")
+        }
+    }
+
     private var menuBarIconName: String {
         appState.isEnabled ? "character.bubble.fill" : "character.bubble"
     }

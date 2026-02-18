@@ -59,6 +59,18 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(notificationStyle, forKey: PimPidKeys.notificationStyle) }
     }
 
+    @Published var appLanguage: String {
+        didSet {
+            UserDefaults.standard.set(appLanguage, forKey: PimPidKeys.appLanguage)
+            // Apply language override immediately (takes full effect on next launch)
+            if appLanguage == "system" {
+                UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+            } else {
+                UserDefaults.standard.set([appLanguage], forKey: "AppleLanguages")
+            }
+        }
+    }
+
     init() {
         // Initialize isEnabled
         if UserDefaults.standard.object(forKey: PimPidKeys.enabled) == nil {
@@ -115,5 +127,7 @@ final class AppState: ObservableObject {
             UserDefaults.standard.set("toast", forKey: PimPidKeys.notificationStyle)
         }
         self.notificationStyle = UserDefaults.standard.string(forKey: PimPidKeys.notificationStyle) ?? "toast"
+
+        self.appLanguage = UserDefaults.standard.string(forKey: PimPidKeys.appLanguage) ?? "th"
     }
 }

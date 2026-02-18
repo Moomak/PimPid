@@ -1,9 +1,15 @@
 import SwiftUI
 
-/// Appearance settings: theme, font size
+/// Appearance settings: theme, font size, language
 struct AppearanceSettingsView: View {
     @EnvironmentObject var appState: AppState
+    @State private var showRestartHint = false
 
+    private var languageOptions: [(id: String, label: String)] {[
+        ("th", String(localized: "appearance.language_thai", bundle: .module)),
+        ("en", String(localized: "appearance.language_english", bundle: .module)),
+        ("system", String(localized: "appearance.language_system", bundle: .module)),
+    ]}
     private var themeOptions: [(id: String, label: String)] {[
         ("auto", String(localized: "appearance.theme_auto", bundle: .module)),
         ("light", String(localized: "appearance.theme_light", bundle: .module)),
@@ -26,6 +32,25 @@ struct AppearanceSettingsView: View {
     ]}
     var body: some View {
         Form {
+            Section {
+                Picker(String(localized: "appearance.language_picker", bundle: .module), selection: $appState.appLanguage) {
+                    ForEach(languageOptions, id: \.id) { option in
+                        Text(option.label).tag(option.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: appState.appLanguage) { showRestartHint = true }
+
+                if showRestartHint {
+                    Text(String(localized: "appearance.language_restart_hint", bundle: .module))
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            } header: {
+                Text(String(localized: "appearance.section.language", bundle: .module))
+                    .font(.headline)
+            }
+
             Section {
                 Picker(String(localized: "appearance.theme_picker", bundle: .module), selection: $appState.appearanceTheme) {
                     ForEach(themeOptions, id: \.id) { option in

@@ -72,6 +72,12 @@
 "info.note.desc" = "Auto-correct may slightly slow typing in some apps";
 
 /* AppearanceSettingsView */
+"appearance.section.language" = "Language";
+"appearance.language_picker" = "Display language";
+"appearance.language_thai" = "ภาษาไทย (Thai)";
+"appearance.language_english" = "English";
+"appearance.language_system" = "System default";
+"appearance.language_restart_hint" = "Relaunch the app to apply the new language";
 "appearance.theme_auto" = "System";
 "appearance.theme_light" = "Light";
 "appearance.theme_dark" = "Dark";

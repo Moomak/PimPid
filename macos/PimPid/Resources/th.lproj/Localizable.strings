@@ -72,6 +72,12 @@
 "info.note.desc" = "Auto-correct อาจทำให้การพิมพ์ช้าลงเล็กน้อยในบางแอป";
 
 /* AppearanceSettingsView */
+"appearance.section.language" = "ภาษา";
+"appearance.language_picker" = "ภาษาที่แสดง";
+"appearance.language_thai" = "ภาษาไทย";
+"appearance.language_english" = "English";
+"appearance.language_system" = "ตามระบบ";
+"appearance.language_restart_hint" = "เปิดแอปใหม่เพื่อให้ภาษาเปลี่ยน";
 "appearance.theme_auto" = "ตามระบบ";
 "appearance.theme_light" = "สว่าง";
 "appearance.theme_dark" = "มืด";

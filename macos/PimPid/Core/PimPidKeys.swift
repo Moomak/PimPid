@@ -51,6 +51,7 @@ enum PimPidKeys {
     static let appearanceFontSize = "pimpid.appearance.fontSize"
     static let notificationStyle = "pimpid.appearance.notificationStyle"
     static let toastDuration = "pimpid.appearance.toastDuration"
+    static let appLanguage = "pimpid.appearance.language"
 
     // Shortcut defaults (⌘⇧L): L = keyCode 37, Cmd+Shift = 768
     static let defaultShortcutKeyCode: UInt16 = 37
