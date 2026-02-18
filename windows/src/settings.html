@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'" />
+  <title>ตั้งค่า PimPid</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f3f3f3;
+      --surface: #ffffff;
+      --border: #d1d1d1;
+      --accent: #0078d4;
+      --accent-hover: #106ebe;
+      --text: #1f1f1f;
+      --text-secondary: #616161;
+      --danger: #c42b1c;
+      --radius: 4px;
+      --tab-h: 36px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #202020;
+        --surface: #2d2d2d;
+        --border: #404040;
+        --text: #f3f3f3;
+        --text-secondary: #a0a0a0;
+      }
+    }
+
+    html, body {
+      height: 100%;
+      font-family: "Segoe UI", "Tahoma", sans-serif;
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--text);
+      user-select: none;
+    }
+
+    /* ─── Layout ─── */
+    .app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ─── Header ─── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .header-icon { font-size: 22px; }
+    .header-title { font-size: 16px; font-weight: 600; }
+
+    /* ─── Tabs ─── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      padding: 0 12px;
+    }
+    .tab {
+      padding: 0 16px;
+      height: var(--tab-h);
+      line-height: var(--tab-h);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+    /* ─── Content ─── */
+    .content { flex: 1; overflow-y: auto; padding: 16px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ─── Sections ─── */
+    .section { margin-bottom: 20px; }
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .section-body {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* ─── Rows ─── */
+    .row {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      min-height: 44px;
+    }
+    .row:last-child { border-bottom: none; }
+    .row-label { flex: 1; }
+    .row-label-main { font-size: 13px; }
+    .row-label-hint { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ─── Toggle (checkbox styled) ─── */
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: var(--border);
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-slider::after {
+      content: '';
+      position: absolute;
+      left: 3px; top: 3px;
+      width: 16px; height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--accent); }
+    .toggle input:checked + .toggle-slider::after { transform: translateX(18px); }
+    .toggle input:disabled + .toggle-slider { opacity: 0.4; cursor: not-allowed; }
+
+    /* ─── Select ─── */
+    select {
+      font-family: inherit;
+      font-size: 12px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      min-width: 120px;
+    }
+    select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+    /* ─── Number input ─── */
+    input[type="number"] {
+      font-family: inherit;
+      font-size: 12px;
+      width: 72px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      text-align: right;
+    }
+    input[type="number"]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+    /* ─── Text input ─── */
+    input[type="text"] {
+      font-family: inherit;
+      font-size: 12px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      flex: 1;
+    }
+    input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+    /* ─── Button ─── */
+    .btn {
+      font-family: inherit;
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--border); }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-icon {
+      padding: 2px 7px;
+      font-size: 14px;
+      line-height: 1;
+      color: var(--danger);
+      border-color: transparent;
+      background: transparent;
+    }
+    .btn-icon:hover { background: rgba(196, 43, 28, 0.1); border-color: transparent; }
+
+    /* ─── Exclude words add row ─── */
+    .exclude-add {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ─── Exclude word list ─── */
+    .word-list { max-height: 200px; overflow-y: auto; }
+    .word-row {
+      display: flex;
+      align-items: center;
+      padding: 6px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .word-row:last-child { border-bottom: none; }
+    .word-text { flex: 1; font-size: 13px; }
+    .word-empty {
+      padding: 16px 14px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    /* ─── Shortcut chip ─── */
+    .shortcut-chip {
+      font-family: "Consolas", monospace;
+      font-size: 11px;
+      background: var(--border);
+      padding: 3px 8px;
+      border-radius: 3px;
+    }
+
+    /* ─── Footer ─── */
+    .footer {
+      display: flex;
+      justify-content: flex-end;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">⌨️</div>
+    <div class="header-title" id="h-title">ตั้งค่า PimPid</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="general"   id="tab-general">ทั่วไป</div>
+    <div class="tab"        data-tab="autocorrect" id="tab-autocorrect">Auto-Correct</div>
+    <div class="tab"        data-tab="exclude"   id="tab-exclude">Exclude คำ</div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ═══ General panel ═══ -->
+    <div class="panel active" id="panel-general">
+
+      <div class="section">
+        <div class="section-title" id="lbl-basic">การทำงานพื้นฐาน</div>
+        <div class="section-body">
+
+          <!-- Enable toggle -->
+          <div class="row">
+            <div class="row-label">
+              <div class="row-label-main" id="lbl-enable">เปิดใช้งาน PimPid</div>
+              <div class="row-label-hint" id="lbl-enable-desc">เมื่อเปิดใช้งาน PimPid จะทำงานในเบื้องหลัง</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="chk-enable" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Language picker -->
+          <div class="row">
+            <div class="row-label">
+              <div class="row-label-main" id="lbl-language">ภาษาที่แสดง</div>
+              <div class="row-label-hint" id="lbl-language-hint">เปิดแอปใหม่เพื่อให้ภาษาเปลี่ยน</div>
+            </div>
+            <select id="sel-language">
+              <option value="th" id="opt-th">ภาษาไทย</option>
+              <option value="en" id="opt-en">English</option>
+            </select>
+          </div>
+
+          <!-- Shortcut info -->
+          <div class="row">
+            <div class="row-label">
+              <div class="row-label-main" id="lbl-shortcut">Shortcut ปัจจุบัน</div>
+            </div>
+            <span class="shortcut-chip" id="shortcut-display">Ctrl+Shift+L</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /panel-general -->
+
+    <!-- ═══ Auto-Correct panel ═══ -->
+    <div class="panel" id="panel-autocorrect">
+
+      <div class="section">
+        <div class="section-title" id="lbl-ac-enable-section">การเปิดใช้งาน</div>
+        <div class="section-body">
+
+          <!-- Auto-correct toggle -->
+          <div class="row">
+            <div class="row-label">
+              <div class="row-label-main" id="lbl-ac-enable">เปิดใช้งาน Auto-Correct</div>
+              <div class="row-label-hint" id="lbl-ac-desc">แก้ไขข้อความอัตโนมัติทันทีที่พิมพ์ผิดภาษา</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="chk-autocorrect" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title" id="lbl-ac-settings-section">ตั้งค่าการแก้ไข</div>
+        <div class="section-body">
+
+          <!-- Delay -->
+          <div class="row">
+            <div class="row-label">
+              <div class="row-label-main" id="lbl-ac-delay">ความล่าช้า (ms)</div>
+              <div class="row-label-hint" id="lbl-ac-delay-hint">เวลารอก่อนแก้ไขอัตโนมัติ (0–1000 ms)</div>
+            </div>
+            <input type="number" id="inp-delay" min="0" max="1000" step="50" value="300" />
+          </div>
+
+          <!-- Min chars -->
+          <div class="row">
+            <div class="row-label">
+              <div class="row-label-main" id="lbl-ac-minchars">จำนวนตัวอักษรขั้นต่ำ</div>
+              <div class="row-label-hint" id="lbl-ac-minchars-hint">พิมพ์อย่างน้อยกี่ตัวก่อนแก้ไขอัตโนมัติ</div>
+            </div>
+            <input type="number" id="inp-minchars" min="1" max="10" step="1" value="3" />
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /panel-autocorrect -->
+
+    <!-- ═══ Exclude Words panel ═══ -->
+    <div class="panel" id="panel-exclude">
+
+      <div class="section">
+        <div class="section-title" id="lbl-ex-add-section">เพิ่มคำ</div>
+        <div class="section-body">
+          <div class="exclude-add">
+            <input type="text" id="inp-word" placeholder="คำที่ไม่ต้องการให้แปลง" autocomplete="off" spellcheck="false" />
+            <button class="btn btn-primary" id="btn-add-word">เพิ่ม</button>
+          </div>
+          <div class="row" style="padding-top:4px; padding-bottom:4px;">
+            <div class="row-label-hint" id="lbl-ex-hint">ป้อนคำที่ไม่ต้องการให้ PimPid แปลง เช่น ชื่อ, แบรนด์</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title" id="lbl-ex-list-section">รายการ Exclude</div>
+        <div class="section-body">
+          <div class="word-list" id="word-list">
+            <div class="word-empty" id="lbl-ex-empty">ยังไม่มีคำที่ exclude</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /panel-exclude -->
+
+  </div><!-- /content -->
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="btn" id="btn-close">ปิด</button>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ─── Types from preload ───────────────────────────────────────────────────────
+/** @type {{ getSettings: () => Promise<any>, setSetting: (k: string, v: any) => Promise<void>, onSettingsChanged: (cb: (s:any)=>void)=>void, getLang: ()=>Promise<string> }} */
+const api = window.electronAPI;
+
+// ─── i18n strings (subset needed by renderer) ─────────────────────────────────
+const STRINGS = {
+  th: {
+    title: 'ตั้งค่า PimPid',
+    tabGeneral: 'ทั่วไป', tabAC: 'Auto-Correct', tabExclude: 'Exclude คำ',
+    sectionBasic: 'การทำงานพื้นฐาน', lblEnable: 'เปิดใช้งาน PimPid',
+    lblEnableDesc: 'เมื่อเปิดใช้งาน PimPid จะทำงานในเบื้องหลังและพร้อมแปลงข้อความ',
+    lblLanguage: 'ภาษาที่แสดง', lblLangHint: 'เปิดแอปใหม่เพื่อให้ภาษาเปลี่ยน',
+    lblShortcut: 'Shortcut ปัจจุบัน',
+    optTh: 'ภาษาไทย', optEn: 'English',
+    sectionACEnable: 'การเปิดใช้งาน', lblACEnable: 'เปิดใช้งาน Auto-Correct',
+    lblACDesc: 'แก้ไขข้อความอัตโนมัติทันทีที่พิมพ์ผิดภาษา',
+    sectionACSettings: 'ตั้งค่าการแก้ไข', lblDelay: 'ความล่าช้า (ms)',
+    lblDelayHint: 'เวลารอก่อนแก้ไขอัตโนมัติ (0–1000 ms, 0 = ค่าเริ่มต้น 300 ms)',
+    lblMinChars: 'จำนวนตัวอักษรขั้นต่ำ', lblMinCharsHint: 'พิมพ์อย่างน้อยกี่ตัวก่อนแก้ไขอัตโนมัติ',
+    sectionExAdd: 'เพิ่มคำ', placeholder: 'คำที่ไม่ต้องการให้แปลง', btnAdd: 'เพิ่ม',
+    exHint: 'ป้อนคำที่ไม่ต้องการให้ PimPid แปลง เช่น ชื่อ, แบรนด์, คำศัพท์เฉพาะ',
+    sectionExList: 'รายการ Exclude', exEmpty: 'ยังไม่มีคำที่ exclude',
+    btnClose: 'ปิด',
+  },
+  en: {
+    title: 'PimPid Settings',
+    tabGeneral: 'General', tabAC: 'Auto-Correct', tabExclude: 'Exclude Words',
+    sectionBasic: 'Basic Operation', lblEnable: 'Enable PimPid',
+    lblEnableDesc: 'When enabled, PimPid runs in the background and is ready to convert text',
+    lblLanguage: 'Display language', lblLangHint: 'Relaunch the app to apply the new language',
+    lblShortcut: 'Current shortcut',
+    optTh: 'ภาษาไทย (Thai)', optEn: 'English',
+    sectionACEnable: 'Enable', lblACEnable: 'Enable Auto-Correct',
+    lblACDesc: 'Automatically correct text when typing in the wrong language',
+    sectionACSettings: 'Correction Settings', lblDelay: 'Delay (ms)',
+    lblDelayHint: 'Wait time before auto-correcting (0–1000 ms, 0 = default 300 ms)',
+    lblMinChars: 'Minimum characters', lblMinCharsHint: 'Minimum characters to type before auto-correction starts',
+    sectionExAdd: 'Add Word', placeholder: 'Word to exclude from conversion', btnAdd: 'Add',
+    exHint: "Enter words you don't want PimPid to convert (e.g. names, brands, jargon)",
+    sectionExList: 'Exclude List', exEmpty: 'No excluded words yet',
+    btnClose: 'Close',
+  },
+};
+
+let lang = 'th';
+let currentSettings = null;
+
+function s(key) { return STRINGS[lang][key] ?? STRINGS['en'][key] ?? key; }
+
+function applyLang() {
+  const L = s;
+  document.title = L('title');
+  document.getElementById('h-title').textContent = L('title');
+  document.getElementById('tab-general').textContent = L('tabGeneral');
+  document.getElementById('tab-autocorrect').textContent = L('tabAC');
+  document.getElementById('tab-exclude').textContent = L('tabExclude');
+  document.getElementById('lbl-basic').textContent = L('sectionBasic');
+  document.getElementById('lbl-enable').textContent = L('lblEnable');
+  document.getElementById('lbl-enable-desc').textContent = L('lblEnableDesc');
+  document.getElementById('lbl-language').textContent = L('lblLanguage');
+  document.getElementById('lbl-language-hint').textContent = L('lblLangHint');
+  document.getElementById('lbl-shortcut').textContent = L('lblShortcut');
+  document.getElementById('opt-th').textContent = L('optTh');
+  document.getElementById('opt-en').textContent = L('optEn');
+  document.getElementById('lbl-ac-enable-section').textContent = L('sectionACEnable');
+  document.getElementById('lbl-ac-enable').textContent = L('lblACEnable');
+  document.getElementById('lbl-ac-desc').textContent = L('lblACDesc');
+  document.getElementById('lbl-ac-settings-section').textContent = L('sectionACSettings');
+  document.getElementById('lbl-ac-delay').textContent = L('lblDelay');
+  document.getElementById('lbl-ac-delay-hint').textContent = L('lblDelayHint');
+  document.getElementById('lbl-ac-minchars').textContent = L('lblMinChars');
+  document.getElementById('lbl-ac-minchars-hint').textContent = L('lblMinCharsHint');
+  document.getElementById('lbl-ex-add-section').textContent = L('sectionExAdd');
+  document.getElementById('inp-word').placeholder = L('placeholder');
+  document.getElementById('btn-add-word').textContent = L('btnAdd');
+  document.getElementById('lbl-ex-hint').textContent = L('exHint');
+  document.getElementById('lbl-ex-list-section').textContent = L('sectionExList');
+  document.getElementById('lbl-ex-empty').textContent = L('exEmpty');
+  document.getElementById('btn-close').textContent = L('btnClose');
+}
+
+function applySettings(settings) {
+  currentSettings = settings;
+  document.getElementById('chk-enable').checked = settings.isEnabled;
+  document.getElementById('chk-autocorrect').checked = settings.autoCorrectEnabled;
+  document.getElementById('sel-language').value = settings.language;
+  document.getElementById('inp-delay').value = settings.autoCorrectDebounceMs;
+  document.getElementById('inp-minchars').value = settings.autoCorrectMinChars;
+
+  // Sync UI language whenever settings change (e.g. via tray broadcast)
+  if (settings.language && settings.language !== lang) {
+    lang = settings.language;
+    applyLang();
+  }
+
+  // Format shortcut display
+  const shortcut = (settings.shortcut || 'CommandOrControl+Shift+L')
+    .replace('CommandOrControl', 'Ctrl')
+    .replace('Control', 'Ctrl')
+    .replace('Command', 'Win')
+    .replace(/\+/g, ' + ');
+  document.getElementById('shortcut-display').textContent = shortcut;
+
+  renderWordList(settings.excludeWords || []);
+}
+
+function renderWordList(words) {
+  const list = document.getElementById('word-list');
+  const emptyLabel = s('exEmpty');
+
+  if (!words.length) {
+    list.innerHTML = `<div class="word-empty" id="lbl-ex-empty">${emptyLabel}</div>`;
+    return;
+  }
+
+  list.innerHTML = words.map((w, i) => `
+    <div class="word-row">
+      <span class="word-text">${escHtml(w)}</span>
+      <button class="btn btn-icon" data-index="${i}" title="Remove">✕</button>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.btn-icon').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index, 10);
+      const words = [...(currentSettings.excludeWords || [])];
+      words.splice(idx, 1);
+      api.setSetting('excludeWords', words);
+      currentSettings.excludeWords = words;
+      renderWordList(words);
+    });
+  });
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Tab switching ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ─── Control events ───────────────────────────────────────────────────────────
+document.getElementById('chk-enable').addEventListener('change', e => {
+  api.setSetting('isEnabled', e.target.checked);
+});
+
+document.getElementById('chk-autocorrect').addEventListener('change', e => {
+  api.setSetting('autoCorrectEnabled', e.target.checked);
+});
+
+document.getElementById('sel-language').addEventListener('change', e => {
+  lang = e.target.value;
+  api.setSetting('language', e.target.value);
+  applyLang();
+});
+
+document.getElementById('inp-delay').addEventListener('change', e => {
+  const v = Math.max(0, Math.min(1000, parseInt(e.target.value, 10) || 0));
+  e.target.value = v;
+  api.setSetting('autoCorrectDebounceMs', v);
+});
+
+document.getElementById('inp-minchars').addEventListener('change', e => {
+  const v = Math.max(1, Math.min(10, parseInt(e.target.value, 10) || 3));
+  e.target.value = v;
+  api.setSetting('autoCorrectMinChars', v);
+});
+
+// ─── Exclude word add ─────────────────────────────────────────────────────────
+function addWord() {
+  const inp = document.getElementById('inp-word');
+  const word = inp.value.trim();
+  if (!word) return;
+  const words = [...(currentSettings.excludeWords || [])];
+  if (!words.includes(word)) {
+    words.push(word);
+    api.setSetting('excludeWords', words);
+    currentSettings.excludeWords = words;
+    renderWordList(words);
+  }
+  inp.value = '';
+  inp.focus();
+}
+
+document.getElementById('btn-add-word').addEventListener('click', addWord);
+document.getElementById('inp-word').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addWord();
+});
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+document.getElementById('btn-close').addEventListener('click', () => {
+  window.close();
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  const [settings, langFromMain] = await Promise.all([
+    api.getSettings(),
+    api.getLang(),
+  ]);
+  // settings.language is the persistent source of truth;
+  // langFromMain may lag if setLang() wasn't called yet on first boot.
+  lang = settings.language || langFromMain || 'th';
+  applyLang();
+  applySettings(settings);
+
+  // Listen for live updates from main (e.g. tray menu toggle)
+  api.onSettingsChanged(updated => {
+    applySettings(updated);
+  });
+}
+
+init().catch(console.error);
+</script>
+</body>
+</html>

@@ -2,10 +2,12 @@ import {
   app,
   Tray,
   Menu,
+  BrowserWindow,
   globalShortcut,
   clipboard,
   nativeImage,
   Notification,
+  ipcMain,
 } from "electron";
 import * as path from "path";
 import { convertAuto, dominantLanguage, ConversionDirection } from "./converter";
@@ -13,30 +15,34 @@ import {
   startAutoCorrection,
   stopAutoCorrection,
   isAutoCorrectRunning,
+  updateAutoCorrectConfig,
+  setExcludeWords,
 } from "./auto-correction";
+import { initStore, store } from "./store";
+import { setLang, getLang, t } from "./i18n";
 
 let tray: Tray | null = null;
-let isEnabled = true;
-let autoCorrectEnabled = false;
+let settingsWin: BrowserWindow | null = null;
 
-function createTray(): void {
-  const iconPath = path.join(__dirname, "..", "src", "icon.png");
+// ─── Notification tracking (prevent leak) ─────────────────────────────────────
+let lastNotification: Notification | null = null;
 
-  let trayIcon: Electron.NativeImage;
-  try {
-    trayIcon = nativeImage.createFromPath(iconPath);
-    if (trayIcon.isEmpty()) {
-      trayIcon = createDefaultIcon();
-    }
-  } catch {
-    trayIcon = createDefaultIcon();
+function showNotification(title: string, body: string): void {
+  if (!Notification.isSupported()) return;
+  if (lastNotification) {
+    try { lastNotification.close(); } catch { /* ignore */ }
+    lastNotification = null;
   }
-
-  tray = new Tray(trayIcon.resize({ width: 16, height: 16 }));
-  tray.setToolTip("PimPid — Thai ⇄ English Converter");
-  updateTrayMenu();
+  const n = new Notification({ title, body, silent: true });
+  n.show();
+  lastNotification = n;
+  // Auto-clear reference after it should have expired
+  setTimeout(() => {
+    if (lastNotification === n) lastNotification = null;
+  }, 5000);
 }
 
+// ─── Tray icon ────────────────────────────────────────────────────────────────
 function createDefaultIcon(): Electron.NativeImage {
   const size = 16;
   const canvas = Buffer.alloc(size * size * 4);
@@ -55,85 +61,120 @@ function createDefaultIcon(): Electron.NativeImage {
   return nativeImage.createFromBuffer(canvas, { width: size, height: size });
 }
 
-function toggleAutoCorrect(): void {
-  if (autoCorrectEnabled) {
-    stopAutoCorrection();
-    autoCorrectEnabled = false;
-  } else {
-    startAutoCorrection({
-      enabled: true,
-      debounceMs: 300,
-      minBufferLength: 3,
-      onCorrection: (original, converted) => {
-        console.log(`Auto-corrected: ${original} → ${converted}`);
-      },
-    });
-    autoCorrectEnabled = isAutoCorrectRunning();
+function createTray(): void {
+  const iconPath = path.join(__dirname, "..", "src", "icon.png");
+  let trayIcon: Electron.NativeImage;
+  try {
+    trayIcon = nativeImage.createFromPath(iconPath);
+    if (trayIcon.isEmpty()) trayIcon = createDefaultIcon();
+  } catch {
+    trayIcon = createDefaultIcon();
   }
+
+  tray = new Tray(trayIcon.resize({ width: 16, height: 16 }));
+  tray.setToolTip(t("tray.tooltip"));
   updateTrayMenu();
 }
 
+// ─── Tray menu (i18n-aware) ───────────────────────────────────────────────────
 function updateTrayMenu(): void {
   if (!tray) return;
 
+  const isEnabled = store.get("isEnabled");
+  const autoCorrectEnabled = isAutoCorrectRunning();
+
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: "PimPid — Thai ⇄ English",
+      label: t("tray.title"),
       enabled: false,
     },
     { type: "separator" },
     {
-      label: isEnabled ? "✅ เปิดใช้งาน" : "⬜ เปิดใช้งาน",
+      label: isEnabled ? t("menu.enable.on") : t("menu.enable.off"),
       click: () => {
-        isEnabled = !isEnabled;
-        if (!isEnabled && autoCorrectEnabled) {
+        const next = !store.get("isEnabled");
+        store.set("isEnabled", next);
+        if (!next && isAutoCorrectRunning()) {
           stopAutoCorrection();
-          autoCorrectEnabled = false;
+          store.set("autoCorrectEnabled", false);
         }
         updateTrayMenu();
+        broadcastSettings();
       },
     },
     {
       label: autoCorrectEnabled
-        ? "⚡ Auto-Correct: ON"
-        : "⚡ Auto-Correct: OFF",
-      click: () => {
-        toggleAutoCorrect();
-      },
+        ? t("menu.autocorrect.on")
+        : t("menu.autocorrect.off"),
+      click: toggleAutoCorrect,
       enabled: isEnabled,
     },
     { type: "separator" },
     {
-      label: "Convert Selected Text (Ctrl+Shift+L)",
-      click: () => {
-        convertSelectedText();
-      },
+      label: t("menu.convert"),
+      click: () => convertSelectedText(),
       enabled: isEnabled,
     },
     { type: "separator" },
     {
-      label: "Quit PimPid",
-      click: () => {
-        app.quit();
-      },
+      label: t("menu.settings"),
+      click: openSettings,
+    },
+    {
+      label: t("menu.quit"),
+      click: () => app.quit(),
     },
   ]);
 
   tray.setContextMenu(contextMenu);
+  tray.setToolTip(t("tray.tooltip"));
 }
 
-async function convertSelectedText(): Promise<void> {
+// ─── Auto-correct toggle ──────────────────────────────────────────────────────
+function toggleAutoCorrect(): void {
+  const isEnabled = store.get("isEnabled");
   if (!isEnabled) return;
+
+  if (isAutoCorrectRunning()) {
+    stopAutoCorrection();
+    store.set("autoCorrectEnabled", false);
+  } else {
+    startAutoCorrection({
+      enabled: true,
+      debounceMs: store.get("autoCorrectDebounceMs"),
+      minBufferLength: store.get("autoCorrectMinChars"),
+      excludeWords: store.get("excludeWords"),
+      onCorrection: (original, converted) => {
+        console.log(`[PimPid] Auto-corrected: ${original} → ${converted}`);
+      },
+    });
+    store.set("autoCorrectEnabled", isAutoCorrectRunning());
+  }
+  updateTrayMenu();
+  broadcastSettings();
+}
+
+// ─── Convert selected text ────────────────────────────────────────────────────
+async function convertSelectedText(): Promise<void> {
+  if (!store.get("isEnabled")) return;
 
   const savedClipboard = clipboard.readText();
   clipboard.writeText("");
 
-  await simulateCopy();
+  await simulateKeyCombo("c");
   await sleep(200);
 
   const selectedText = clipboard.readText();
 
   if (!selectedText || selectedText.trim() === "") {
+    clipboard.writeText(savedClipboard);
+    return;
+  }
+
+  // Check exclude words
+  const excludeWords = store.get("excludeWords");
+  const lower = selectedText.trim().toLowerCase();
+  if (excludeWords.some((w) => w.toLowerCase() === lower)) {
     clipboard.writeText(savedClipboard);
     return;
   }
@@ -146,27 +187,20 @@ async function convertSelectedText(): Promise<void> {
   }
 
   clipboard.writeText(converted);
-  await simulatePaste();
+  await simulateKeyCombo("v");
 
-  await sleep(500);
+  await sleep(400);
   clipboard.writeText(savedClipboard);
 
   const direction = dominantLanguage(selectedText);
   const dirLabel =
     direction === ConversionDirection.ThaiToEnglish
-      ? "ไทย → English"
-      : "English → ไทย";
+      ? t("notify.converted.th_to_en")
+      : t("notify.converted.en_to_th");
   showNotification(dirLabel, `${selectedText} → ${converted}`);
 }
 
-function simulateCopy(): Promise<void> {
-  return simulateKeyCombo("c");
-}
-
-function simulatePaste(): Promise<void> {
-  return simulateKeyCombo("v");
-}
-
+// ─── Key simulation (PowerShell) ─────────────────────────────────────────────
 function simulateKeyCombo(key: string): Promise<void> {
   return new Promise((resolve) => {
     const { exec } = require("child_process");
@@ -176,11 +210,10 @@ function simulateKeyCombo(key: string): Promise<void> {
         : `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("^v")`;
 
     exec(
-      `powershell -NoProfile -Command "${psScript}"`,
+      `powershell -NoProfile -WindowStyle Hidden -Command "${psScript}"`,
+      { timeout: 5000 },
       (error: Error | null) => {
-        if (error) {
-          console.error(`Failed to simulate Ctrl+${key}:`, error.message);
-        }
+        if (error) console.error(`[PimPid] SendKeys ${key} failed:`, error.message);
         resolve();
       }
     );
@@ -191,44 +224,165 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function showNotification(title: string, body: string): void {
-  if (Notification.isSupported()) {
-    const notification = new Notification({
-      title,
-      body,
-      silent: true,
-    });
-    notification.show();
+// ─── Settings window ──────────────────────────────────────────────────────────
+function openSettings(): void {
+  if (settingsWin && !settingsWin.isDestroyed()) {
+    settingsWin.focus();
+    return;
+  }
+
+  settingsWin = new BrowserWindow({
+    width: 480,
+    height: 540,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    title: t("settings.title"),
+    webPreferences: {
+      preload: path.join(__dirname, "settings-preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+    show: false,
+  });
+
+  settingsWin.setMenuBarVisibility(false);
+  settingsWin.loadFile(path.join(__dirname, "..", "src", "settings.html"));
+
+  settingsWin.once("ready-to-show", () => {
+    settingsWin?.show();
+  });
+
+  settingsWin.on("closed", () => {
+    settingsWin = null;
+  });
+}
+
+/** Push latest settings to open settings window */
+function broadcastSettings(): void {
+  if (settingsWin && !settingsWin.isDestroyed()) {
+    settingsWin.webContents.send("settings:updated", store.getAll());
   }
 }
 
-// App lifecycle
-app.whenReady().then(() => {
-  createTray();
+// ─── IPC handlers ─────────────────────────────────────────────────────────────
+function setupIPC(): void {
+  ipcMain.handle("settings:get", () => store.getAll());
 
-  const registered = globalShortcut.register(
-    "CommandOrControl+Shift+L",
-    () => {
-      convertSelectedText();
+  ipcMain.handle("settings:getLang", () => getLang());
+
+  ipcMain.handle(
+    "settings:set",
+    (_event, key: string, value: unknown) => {
+      // Validate key is a known store key to prevent prototype pollution
+      const VALID_KEYS = new Set([
+        "language", "isEnabled", "autoCorrectEnabled",
+        "autoCorrectDebounceMs", "autoCorrectMinChars", "excludeWords", "shortcut",
+      ]);
+      if (!VALID_KEYS.has(key)) return;
+
+      // Apply to store
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (store as any).set(key, value);
+
+      // Side effects
+      switch (key) {
+        case "language":
+          if (value === "th" || value === "en") {
+            setLang(value);
+            updateTrayMenu();
+          }
+          break;
+
+        case "isEnabled":
+          if (!value && isAutoCorrectRunning()) {
+            stopAutoCorrection();
+            store.set("autoCorrectEnabled", false);
+          }
+          updateTrayMenu();
+          break;
+
+        case "autoCorrectEnabled":
+          if (value && store.get("isEnabled")) {
+            if (!isAutoCorrectRunning()) {
+              startAutoCorrection({
+                enabled: true,
+                debounceMs: store.get("autoCorrectDebounceMs"),
+                minBufferLength: store.get("autoCorrectMinChars"),
+                excludeWords: store.get("excludeWords"),
+              });
+              store.set("autoCorrectEnabled", isAutoCorrectRunning());
+            }
+          } else if (!value && isAutoCorrectRunning()) {
+            stopAutoCorrection();
+            store.set("autoCorrectEnabled", false);
+          }
+          updateTrayMenu();
+          break;
+
+        case "autoCorrectDebounceMs":
+          updateAutoCorrectConfig({ debounceMs: value as number });
+          break;
+
+        case "autoCorrectMinChars":
+          updateAutoCorrectConfig({ minBufferLength: value as number });
+          break;
+
+        case "excludeWords":
+          setExcludeWords(value as string[]);
+          break;
+      }
+
+      broadcastSettings();
     }
   );
+}
 
+// ─── App lifecycle ────────────────────────────────────────────────────────────
+app.whenReady().then(() => {
+  initStore();
+
+  // Apply persisted language
+  const lang = store.get("language");
+  setLang(lang);
+
+  setupIPC();
+  createTray();
+
+  // Register global shortcut
+  const shortcut = store.get("shortcut");
+  const registered = globalShortcut.register(shortcut, () => {
+    convertSelectedText();
+  });
   if (!registered) {
-    console.error("Failed to register global shortcut Ctrl+Shift+L");
+    console.error(`[PimPid] Failed to register shortcut: ${shortcut}`);
   }
 
-  console.log(
-    "PimPid Windows started — Ctrl+Shift+L to convert selected text"
-  );
+  // Restore auto-correct if it was enabled
+  if (store.get("autoCorrectEnabled") && store.get("isEnabled")) {
+    startAutoCorrection({
+      enabled: true,
+      debounceMs: store.get("autoCorrectDebounceMs"),
+      minBufferLength: store.get("autoCorrectMinChars"),
+      excludeWords: store.get("excludeWords"),
+    });
+    // If uiohook isn't available, auto-correct will be disabled
+    store.set("autoCorrectEnabled", isAutoCorrectRunning());
+    updateTrayMenu();
+  }
+
+  console.log("[PimPid] Started — shortcut:", shortcut);
 });
 
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
-  if (autoCorrectEnabled) {
+  if (isAutoCorrectRunning()) {
     stopAutoCorrection();
+  }
+  if (lastNotification) {
+    try { lastNotification.close(); } catch { /* ignore */ }
   }
 });
 
-app.on("window-all-closed", () => {
-  // Prevent app from quitting when all windows are closed (tray app)
-});
+// Prevent quit when settings window closes (tray-only app)
+app.on("window-all-closed", () => { /* keep running */ });

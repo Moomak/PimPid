@@ -1,6 +1,6 @@
 {
   "name": "pimpid-windows",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "PimPid — Thai ⇄ English Keyboard Layout Converter for Windows",
   "main": "dist/main.js",
   "scripts": {

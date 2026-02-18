@@ -1,8 +1,8 @@
-// Preload script — currently minimal since PimPid Windows is a tray-only app
-// with no renderer window. This file exists for future use if a settings UI is added.
+// Preload script สำหรับ main window (ถ้ามีในอนาคต)
+// Settings window ใช้ settings-preload.ts แทน
 
 import { contextBridge } from "electron";
 
 contextBridge.exposeInMainWorld("pimpid", {
-  version: "1.5.10",
+  version: "1.6.2",
 });

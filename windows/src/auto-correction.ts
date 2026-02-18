@@ -7,117 +7,69 @@
  * 2. สะสมตัวอักษรใน word buffer
  * 3. เมื่อหยุดพิมพ์ (debounce) หรือพบ word boundary → ตรวจคำ
  * 4. ถ้าพิมพ์ผิดภาษา → ลบคำเดิม + paste คำที่แปลงแล้ว
+ *
+ * Memory fixes:
+ * - Notification ถูก track และ close ก่อนสร้างอันใหม่ (ป้องกัน leak)
+ * - Clipboard restore timer ถูก track และ clear ก่อนตั้งใหม่ (ป้องกัน timer pile-up)
+ * - isProcessing มี safety timeout 4วิ (ป้องกัน permanent lock)
+ * - Rate limiting: ห้ามแก้ไขถี่กว่า 500ms (ป้องกัน powershell pile-up)
+ * - PowerShell ใช้ -WindowStyle Hidden เพื่อไม่สร้าง visible window ทุกครั้ง
  */
 
 import { clipboard, Notification } from "electron";
 import { exec } from "child_process";
 import {
-  convertAuto,
-  convertThaiToEnglish,
   convertEnglishToThai,
+  convertThaiToEnglish,
   dominantLanguage,
   ConversionDirection,
 } from "./converter";
 import { containsKnownThai, hasWordWithPrefix } from "./thai-words";
 
-// uiohook-napi keycodes (libuiohook cross-platform codes)
-// These are scan-code based, same across OS
-const VC_ESCAPE = 0x0001;
+// ─── uiohook-napi keycodes ────────────────────────────────────────────────────
+const VC_ESCAPE    = 0x0001;
 const VC_BACKSPACE = 0x000e;
-const VC_TAB = 0x000f;
-const VC_ENTER = 0x001c;
-const VC_SPACE = 0x0039;
-
-// Arrow keys
-const VC_LEFT = 0xe04b;
-const VC_RIGHT = 0xe04d;
-const VC_UP = 0xe048;
-const VC_DOWN = 0xe050;
-const VC_HOME = 0xe047;
-const VC_END = 0xe04f;
-const VC_PAGE_UP = 0xe049;
+const VC_TAB       = 0x000f;
+const VC_ENTER     = 0x001c;
+const VC_SPACE     = 0x0039;
+const VC_LEFT      = 0xe04b;
+const VC_RIGHT     = 0xe04d;
+const VC_UP        = 0xe048;
+const VC_DOWN      = 0xe050;
+const VC_HOME      = 0xe047;
+const VC_END       = 0xe04f;
+const VC_PAGE_UP   = 0xe049;
 const VC_PAGE_DOWN = 0xe051;
 
-// Navigation keys that clear the buffer
 const NAVIGATION_KEYS = new Set([
-  VC_LEFT,
-  VC_RIGHT,
-  VC_UP,
-  VC_DOWN,
-  VC_ESCAPE,
-  VC_ENTER,
-  VC_TAB,
-  VC_HOME,
-  VC_END,
-  VC_PAGE_UP,
-  VC_PAGE_DOWN,
+  VC_LEFT, VC_RIGHT, VC_UP, VC_DOWN, VC_ESCAPE, VC_ENTER,
+  VC_TAB, VC_HOME, VC_END, VC_PAGE_UP, VC_PAGE_DOWN,
 ]);
 
 // uiohook keycode → QWERTY character mapping [unshifted, shifted]
 const KEYCODE_TO_CHAR: Record<number, [string, string]> = {
-  // Number row
-  0x0029: ["`", "~"],
-  0x0002: ["1", "!"],
-  0x0003: ["2", "@"],
-  0x0004: ["3", "#"],
-  0x0005: ["4", "$"],
-  0x0006: ["5", "%"],
-  0x0007: ["6", "^"],
-  0x0008: ["7", "&"],
-  0x0009: ["8", "*"],
-  0x000a: ["9", "("],
-  0x000b: ["0", ")"],
-  0x000c: ["-", "_"],
+  0x0029: ["`", "~"], 0x0002: ["1", "!"], 0x0003: ["2", "@"], 0x0004: ["3", "#"],
+  0x0005: ["4", "$"], 0x0006: ["5", "%"], 0x0007: ["6", "^"], 0x0008: ["7", "&"],
+  0x0009: ["8", "*"], 0x000a: ["9", "("], 0x000b: ["0", ")"], 0x000c: ["-", "_"],
   0x000d: ["=", "+"],
-  // Top row (QWERTY)
-  0x0010: ["q", "Q"],
-  0x0011: ["w", "W"],
-  0x0012: ["e", "E"],
-  0x0013: ["r", "R"],
-  0x0014: ["t", "T"],
-  0x0015: ["y", "Y"],
-  0x0016: ["u", "U"],
-  0x0017: ["i", "I"],
-  0x0018: ["o", "O"],
-  0x0019: ["p", "P"],
-  0x001a: ["[", "{"],
-  0x001b: ["]", "}"],
+  0x0010: ["q", "Q"], 0x0011: ["w", "W"], 0x0012: ["e", "E"], 0x0013: ["r", "R"],
+  0x0014: ["t", "T"], 0x0015: ["y", "Y"], 0x0016: ["u", "U"], 0x0017: ["i", "I"],
+  0x0018: ["o", "O"], 0x0019: ["p", "P"], 0x001a: ["[", "{"], 0x001b: ["]", "}"],
   0x002b: ["\\", "|"],
-  // Home row (ASDF)
-  0x001e: ["a", "A"],
-  0x001f: ["s", "S"],
-  0x0020: ["d", "D"],
-  0x0021: ["f", "F"],
-  0x0022: ["g", "G"],
-  0x0023: ["h", "H"],
-  0x0024: ["j", "J"],
-  0x0025: ["k", "K"],
-  0x0026: ["l", "L"],
-  0x0027: [";", ":"],
-  0x0028: ["'", '"'],
-  // Bottom row (ZXCV)
-  0x002c: ["z", "Z"],
-  0x002d: ["x", "X"],
-  0x002e: ["c", "C"],
-  0x002f: ["v", "V"],
-  0x0030: ["b", "B"],
-  0x0031: ["n", "N"],
-  0x0032: ["m", "M"],
-  0x0033: [",", "<"],
-  0x0034: [".", ">"],
-  0x0035: ["/", "?"],
-  // Space
+  0x001e: ["a", "A"], 0x001f: ["s", "S"], 0x0020: ["d", "D"], 0x0021: ["f", "F"],
+  0x0022: ["g", "G"], 0x0023: ["h", "H"], 0x0024: ["j", "J"], 0x0025: ["k", "K"],
+  0x0026: ["l", "L"], 0x0027: [";", ":"], 0x0028: ["'", '"'],
+  0x002c: ["z", "Z"], 0x002d: ["x", "X"], 0x002e: ["c", "C"], 0x002f: ["v", "V"],
+  0x0030: ["b", "B"], 0x0031: ["n", "N"], 0x0032: ["m", "M"],
+  0x0033: [",", "<"], 0x0034: [".", ">"], 0x0035: ["/", "?"],
   [VC_SPACE]: [" ", " "],
 };
 
-// Thai Kedmanee mapping (same physical key → Thai character)
-// We use the converter's mapping, so we track QWERTY chars and know
-// what the Thai equivalent would be
-
-interface AutoCorrectionConfig {
+export interface AutoCorrectionConfig {
   debounceMs: number;
   minBufferLength: number;
   enabled: boolean;
+  excludeWords?: string[];
   onCorrection?: (original: string, converted: string) => void;
 }
 
@@ -125,17 +77,25 @@ let config: AutoCorrectionConfig = {
   debounceMs: 300,
   minBufferLength: 3,
   enabled: false,
+  excludeWords: [],
 };
 
 let wordBuffer = "";
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let isProcessing = false;
-let uiohookInstance: any = null;
+let isProcessingTimer: ReturnType<typeof setTimeout> | null = null; // safety timeout
+let lastCorrectionTime = 0;                                          // rate limiting
+let uiohookInstance: unknown = null;
 
-/**
- * เริ่ม auto-correction engine
- * ใช้ uiohook-napi ฟัง global keyboard events
- */
+// ─── Notification tracking ────────────────────────────────────────────────────
+let lastNotification: Notification | null = null;
+let lastNotificationTimer: ReturnType<typeof setTimeout> | null = null;
+
+// ─── Clipboard restore timer tracking ────────────────────────────────────────
+let clipboardRestoreTimer: ReturnType<typeof setTimeout> | null = null;
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
 export function startAutoCorrection(
   overrideConfig?: Partial<AutoCorrectionConfig>
 ): void {
@@ -147,81 +107,87 @@ export function startAutoCorrection(
   config.enabled = true;
 
   try {
-    // Dynamic import to handle case where uiohook-napi is not installed
-    const { uIOhook, UiohookKey } = require("uiohook-napi");
+    const { uIOhook } = require("uiohook-napi");
     uiohookInstance = uIOhook;
-
-    uIOhook.on("keydown", (event: any) => {
-      handleKeyDown(event);
-    });
-
+    uIOhook.on("keydown", handleKeyDown);
     uIOhook.start();
-    console.log("Auto-correction engine started");
-  } catch (err: any) {
-    console.error(
-      "Failed to start auto-correction (uiohook-napi not available):",
-      err.message
-    );
-    console.log(
-      "Auto-correction requires uiohook-napi. Install with: npm install uiohook-napi"
-    );
+    console.log("[PimPid] Auto-correction engine started");
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[PimPid] Failed to start auto-correction (uiohook-napi not available):", msg);
     config.enabled = false;
   }
 }
 
-/** หยุด auto-correction engine */
 export function stopAutoCorrection(): void {
   if (!config.enabled) return;
   config.enabled = false;
 
   if (uiohookInstance) {
     try {
-      uiohookInstance.stop();
-    } catch {
-      // ignore
-    }
+      (uiohookInstance as { stop: () => void }).stop();
+    } catch { /* ignore */ }
     uiohookInstance = null;
   }
 
   clearBuffer();
-  console.log("Auto-correction engine stopped");
+  clearProcessingLock();
+
+  // Cancel any pending clipboard restore
+  if (clipboardRestoreTimer) {
+    clearTimeout(clipboardRestoreTimer);
+    clipboardRestoreTimer = null;
+  }
+
+  console.log("[PimPid] Auto-correction engine stopped");
 }
 
 export function isAutoCorrectRunning(): boolean {
   return config.enabled;
 }
 
-function handleKeyDown(event: any): void {
+/** Update config without restarting the engine */
+export function updateAutoCorrectConfig(
+  updates: Partial<Pick<AutoCorrectionConfig, "debounceMs" | "minBufferLength">>
+): void {
+  config = { ...config, ...updates };
+}
+
+/** Update exclude words list live */
+export function setExcludeWords(words: string[]): void {
+  config.excludeWords = words;
+}
+
+// ─── Key handler ──────────────────────────────────────────────────────────────
+
+function handleKeyDown(event: {
+  keycode: number;
+  shiftKey?: boolean;
+  ctrlKey?: boolean;
+  altKey?: boolean;
+  metaKey?: boolean;
+}): void {
   if (isProcessing) return;
 
-  const keycode: number = event.keycode;
-  const shiftKey: boolean = event.shiftKey ?? false;
-  const ctrlKey: boolean = event.ctrlKey ?? false;
-  const altKey: boolean = event.altKey ?? false;
-  const metaKey: boolean = event.metaKey ?? false;
+  const { keycode, shiftKey = false, ctrlKey = false, altKey = false, metaKey = false } = event;
 
-  // Modifier keys held (Ctrl, Alt, Meta) → clear buffer
+  // Modifier combos → clear buffer (user doing shortcuts, not typing)
   if (ctrlKey || altKey || metaKey) {
     clearBuffer();
     return;
   }
 
-  // Navigation keys → clear buffer
   if (NAVIGATION_KEYS.has(keycode)) {
     clearBuffer();
     return;
   }
 
-  // Backspace → shrink buffer
   if (keycode === VC_BACKSPACE) {
-    if (wordBuffer.length > 0) {
-      wordBuffer = wordBuffer.slice(0, -1);
-    }
+    if (wordBuffer.length > 0) wordBuffer = wordBuffer.slice(0, -1);
     cancelDebounce();
     return;
   }
 
-  // Space → word boundary, trigger check immediately
   if (keycode === VC_SPACE) {
     if (wordBuffer.length >= config.minBufferLength) {
       triggerCorrection();
@@ -231,21 +197,18 @@ function handleKeyDown(event: any): void {
     return;
   }
 
-  // Map keycode to QWERTY character
   const mapping = KEYCODE_TO_CHAR[keycode];
   if (!mapping) return;
 
-  const char = shiftKey ? mapping[1] : mapping[0];
-  wordBuffer += char;
+  wordBuffer += shiftKey ? mapping[1] : mapping[0];
 
-  // Limit buffer size
-  if (wordBuffer.length > 64) {
-    wordBuffer = wordBuffer.slice(-64);
-  }
+  // Cap buffer to prevent runaway growth
+  if (wordBuffer.length > 64) wordBuffer = wordBuffer.slice(-64);
 
-  // Schedule debounce
   scheduleDebounce();
 }
+
+// ─── Buffer management ────────────────────────────────────────────────────────
 
 function clearBuffer(): void {
   wordBuffer = "";
@@ -261,13 +224,34 @@ function cancelDebounce(): void {
 
 function scheduleDebounce(): void {
   cancelDebounce();
-
   if (wordBuffer.length < config.minBufferLength) return;
-
-  debounceTimer = setTimeout(() => {
-    triggerCorrection();
-  }, config.debounceMs);
+  debounceTimer = setTimeout(triggerCorrection, config.debounceMs);
 }
+
+// ─── Rate limit + processing lock ─────────────────────────────────────────────
+
+function setProcessingLock(): void {
+  isProcessing = true;
+  // Safety timeout: always release lock after 4s regardless
+  if (isProcessingTimer) clearTimeout(isProcessingTimer);
+  isProcessingTimer = setTimeout(() => {
+    if (isProcessing) {
+      console.warn("[PimPid] isProcessing safety timeout triggered — resetting");
+      isProcessing = false;
+    }
+    isProcessingTimer = null;
+  }, 4000);
+}
+
+function clearProcessingLock(): void {
+  isProcessing = false;
+  if (isProcessingTimer) {
+    clearTimeout(isProcessingTimer);
+    isProcessingTimer = null;
+  }
+}
+
+// ─── Correction logic ─────────────────────────────────────────────────────────
 
 function triggerCorrection(): void {
   cancelDebounce();
@@ -278,50 +262,44 @@ function triggerCorrection(): void {
     return;
   }
 
-  // The word buffer contains QWERTY characters (physical key positions).
-  // Since the user might be typing with Thai layout active, the QWERTY chars
-  // represent the physical keys pressed. We need to check both directions:
-  //
-  // Case 1: User has Thai layout active but meant to type English
-  //   → The OS produced Thai chars, but we captured QWERTY physical keys
-  //   → The QWERTY text IS what they meant to type
-  //   → We need to check: does the Thai equivalent of these keys look like
-  //     intentional Thai? If NOT, the user probably meant to type these QWERTY chars
-  //
-  // Case 2: User has English layout active but meant to type Thai
-  //   → The OS produced English chars
-  //   → We captured the same QWERTY chars
-  //   → Convert QWERTY → Thai and check if it makes sense as Thai
-  //
-  // Since we capture physical key positions (QWERTY), we actually have the
-  // English text. We convert to Thai using our mapping and check both ways.
+  // Rate limit: skip if corrected too recently (prevents powershell pile-up)
+  const now = Date.now();
+  if (now - lastCorrectionTime < 500) {
+    clearBuffer();
+    return;
+  }
 
-  const asEnglish = word;
+  // Check exclude words
+  const excludeWords = config.excludeWords ?? [];
   const asThai = convertEnglishToThai(word);
+  if (excludeWords.some((w) => w.toLowerCase() === word.toLowerCase()
+    || w.toLowerCase() === asThai.toLowerCase())) {
+    clearBuffer();
+    return;
+  }
 
-  const replacement = checkReplacement(asEnglish, asThai);
+  const replacement = checkReplacement(word, asThai);
   if (!replacement) {
     clearBuffer();
     return;
   }
 
-  // Perform replacement
-  isProcessing = true;
+  lastCorrectionTime = now;
+  setProcessingLock();
   const deleteCount = [...word].length;
   wordBuffer = "";
 
   performReplacement(deleteCount, replacement.converted)
     .then(() => {
-      if (config.onCorrection) {
-        config.onCorrection(replacement.original, replacement.converted);
-      }
+      config.onCorrection?.(replacement.original, replacement.converted);
       showCorrectionNotification(replacement.original, replacement.converted);
     })
-    .catch((err) => {
-      console.error("Auto-correction replacement failed:", err);
+    .catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[PimPid] Auto-correction replacement failed:", msg);
     })
     .finally(() => {
-      isProcessing = false;
+      clearProcessingLock();
     });
 }
 
@@ -335,44 +313,20 @@ function checkReplacement(
   asEnglish: string,
   asThai: string
 ): ReplacementResult | null {
-  // Check if the Thai interpretation is a known Thai word
-  // If it is, the user probably meant to type Thai → don't correct
-  if (containsKnownThai(asThai)) {
-    return null;
-  }
+  // If Thai interpretation is a known Thai word → user meant to type Thai, skip
+  if (containsKnownThai(asThai)) return null;
+  if (hasWordWithPrefix(asThai)) return null;
 
-  // Check if Thai text is a prefix of a known word (user still typing)
-  if (hasWordWithPrefix(asThai)) {
-    return null;
-  }
-
-  // Check direction: is the QWERTY text valid English?
-  // If it looks like English characters were typed but they map to Thai → correct to Thai
-  // If Thai characters were typed but they map to English → correct to English
   const direction = dominantLanguage(asThai);
 
-  if (direction === ConversionDirection.ThaiToEnglish) {
-    // The Thai interpretation looks like Thai → convert to English
-    // But we already have the English (QWERTY). This means the user
-    // typed with English layout and the keys happen to map to Thai-looking text.
-    // This case is less common for auto-correction.
-    return null;
-  }
-
   if (direction === ConversionDirection.EnglishToThai) {
-    // The QWERTY text looks English, meaning user typed with English layout
-    // but the Thai conversion looks valid → user meant to type Thai
+    // QWERTY looks English, Thai conversion looks valid
     if (containsKnownThai(asThai)) {
-      return {
-        original: asEnglish,
-        converted: asThai,
-        direction: ConversionDirection.EnglishToThai,
-      };
+      return { original: asEnglish, converted: asThai, direction };
     }
   }
 
-  // Also check: the user typed QWERTY that looks like nonsense English
-  // but converting to Thai gives a known word
+  // Check: QWERTY maps to invalid Thai, but Thai→English gives valid English
   const thaiConverted = convertEnglishToThai(asEnglish);
   if (containsKnownThai(thaiConverted) && !looksLikeValidEnglish(asEnglish)) {
     return {
@@ -382,9 +336,7 @@ function checkReplacement(
     };
   }
 
-  // Check reverse: user typed with Thai layout but meant English
-  // In this case, we captured QWERTY keys, but the OS produced Thai.
-  // The Thai text doesn't make sense → convert back to English QWERTY
+  // Check: typed with Thai layout but meant English
   const englishFromThai = convertThaiToEnglish(asThai);
   if (
     looksLikeValidEnglish(englishFromThai) &&
@@ -401,172 +353,38 @@ function checkReplacement(
   return null;
 }
 
-/** ตรวจว่าข้อความดูเหมือนคำอังกฤษที่ถูกต้อง (heuristic) */
 function looksLikeValidEnglish(text: string): boolean {
   const trimmed = text.trim().toLowerCase();
-  if (!trimmed) return false;
-  // Must be all letters
-  if (!/^[a-z]+$/.test(trimmed)) return false;
-  // Must have vowels (a, e, i, o, u)
+  if (!trimmed || !/^[a-z]+$/.test(trimmed)) return false;
   if (!/[aeiou]/.test(trimmed)) return false;
-  // Must be at least 2 chars
   if (trimmed.length < 2) return false;
-  // Check against a small common English words list
   return COMMON_ENGLISH.has(trimmed) || trimmed.length >= 4;
 }
 
-// Common English words for basic validation
 const COMMON_ENGLISH = new Set([
-  "the",
-  "be",
-  "to",
-  "of",
-  "and",
-  "a",
-  "in",
-  "that",
-  "have",
-  "i",
-  "it",
-  "for",
-  "not",
-  "on",
-  "with",
-  "he",
-  "as",
-  "you",
-  "do",
-  "at",
-  "this",
-  "but",
-  "his",
-  "by",
-  "from",
-  "they",
-  "we",
-  "say",
-  "her",
-  "she",
-  "or",
-  "an",
-  "will",
-  "my",
-  "one",
-  "all",
-  "would",
-  "there",
-  "their",
-  "what",
-  "so",
-  "up",
-  "out",
-  "if",
-  "about",
-  "who",
-  "get",
-  "which",
-  "go",
-  "me",
-  "when",
-  "make",
-  "can",
-  "like",
-  "time",
-  "no",
-  "just",
-  "him",
-  "know",
-  "take",
-  "come",
-  "could",
-  "than",
-  "look",
-  "use",
-  "find",
-  "here",
-  "thing",
-  "many",
-  "well",
-  "also",
-  "now",
-  "new",
-  "way",
-  "may",
-  "then",
-  "how",
-  "its",
-  "see",
-  "did",
-  "been",
-  "has",
-  "are",
-  "was",
-  "were",
-  "had",
-  "is",
-  "am",
-  "let",
-  "put",
-  "set",
-  "run",
-  "got",
-  "yes",
-  "code",
-  "file",
-  "test",
-  "help",
-  "home",
-  "work",
-  "good",
-  "back",
-  "right",
-  "left",
-  "open",
-  "close",
-  "save",
-  "edit",
-  "view",
-  "next",
-  "last",
-  "name",
-  "type",
-  "data",
-  "list",
-  "text",
-  "more",
-  "some",
-  "very",
-  "much",
-  "still",
-  "over",
-  "after",
-  "only",
-  "even",
-  "such",
-  "most",
-  "into",
-  "other",
-  "your",
-  "them",
-  "these",
-  "those",
+  "the","be","to","of","and","a","in","that","have","i","it","for","not","on",
+  "with","he","as","you","do","at","this","but","his","by","from","they","we",
+  "say","her","she","or","an","will","my","one","all","would","there","their",
+  "what","so","up","out","if","about","who","get","which","go","me","when",
+  "make","can","like","time","no","just","him","know","take","come","could",
+  "than","look","use","find","here","thing","many","well","also","now","new",
+  "way","may","then","how","its","see","did","been","has","are","was","were",
+  "had","is","am","let","put","set","run","got","yes","code","file","test",
+  "help","home","work","good","back","right","left","open","close","save",
+  "edit","view","next","last","name","type","data","list","text","more","some",
+  "very","much","still","over","after","only","even","such","most","into",
+  "other","your","them","these","those",
 ]);
 
-/**
- * ลบคำเดิมแล้ว paste คำที่แปลงแล้ว
- * ใช้ PowerShell SendKeys บน Windows
- */
+// ─── Replacement execution ────────────────────────────────────────────────────
+
 async function performReplacement(
   deleteCount: number,
   newText: string
 ): Promise<void> {
-  // Save current clipboard
   const savedClipboard = clipboard.readText();
-
-  // Write converted text to clipboard
   clipboard.writeText(newText);
 
-  // Build SendKeys command: backspaces + Ctrl+V
   const bsCount = Math.min(deleteCount, 50);
   const sendKeysArg = `{BS ${bsCount}}^v`;
 
@@ -574,38 +392,56 @@ async function performReplacement(
     `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('${sendKeysArg}')`
   );
 
-  // Restore clipboard after delay
-  setTimeout(() => {
+  // Restore clipboard after delay — track timer to prevent multiple pending restores
+  if (clipboardRestoreTimer) clearTimeout(clipboardRestoreTimer);
+  clipboardRestoreTimer = setTimeout(() => {
     clipboard.writeText(savedClipboard);
-  }, 500);
+    clipboardRestoreTimer = null;
+  }, 600);
 }
 
 function runPowerShell(script: string): Promise<void> {
   return new Promise((resolve, reject) => {
     exec(
-      `powershell -NoProfile -Command "${script}"`,
+      `powershell -NoProfile -WindowStyle Hidden -Command "${script}"`,
       { timeout: 5000 },
       (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
+        if (error) reject(error);
+        else resolve();
       }
     );
   });
 }
 
+// ─── Notification (with leak prevention) ─────────────────────────────────────
+
 function showCorrectionNotification(
   original: string,
   converted: string
 ): void {
-  if (Notification.isSupported()) {
-    const notification = new Notification({
-      title: "PimPid Auto-Correct",
-      body: `${original} → ${converted}`,
-      silent: true,
-    });
-    notification.show();
+  if (!Notification.isSupported()) return;
+
+  // Close previous notification before showing new one
+  if (lastNotification) {
+    try { lastNotification.close(); } catch { /* ignore */ }
+    lastNotification = null;
   }
+  if (lastNotificationTimer) {
+    clearTimeout(lastNotificationTimer);
+    lastNotificationTimer = null;
+  }
+
+  const n = new Notification({
+    title: "PimPid Auto-Correct",
+    body: `${original} → ${converted}`,
+    silent: true,
+  });
+  n.show();
+  lastNotification = n;
+
+  // Auto-clear reference after notification expires
+  lastNotificationTimer = setTimeout(() => {
+    if (lastNotification === n) lastNotification = null;
+    lastNotificationTimer = null;
+  }, 5000);
 }

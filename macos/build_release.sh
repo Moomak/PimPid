@@ -6,8 +6,8 @@
 
 set -e
 
-VERSION="${PIMPID_VERSION:-1.6.2}"
-BUILD="${PIMPID_BUILD:-18}"
+VERSION="${PIMPID_VERSION:-1.6.3}"
+BUILD="${PIMPID_BUILD:-19}"
 
 # หา root directory ของโปรเจกต์
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
