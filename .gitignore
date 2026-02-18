@@ -65,3 +65,5 @@ skills/
 *credentials*
 *secrets*
 *.key
+
+.vscode/

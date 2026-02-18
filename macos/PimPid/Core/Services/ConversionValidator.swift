@@ -27,8 +27,8 @@ enum ConversionValidator {
             if !original.contains(where: { $0.isLetter }) {
                 return false
             }
-            // แปลงแล้วต้องมีความหมายเป็นคำไทย — ถ้าไม่รู้จัก (เช่น claude→cแสฟีกำ) ไม่แปลง
-            if !ThaiWordList.containsKnownThai(converted) {
+            // แปลงแล้วต้องมีความหมายเป็นคำไทย หรือเป็น prefix ของคำ (เช่น megd→ทำเก เป็นต้นของ ทำเกม)
+            if !ThaiWordList.containsKnownThai(converted) && !ThaiWordList.hasWordWithPrefix(converted) {
                 return false
             }
             if original.contains(where: { $0.isNumber }) { return true }
@@ -100,10 +100,8 @@ enum ConversionValidator {
     private static var spellCache: [String: Bool] = [:]
     private static let spellCacheMax = 500
 
-    /// Timeout สำหรับ spell check (task 18) — ไม่ให้คำยาวหรือข้อความใหญ่ค้าง
-    private static let spellCheckTimeoutSeconds: TimeInterval = 2.0
-
-    /// ตรวจว่าข้อความเป็นคำอังกฤษที่ยอมรับได้ (ใช้ NSSpellChecker + cache, มี timeout)
+    /// ตรวจว่าข้อความเป็นคำอังกฤษที่ยอมรับได้ (ใช้ NSSpellChecker + cache)
+    /// เรียกตรง ๆ ได้จากทุก thread เพราะ NSSpellChecker.checkSpelling(of:) ไม่ต้องการ main thread
     private static func isValidEnglish(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
@@ -113,14 +111,7 @@ enum ConversionValidator {
 
         if words.contains(where: { $0.count > 50 }) { return false }
 
-        var result = true
-        let semaphore = DispatchSemaphore(value: 0)
-        DispatchQueue.global(qos: .userInitiated).async {
-            result = isValidEnglishImpl(words: words)
-            semaphore.signal()
-        }
-        if semaphore.wait(timeout: .now() + spellCheckTimeoutSeconds) == .timedOut { return false }
-        return result
+        return isValidEnglishImpl(words: words)
     }
 
     private static func isValidEnglishImpl(words: [String]) -> Bool {

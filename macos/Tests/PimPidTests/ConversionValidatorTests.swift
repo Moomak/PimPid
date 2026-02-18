@@ -103,4 +103,9 @@ final class ConversionValidatorTests: XCTestCase {
         XCTAssertTrue(ConversionValidator.shouldReplace(converted: "เติม", direction: .englishToThai, original: "g9b,"))
         XCTAssertTrue(ConversionValidator.shouldReplace(converted: "จัน", direction: .englishToThai, original: "0yo"))
     }
+
+    /// ลืมสลับภาษา พิมพ์ megd (ตั้งใจทำเกม) — ต้องแก้เป็น ทำเก ได้ (prefix ของ ทำเกม)
+    func testEnglishToThai_AcceptPrefixOfKnownWord_MegdToTamGe() {
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "ทำเก", direction: .englishToThai, original: "megd"))
+    }
 }
