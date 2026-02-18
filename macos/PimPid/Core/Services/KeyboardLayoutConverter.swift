@@ -69,6 +69,32 @@ struct KeyboardLayoutConverter {
     private static let overlayCacheLock = NSLock()
     private static var overlayCache: [String: [Unicode.Scalar: Unicode.Scalar]?] = [:]
 
+    // MARK: - Effective map cache
+    private static let mapCacheLock = NSLock()
+    private static var _cachedLayoutName: String? = nil
+    private static var _cachedEffectiveE2T: [Unicode.Scalar: Unicode.Scalar]? = nil
+    private static var _cachedEffectiveT2E: [Unicode.Scalar: Unicode.Scalar]? = nil
+
+    /// สร้าง (E→T, T→E) หนึ่งครั้งต่อ layout name แล้ว cache ไว้ — เร็วกว่า rebuild ทุกครั้ง
+    private static func effectiveMaps() -> (e2t: [Unicode.Scalar: Unicode.Scalar], t2e: [Unicode.Scalar: Unicode.Scalar]) {
+        let name = currentThaiLayoutName
+        mapCacheLock.lock()
+        defer { mapCacheLock.unlock() }
+        if name == _cachedLayoutName, let e2t = _cachedEffectiveE2T, let t2e = _cachedEffectiveT2E {
+            return (e2t, t2e)
+        }
+        var e2t = englishToThai
+        if let overlay = loadBundleMapping(forLayoutName: name) {
+            for (k, v) in overlay { e2t[k] = v }
+        }
+        var t2e: [Unicode.Scalar: Unicode.Scalar] = [:]
+        for (eng, thai) in e2t { t2e[thai] = eng }
+        _cachedEffectiveE2T = e2t
+        _cachedEffectiveT2E = t2e
+        _cachedLayoutName = name
+        return (e2t, t2e)
+    }
+
     private static func loadBundleMapping(forLayoutName name: String?) -> [Unicode.Scalar: Unicode.Scalar]? {
         let key = name ?? "kedmanee"
         overlayCacheLock.lock()
@@ -111,25 +137,11 @@ struct KeyboardLayoutConverter {
         UserDefaults.standard.string(forKey: PimPidKeys.thaiKeyboardLayout) ?? "kedmanee"
     }
 
-    /// English → Thai ที่ใช้จริง (built-in + bundle overlay ตาม layout ที่เลือก)
-    private static var effectiveEnglishToThai: [Unicode.Scalar: Unicode.Scalar] {
-        let overlay = loadBundleMapping(forLayoutName: currentThaiLayoutName)
-        guard let o = overlay else { return englishToThai }
-        var map = englishToThai
-        for (k, v) in o {
-            map[k] = v
-        }
-        return map
-    }
+    /// English → Thai ที่ใช้จริง (จาก cache — rebuild เมื่อ layout เปลี่ยนเท่านั้น)
+    private static var effectiveEnglishToThai: [Unicode.Scalar: Unicode.Scalar] { effectiveMaps().e2t }
 
-    /// Thai → English ที่ใช้จริง (inverted จาก effectiveEnglishToThai)
-    private static var effectiveThaiToEnglish: [Unicode.Scalar: Unicode.Scalar] {
-        var map: [Unicode.Scalar: Unicode.Scalar] = [:]
-        for (eng, thai) in effectiveEnglishToThai {
-            map[thai] = eng
-        }
-        return map
-    }
+    /// Thai → English ที่ใช้จริง (จาก cache — rebuild เมื่อ layout เปลี่ยนเท่านั้น)
+    private static var effectiveThaiToEnglish: [Unicode.Scalar: Unicode.Scalar] { effectiveMaps().t2e }
 
     /// ตรวจว่าเป็นตัวอักษรไทย (ช่วง Unicode Thai)
     static func isThai(_ c: Character) -> Bool {

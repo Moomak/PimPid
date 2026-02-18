@@ -334,15 +334,7 @@ final class AutoCorrectionEngine {
         let converted = KeyboardLayoutConverter.convertAuto(trimmed)
         guard converted != trimmed else { return nil }
 
-        var shouldReplace = false
-        if Thread.isMainThread {
-            shouldReplace = ConversionValidator.shouldReplace(converted: converted, direction: direction, original: trimmed)
-        } else {
-            DispatchQueue.main.sync {
-                shouldReplace = ConversionValidator.shouldReplace(converted: converted, direction: direction, original: trimmed)
-            }
-        }
-        guard shouldReplace else { return nil }
+        guard ConversionValidator.shouldReplace(converted: converted, direction: direction, original: trimmed) else { return nil }
 
         return ReplacementInfo(converted: converted, direction: direction)
     }

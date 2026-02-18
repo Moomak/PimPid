@@ -27,12 +27,14 @@ enum TextManipulator {
         }
     }
 
+    // Reuse a fixed custom pasteboard ระหว่าง replace (ปลอดภัยเพราะ _isProcessing ป้องกัน concurrent replacements)
+    private static let clipboardBackup = NSPasteboard(name: NSPasteboard.Name("com.pimpid.clipboard-backup"))
+
     /// แทนที่ข้อความโดยลบคำเดิมแล้ว paste คำใหม่ผ่าน clipboard (Cmd+V)
     /// Task 26: Save/Restore clipboard หลาย type; Task 27: ใช้ custom pasteboard เก็บของ user ระหว่าง replace
     static func replaceWithClipboard(deleteCount: Int, text: String) {
         let general = NSPasteboard.general
-        let customName = NSPasteboard.Name("com.pimpid.replace.\(UUID().uuidString)")
-        let custom = NSPasteboard(name: customName)
+        let custom = clipboardBackup
 
         // Save current clipboard ไป custom pasteboard (ลดโอกาสแอปอื่นอ่าน/เขียน general ระหว่าง replace)
         var savedItems: [[(type: NSPasteboard.PasteboardType, data: Data)]] = []

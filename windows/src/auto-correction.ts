@@ -315,7 +315,8 @@ function checkReplacement(
 ): ReplacementResult | null {
   // If Thai interpretation is a known Thai word → user meant to type Thai, skip
   if (containsKnownThai(asThai)) return null;
-  if (hasWordWithPrefix(asThai)) return null;
+  // Skip when user typed Thai and it's a prefix of a word (กำลังพิมพ์อยู่)
+  if (hasWordWithPrefix(asThai) && typedTextContainsThai(asEnglish)) return null;
 
   const direction = dominantLanguage(asThai);
 
@@ -326,9 +327,11 @@ function checkReplacement(
     }
   }
 
-  // Check: QWERTY maps to invalid Thai, but Thai→English gives valid English
+  // Check: QWERTY maps to invalid Thai, but Thai→English gives valid English (หรือผลเป็น prefix ของคำ เช่น megd→ทำเก)
   const thaiConverted = convertEnglishToThai(asEnglish);
-  if (containsKnownThai(thaiConverted) && !looksLikeValidEnglish(asEnglish)) {
+  const thaiConvertedValid =
+    containsKnownThai(thaiConverted) || hasWordWithPrefix(thaiConverted);
+  if (thaiConvertedValid && !looksLikeValidEnglish(asEnglish)) {
     return {
       original: asEnglish,
       converted: thaiConverted,
@@ -351,6 +354,11 @@ function checkReplacement(
   }
 
   return null;
+}
+
+/** ตรวจว่าข้อความที่พิมพ์มีตัวอักษรไทย (ใช้ตัดว่าเป็นคำที่กำลังพิมพ์ไทยอยู่หรือพิมพ์อังกฤษผิด layout) */
+function typedTextContainsThai(text: string): boolean {
+  return /[\u0E01-\u0E5B]/.test(text);
 }
 
 function looksLikeValidEnglish(text: string): boolean {
