@@ -19,7 +19,7 @@ export interface StoreData {
 
 const DEFAULTS: StoreData = {
   language: "th",
-  isEnabled: true,
+  isEnabled: false,
   autoCorrectEnabled: false,
   autoCorrectDebounceMs: 300,
   autoCorrectMinChars: 3,

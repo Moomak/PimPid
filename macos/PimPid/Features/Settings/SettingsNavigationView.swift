@@ -122,20 +122,8 @@ struct GeneralSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle(String(localized: "general.toggle", bundle: appState.localizedBundle), isOn: $appState.isEnabled)
-                    .toggleStyle(.switch)
-
-                Text(String(localized: "general.description", bundle: appState.localizedBundle))
-                    .font(.system(size: 12 * fontScale))
-                    .foregroundStyle(.secondary)
-            } header: {
-                Text(String(localized: "general.section.basic", bundle: appState.localizedBundle))
-                    .font(.system(size: 13 * fontScale, weight: .semibold))
-            }
-
-            Section {
                 LabeledContent(String(localized: "general.version", bundle: appState.localizedBundle), value: Bundle.main.appVersion)
-                LabeledContent(String(localized: "general.status", bundle: appState.localizedBundle), value: appState.isEnabled ? String(localized: "general.status.active", bundle: appState.localizedBundle) : String(localized: "general.status.paused", bundle: appState.localizedBundle))
+                LabeledContent(String(localized: "general.status", bundle: appState.localizedBundle), value: appState.autoCorrectEnabled ? String(localized: "general.status.active", bundle: appState.localizedBundle) : String(localized: "general.status.paused", bundle: appState.localizedBundle))
             } header: {
                 Text(String(localized: "section.info", bundle: appState.localizedBundle))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
@@ -143,7 +131,7 @@ struct GeneralSettingsView: View {
 
             Section {
                 Button(String(localized: "button.use_defaults", bundle: appState.localizedBundle)) {
-                    appState.isEnabled = true
+                    appState.autoCorrectEnabled = false
                 }
                 .buttonStyle(.bordered)
             } header: {

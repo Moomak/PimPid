@@ -280,18 +280,6 @@
         <div class="section-title" id="lbl-basic">การทำงานพื้นฐาน</div>
         <div class="section-body">
 
-          <!-- Enable toggle -->
-          <div class="row">
-            <div class="row-label">
-              <div class="row-label-main" id="lbl-enable">เปิดใช้งาน PimPid</div>
-              <div class="row-label-hint" id="lbl-enable-desc">เมื่อเปิดใช้งาน PimPid จะทำงานในเบื้องหลัง</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="chk-enable" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
           <!-- Language picker -->
           <div class="row">
             <div class="row-label">
@@ -460,8 +448,6 @@ function applyLang() {
   document.getElementById('tab-autocorrect').textContent = L('tabAC');
   document.getElementById('tab-exclude').textContent = L('tabExclude');
   document.getElementById('lbl-basic').textContent = L('sectionBasic');
-  document.getElementById('lbl-enable').textContent = L('lblEnable');
-  document.getElementById('lbl-enable-desc').textContent = L('lblEnableDesc');
   document.getElementById('lbl-language').textContent = L('lblLanguage');
   document.getElementById('lbl-language-hint').textContent = L('lblLangHint');
   document.getElementById('lbl-shortcut').textContent = L('lblShortcut');
@@ -486,7 +472,6 @@ function applyLang() {
 
 function applySettings(settings) {
   currentSettings = settings;
-  document.getElementById('chk-enable').checked = settings.isEnabled;
   document.getElementById('chk-autocorrect').checked = settings.autoCorrectEnabled;
   document.getElementById('sel-language').value = settings.language;
   document.getElementById('inp-delay').value = settings.autoCorrectDebounceMs;
@@ -552,10 +537,6 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // ─── Control events ───────────────────────────────────────────────────────────
-document.getElementById('chk-enable').addEventListener('change', e => {
-  api.setSetting('isEnabled', e.target.checked);
-});
-
 document.getElementById('chk-autocorrect').addEventListener('change', e => {
   api.setSetting('autoCorrectEnabled', e.target.checked);
 });

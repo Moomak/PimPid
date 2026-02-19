@@ -43,7 +43,7 @@ struct MenuBarContentView: View {
                         .font(.system(size: 16 * fontScale, weight: .bold))
                     Spacer()
                     Circle()
-                        .fill(appState.isEnabled ? Color.green : Color.gray)
+                        .fill(appState.autoCorrectEnabled ? Color.green : Color.gray)
                         .frame(width: 8, height: 8)
                 }
 
@@ -57,19 +57,6 @@ struct MenuBarContentView: View {
 
             // Quick toggles
             VStack(spacing: 10) {
-                Toggle(isOn: $appState.isEnabled) {
-                    HStack {
-                        Image(systemName: "power")
-                            .font(.system(size: 12))
-                            .foregroundColor(appState.isEnabled ? .green : .gray)
-                        Text(String(localized: "toggle.enable", bundle: appState.localizedBundle))
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                }
-                .toggleStyle(.switch)
-                .accessibilityLabel(String(localized: "a11y.toggle_enable", bundle: appState.localizedBundle))
-                .accessibilityHint(String(localized: "a11y.toggle_hint", bundle: appState.localizedBundle))
-
                 Toggle(isOn: $appState.autoCorrectEnabled) {
                     HStack {
                         Image(systemName: "bolt.fill")
@@ -118,7 +105,7 @@ struct MenuBarContentView: View {
                 Task { @MainActor in
                     await TextReplacementService.convertSelectedText(
                         excludeStore: ExcludeListStore.shared,
-                        enabled: appState.isEnabled,
+                        enabled: appState.autoCorrectEnabled,
                         direction: nil
                     )
                 }
@@ -136,7 +123,7 @@ struct MenuBarContentView: View {
             }
             .buttonStyle(.plain)
             .padding(.vertical, 4)
-            .disabled(!appState.isEnabled)
+            .disabled(!appState.autoCorrectEnabled)
             .accessibilityLabel("Convert Selected Text, \(KeyboardShortcutManager.shortcutDisplayString())")
 
             Divider()

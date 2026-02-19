@@ -22,11 +22,11 @@ struct PimPidApp: App {
     }
 
     private var menuBarIconName: String {
-        appState.isEnabled ? "character.bubble.fill" : "character.bubble"
+        appState.autoCorrectEnabled ? "character.bubble.fill" : "character.bubble"
     }
 
     private var menuBarIconColor: Color {
-        if appState.isEnabled, appState.autoCorrectEnabled { return .orange }
+        if appState.autoCorrectEnabled { return .orange }
         return .primary
     }
 
@@ -89,9 +89,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         )
 
+        let autoCorrectEnabled = UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled)
+        UserDefaults.standard.set(autoCorrectEnabled, forKey: PimPidKeys.enabled)
+
         // Initialize auto-correction engine if enabled (read UserDefaults directly)
-        if UserDefaults.standard.bool(forKey: PimPidKeys.enabled)
-            && UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled) {
+        if autoCorrectEnabled {
             AutoCorrectionEngine.shared.start()
         }
 
@@ -150,8 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func appDidBecomeActive() {
-        if UserDefaults.standard.bool(forKey: PimPidKeys.enabled),
-           UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled),
+        if UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled),
            AccessibilityHelper.isAccessibilityTrusted,
            !AutoCorrectionEngine.shared.isRunning {
             AutoCorrectionEngine.shared.start()

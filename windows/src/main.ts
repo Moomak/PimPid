@@ -82,12 +82,38 @@ function createTray(): void {
   updateTrayMenu();
 }
 
+function setAutoCorrectMasterEnabled(enabled: boolean): void {
+  if (enabled) {
+    if (!isAutoCorrectRunning()) {
+      startAutoCorrection({
+        enabled: true,
+        debounceMs: store.get("autoCorrectDebounceMs"),
+        minBufferLength: store.get("autoCorrectMinChars"),
+        excludeWords: store.get("excludeWords"),
+        onCorrection: (original, converted) => {
+          console.log(`[PimPid] Auto-corrected: ${original} → ${converted}`);
+        },
+      });
+    }
+
+    const running = isAutoCorrectRunning();
+    store.set("autoCorrectEnabled", running);
+    store.set("isEnabled", running);
+    return;
+  }
+
+  if (isAutoCorrectRunning()) {
+    stopAutoCorrection();
+  }
+  store.set("autoCorrectEnabled", false);
+  store.set("isEnabled", false);
+}
+
 // ─── Tray menu (i18n-aware) ───────────────────────────────────────────────────
 function updateTrayMenu(): void {
   if (!tray) return;
 
-  const isEnabled = store.get("isEnabled");
-  const autoCorrectEnabled = isAutoCorrectRunning();
+  const autoCorrectEnabled = store.get("autoCorrectEnabled");
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -96,30 +122,16 @@ function updateTrayMenu(): void {
     },
     { type: "separator" },
     {
-      label: isEnabled ? t("menu.enable.on") : t("menu.enable.off"),
-      click: () => {
-        const next = !store.get("isEnabled");
-        store.set("isEnabled", next);
-        if (!next && isAutoCorrectRunning()) {
-          stopAutoCorrection();
-          store.set("autoCorrectEnabled", false);
-        }
-        updateTrayMenu();
-        broadcastSettings();
-      },
-    },
-    {
       label: autoCorrectEnabled
         ? t("menu.autocorrect.on")
         : t("menu.autocorrect.off"),
       click: toggleAutoCorrect,
-      enabled: isEnabled,
     },
     { type: "separator" },
     {
       label: t("menu.convert"),
       click: () => convertSelectedText(),
-      enabled: isEnabled,
+      enabled: autoCorrectEnabled,
     },
     { type: "separator" },
     {
@@ -138,31 +150,14 @@ function updateTrayMenu(): void {
 
 // ─── Auto-correct toggle ──────────────────────────────────────────────────────
 function toggleAutoCorrect(): void {
-  const isEnabled = store.get("isEnabled");
-  if (!isEnabled) return;
-
-  if (isAutoCorrectRunning()) {
-    stopAutoCorrection();
-    store.set("autoCorrectEnabled", false);
-  } else {
-    startAutoCorrection({
-      enabled: true,
-      debounceMs: store.get("autoCorrectDebounceMs"),
-      minBufferLength: store.get("autoCorrectMinChars"),
-      excludeWords: store.get("excludeWords"),
-      onCorrection: (original, converted) => {
-        console.log(`[PimPid] Auto-corrected: ${original} → ${converted}`);
-      },
-    });
-    store.set("autoCorrectEnabled", isAutoCorrectRunning());
-  }
+  setAutoCorrectMasterEnabled(!store.get("autoCorrectEnabled"));
   updateTrayMenu();
   broadcastSettings();
 }
 
 // ─── Convert selected text ────────────────────────────────────────────────────
 async function convertSelectedText(): Promise<void> {
-  if (!store.get("isEnabled")) return;
+  if (!store.get("autoCorrectEnabled")) return;
 
   const savedClipboard = clipboard.readText();
   clipboard.writeText("");
@@ -288,55 +283,39 @@ function setupIPC(): void {
       ]);
       if (!VALID_KEYS.has(key)) return;
 
-      // Apply to store
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (store as any).set(key, value);
-
       // Side effects
       switch (key) {
         case "language":
           if (value === "th" || value === "en") {
+            store.set("language", value);
             setLang(value);
             updateTrayMenu();
           }
           break;
 
         case "isEnabled":
-          if (!value && isAutoCorrectRunning()) {
-            stopAutoCorrection();
-            store.set("autoCorrectEnabled", false);
-          }
-          updateTrayMenu();
-          break;
-
         case "autoCorrectEnabled":
-          if (value && store.get("isEnabled")) {
-            if (!isAutoCorrectRunning()) {
-              startAutoCorrection({
-                enabled: true,
-                debounceMs: store.get("autoCorrectDebounceMs"),
-                minBufferLength: store.get("autoCorrectMinChars"),
-                excludeWords: store.get("excludeWords"),
-              });
-              store.set("autoCorrectEnabled", isAutoCorrectRunning());
-            }
-          } else if (!value && isAutoCorrectRunning()) {
-            stopAutoCorrection();
-            store.set("autoCorrectEnabled", false);
-          }
+          setAutoCorrectMasterEnabled(Boolean(value));
           updateTrayMenu();
           break;
 
         case "autoCorrectDebounceMs":
+          store.set("autoCorrectDebounceMs", value as number);
           updateAutoCorrectConfig({ debounceMs: value as number });
           break;
 
         case "autoCorrectMinChars":
+          store.set("autoCorrectMinChars", value as number);
           updateAutoCorrectConfig({ minBufferLength: value as number });
           break;
 
         case "excludeWords":
+          store.set("excludeWords", value as string[]);
           setExcludeWords(value as string[]);
+          break;
+
+        case "shortcut":
+          store.set("shortcut", value as string);
           break;
       }
 
@@ -348,6 +327,9 @@ function setupIPC(): void {
 // ─── App lifecycle ────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   initStore();
+
+  // Keep legacy isEnabled in sync with the single Auto-Correct toggle.
+  store.set("isEnabled", store.get("autoCorrectEnabled"));
 
   // Apply persisted language
   const lang = store.get("language");
@@ -365,16 +347,9 @@ app.whenReady().then(() => {
     console.error(`[PimPid] Failed to register shortcut: ${shortcut}`);
   }
 
-  // Restore auto-correct if it was enabled
-  if (store.get("autoCorrectEnabled") && store.get("isEnabled")) {
-    startAutoCorrection({
-      enabled: true,
-      debounceMs: store.get("autoCorrectDebounceMs"),
-      minBufferLength: store.get("autoCorrectMinChars"),
-      excludeWords: store.get("excludeWords"),
-    });
-    // If uiohook isn't available, auto-correct will be disabled
-    store.set("autoCorrectEnabled", isAutoCorrectRunning());
+  // Restore auto-correct if it was enabled.
+  if (store.get("autoCorrectEnabled")) {
+    setAutoCorrectMasterEnabled(true);
     updateTrayMenu();
   }
 

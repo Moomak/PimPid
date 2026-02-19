@@ -6,13 +6,11 @@ final class AppState: ObservableObject {
     @Published var isEnabled: Bool {
         didSet {
             UserDefaults.standard.set(isEnabled, forKey: PimPidKeys.enabled)
-            if isEnabled {
-                if autoCorrectEnabled {
-                    AutoCorrectionEngine.shared.start()
-                }
-            } else {
-                AutoCorrectionEngine.shared.stop()
+            guard isEnabled == autoCorrectEnabled else {
+                autoCorrectEnabled = isEnabled
+                return
             }
+            applyAutoCorrectionRuntimeState()
         }
     }
 
@@ -20,11 +18,11 @@ final class AppState: ObservableObject {
     @Published var autoCorrectEnabled: Bool {
         didSet {
             UserDefaults.standard.set(autoCorrectEnabled, forKey: PimPidKeys.autoCorrectEnabled)
-            if autoCorrectEnabled && isEnabled {
-                AutoCorrectionEngine.shared.start()
-            } else {
-                AutoCorrectionEngine.shared.stop()
+            guard autoCorrectEnabled == isEnabled else {
+                isEnabled = autoCorrectEnabled
+                return
             }
+            applyAutoCorrectionRuntimeState()
         }
     }
 
@@ -87,6 +85,14 @@ final class AppState: ObservableObject {
     /// so that language changes take effect immediately (no restart needed).
     @Published private(set) var localizedBundle: Bundle = .module
 
+    private func applyAutoCorrectionRuntimeState() {
+        if autoCorrectEnabled && isEnabled {
+            AutoCorrectionEngine.shared.start()
+        } else {
+            AutoCorrectionEngine.shared.stop()
+        }
+    }
+
     /// Loads the .lproj bundle for `language` directly, bypassing Apple's cached
     /// bundle localization system. Falls back to `.module` if not found.
     static func makeLocalizedBundle(for language: String) -> Bundle {
@@ -97,17 +103,14 @@ final class AppState: ObservableObject {
     }
 
     init() {
-        // Initialize isEnabled
-        if UserDefaults.standard.object(forKey: PimPidKeys.enabled) == nil {
-            UserDefaults.standard.set(true, forKey: PimPidKeys.enabled)
-        }
-        self.isEnabled = UserDefaults.standard.bool(forKey: PimPidKeys.enabled)
-
         // Initialize auto-correction settings
         if UserDefaults.standard.object(forKey: PimPidKeys.autoCorrectEnabled) == nil {
             UserDefaults.standard.set(false, forKey: PimPidKeys.autoCorrectEnabled) // Default: OFF
         }
-        self.autoCorrectEnabled = UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled)
+        let savedAutoCorrectEnabled = UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled)
+        self.isEnabled = savedAutoCorrectEnabled
+        self.autoCorrectEnabled = savedAutoCorrectEnabled
+        UserDefaults.standard.set(savedAutoCorrectEnabled, forKey: PimPidKeys.enabled)
 
         if UserDefaults.standard.object(forKey: PimPidKeys.autoCorrectDelay) == nil {
             UserDefaults.standard.set(0.0, forKey: PimPidKeys.autoCorrectDelay) // Default: 0ms

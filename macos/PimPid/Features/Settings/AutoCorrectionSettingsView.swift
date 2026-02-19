@@ -3,8 +3,16 @@ import SwiftUI
 /// Auto-correction settings view
 struct AutoCorrectionSettingsView: View {
     @EnvironmentObject var appState: AppState
+    @AppStorage(PimPidKeys.autoCorrectMinChars) private var autoCorrectMinChars = 3
     @State private var newAppBundleID = ""
     @State private var showRunningAppPicker = false
+
+    private var minCharsSelection: Binding<Int> {
+        Binding(
+            get: { min(max(autoCorrectMinChars, 2), 5) },
+            set: { autoCorrectMinChars = min(max($0, 2), 5) }
+        )
+    }
 
     var body: some View {
         Form {
@@ -54,13 +62,7 @@ struct AutoCorrectionSettingsView: View {
                         Text(String(localized: "autocorrect.min_chars", bundle: appState.localizedBundle))
                             .font(.system(size: 13))
                         Spacer()
-                        Picker("", selection: Binding(
-                            get: {
-                                let n = UserDefaults.standard.object(forKey: PimPidKeys.autoCorrectMinChars).flatMap { $0 as? NSNumber }.map(\.intValue)
-                                return n.flatMap(Int.init) ?? 3
-                            },
-                            set: { UserDefaults.standard.set($0, forKey: PimPidKeys.autoCorrectMinChars) }
-                        )) {
+                        Picker("", selection: minCharsSelection) {
                             Text(String(format: String(localized: "autocorrect.chars_unit", bundle: appState.localizedBundle), 2)).tag(2)
                             Text(String(format: String(localized: "autocorrect.chars_unit", bundle: appState.localizedBundle), 3)).tag(3)
                             Text(String(format: String(localized: "autocorrect.chars_unit", bundle: appState.localizedBundle), 4)).tag(4)
@@ -221,7 +223,7 @@ struct AutoCorrectionSettingsView: View {
             Section {
                 Button(String(localized: "button.use_defaults", bundle: appState.localizedBundle)) {
                     appState.autoCorrectDelay = 0
-                    UserDefaults.standard.set(3, forKey: PimPidKeys.autoCorrectMinChars)
+                    autoCorrectMinChars = 3
                     appState.autoCorrectSoundEnabled = false
                     appState.autoCorrectVisualFeedback = true
                     appState.excludedApps = []
