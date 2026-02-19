@@ -4,13 +4,13 @@ import Foundation
 /// ดึงข้อความที่เลือกจากแอปที่โฟกัส แล้วแทนที่ด้วยข้อความที่แปลงแล้ว (ใช้ Cmd+C แล้ว Cmd+V)
 enum TextReplacementService {
     /// ดึงข้อความที่เลือกผ่าน pasteboard (ผู้ใช้กด Cmd+C หรือเรา simulate Copy แล้วอ่าน)
-    static func getSelectedTextViaPasteboard() -> String? {
+    static func getSelectedTextViaPasteboard() async -> String? {
         let pasteboard = NSPasteboard.general
         let oldCount = pasteboard.changeCount
         // Simulate Copy
         let source = CGEventSource(stateID: .combinedSessionState)
         keyPress(keyCode: 8, modifier: .maskCommand, source: source) // Cmd+C (C = 8)
-        Thread.sleep(forTimeInterval: 0.2)
+        try? await Task.sleep(nanoseconds: 200_000_000)
         if pasteboard.changeCount != oldCount, let str = pasteboard.string(forType: .string) {
             return str
         }
@@ -32,9 +32,9 @@ enum TextReplacementService {
         excludeStore: ExcludeListStore,
         enabled: Bool,
         direction: KeyboardLayoutConverter.ConversionDirection? = nil
-    ) {
+    ) async {
         guard enabled else { return }
-        let original = getSelectedTextViaPasteboard()
+        let original = await getSelectedTextViaPasteboard()
         guard let raw = original?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return }
         if excludeStore.shouldExclude(text: raw) { return }
         let directionUsed: KeyboardLayoutConverter.ConversionDirection

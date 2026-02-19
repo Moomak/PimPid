@@ -26,6 +26,7 @@ let settingsWin: BrowserWindow | null = null;
 
 // ─── Notification tracking (prevent leak) ─────────────────────────────────────
 let lastNotification: Notification | null = null;
+let lastNotificationTimer: ReturnType<typeof setTimeout> | null = null;
 
 function showNotification(title: string, body: string): void {
   if (!Notification.isSupported()) return;
@@ -33,12 +34,17 @@ function showNotification(title: string, body: string): void {
     try { lastNotification.close(); } catch { /* ignore */ }
     lastNotification = null;
   }
+  if (lastNotificationTimer) {
+    clearTimeout(lastNotificationTimer);
+    lastNotificationTimer = null;
+  }
   const n = new Notification({ title, body, silent: true });
   n.show();
   lastNotification = n;
   // Auto-clear reference after it should have expired
-  setTimeout(() => {
+  lastNotificationTimer = setTimeout(() => {
     if (lastNotification === n) lastNotification = null;
+    lastNotificationTimer = null;
   }, 5000);
 }
 
@@ -208,9 +214,10 @@ function simulateKeyCombo(key: string): Promise<void> {
       key === "c"
         ? `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("^c")`
         : `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("^v")`;
+    const encoded = Buffer.from(psScript, "utf16le").toString("base64");
 
     exec(
-      `powershell -NoProfile -WindowStyle Hidden -Command "${psScript}"`,
+      `powershell -NoProfile -WindowStyle Hidden -EncodedCommand ${encoded}`,
       { timeout: 5000 },
       (error: Error | null) => {
         if (error) console.error(`[PimPid] SendKeys ${key} failed:`, error.message);
@@ -379,8 +386,13 @@ app.on("will-quit", () => {
   if (isAutoCorrectRunning()) {
     stopAutoCorrection();
   }
+  if (lastNotificationTimer) {
+    clearTimeout(lastNotificationTimer);
+    lastNotificationTimer = null;
+  }
   if (lastNotification) {
     try { lastNotification.close(); } catch { /* ignore */ }
+    lastNotification = null;
   }
 });
 

@@ -90,7 +90,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         // Initialize auto-correction engine if enabled (read UserDefaults directly)
-        if UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled) {
+        if UserDefaults.standard.bool(forKey: PimPidKeys.enabled)
+            && UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled) {
             AutoCorrectionEngine.shared.start()
         }
 
@@ -149,7 +150,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func appDidBecomeActive() {
-        if UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled),
+        if UserDefaults.standard.bool(forKey: PimPidKeys.enabled),
+           UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled),
            AccessibilityHelper.isAccessibilityTrusted,
            !AutoCorrectionEngine.shared.isRunning {
             AutoCorrectionEngine.shared.start()

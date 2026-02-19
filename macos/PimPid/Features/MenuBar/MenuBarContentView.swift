@@ -115,11 +115,13 @@ struct MenuBarContentView: View {
 
             // Convert Selected Text
             Button(action: {
-                TextReplacementService.convertSelectedText(
-                    excludeStore: ExcludeListStore.shared,
-                    enabled: appState.isEnabled,
-                    direction: nil
-                )
+                Task { @MainActor in
+                    await TextReplacementService.convertSelectedText(
+                        excludeStore: ExcludeListStore.shared,
+                        enabled: appState.isEnabled,
+                        direction: nil
+                    )
+                }
             }) {
                 HStack {
                     Image(systemName: "arrow.left.arrow.right")

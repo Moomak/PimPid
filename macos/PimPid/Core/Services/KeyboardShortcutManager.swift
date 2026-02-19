@@ -28,7 +28,7 @@ final class KeyboardShortcutManager {
 
             DispatchQueue.main.async {
                 Task { @MainActor in
-                    TextReplacementService.convertSelectedText(
+                    await TextReplacementService.convertSelectedText(
                         excludeStore: ExcludeListStore.shared,
                         enabled: UserDefaults.standard.bool(forKey: PimPidKeys.enabled),
                         direction: nil

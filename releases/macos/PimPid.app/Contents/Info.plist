@@ -4,11 +4,11 @@
 <dict>
 	<key>CFBundleExecutable</key>
 	<string>PimPid</string>
-	<key>CFBundleIconFile</key>
-	<string>PimPid</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.pimpid</string>
 	<key>CFBundleName</key>
+	<string>PimPid</string>
+	<key>CFBundleIconFile</key>
 	<string>PimPid</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
@@ -18,30 +18,23 @@
 	<string>20</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
-	<key>LSUIElement</key>
-	<true/>
 	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>LSUIElement</key>
 	<true/>
 	<key>NSServices</key>
 	<array>
 		<dict>
 			<key>NSMenuItem</key>
-			<dict>
-				<key>default</key>
-				<string>Convert Selected Text - PimPid</string>
-			</dict>
+			<dict><key>default</key><string>Convert Selected Text - PimPid</string></dict>
 			<key>NSMessage</key>
 			<string>convertSelectedText</string>
 			<key>NSPortName</key>
 			<string>PimPid</string>
-			<key>NSReturnTypes</key>
-			<array>
-				<string>NSPasteboardTypeString</string>
-			</array>
 			<key>NSSendTypes</key>
-			<array>
-				<string>NSPasteboardTypeString</string>
-			</array>
+			<array><string>NSPasteboardTypeString</string></array>
+			<key>NSReturnTypes</key>
+			<array><string>NSPasteboardTypeString</string></array>
 		</dict>
 	</array>
 </dict>

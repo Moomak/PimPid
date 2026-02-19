@@ -21,7 +21,6 @@ import { exec } from "child_process";
 import {
   convertEnglishToThai,
   convertThaiToEnglish,
-  dominantLanguage,
   ConversionDirection,
 } from "./converter";
 import { containsKnownThai, hasWordWithPrefix } from "./thai-words";
@@ -45,6 +44,11 @@ const NAVIGATION_KEYS = new Set([
   VC_LEFT, VC_RIGHT, VC_UP, VC_DOWN, VC_ESCAPE, VC_ENTER,
   VC_TAB, VC_HOME, VC_END, VC_PAGE_UP, VC_PAGE_DOWN,
 ]);
+
+const MAX_BUFFER_LENGTH = 50;
+const MAX_DELETE_COUNT = 50;
+const THAI_LAYOUT_IDS = new Set(["041E"]);
+const KEYBOARD_LAYOUT_CACHE_MS = 800;
 
 // uiohook keycode → QWERTY character mapping [unshifted, shifted]
 const KEYCODE_TO_CHAR: Record<number, [string, string]> = {
@@ -73,6 +77,22 @@ export interface AutoCorrectionConfig {
   onCorrection?: (original: string, converted: string) => void;
 }
 
+interface KeyDownEvent {
+  keycode: number;
+  shiftKey?: boolean;
+  ctrlKey?: boolean;
+  altKey?: boolean;
+  metaKey?: boolean;
+}
+
+interface UiohookLike {
+  on: (event: "keydown", listener: (event: KeyDownEvent) => void) => void;
+  off?: (event: "keydown", listener: (event: KeyDownEvent) => void) => void;
+  removeListener?: (event: "keydown", listener: (event: KeyDownEvent) => void) => void;
+  start: () => void;
+  stop: () => void;
+}
+
 let config: AutoCorrectionConfig = {
   debounceMs: 300,
   minBufferLength: 3,
@@ -85,7 +105,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let isProcessing = false;
 let isProcessingTimer: ReturnType<typeof setTimeout> | null = null; // safety timeout
 let lastCorrectionTime = 0;                                          // rate limiting
-let uiohookInstance: unknown = null;
+let uiohookInstance: UiohookLike | null = null;
 
 // ─── Notification tracking ────────────────────────────────────────────────────
 let lastNotification: Notification | null = null;
@@ -93,6 +113,7 @@ let lastNotificationTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ─── Clipboard restore timer tracking ────────────────────────────────────────
 let clipboardRestoreTimer: ReturnType<typeof setTimeout> | null = null;
+let keyboardLayoutCache: { isThai: boolean; timestamp: number } | null = null;
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -107,8 +128,9 @@ export function startAutoCorrection(
   config.enabled = true;
 
   try {
-    const { uIOhook } = require("uiohook-napi");
+    const { uIOhook } = require("uiohook-napi") as { uIOhook: UiohookLike };
     uiohookInstance = uIOhook;
+    detachKeydownListener(uIOhook);
     uIOhook.on("keydown", handleKeyDown);
     uIOhook.start();
     console.log("[PimPid] Auto-correction engine started");
@@ -125,7 +147,8 @@ export function stopAutoCorrection(): void {
 
   if (uiohookInstance) {
     try {
-      (uiohookInstance as { stop: () => void }).stop();
+      detachKeydownListener(uiohookInstance);
+      uiohookInstance.stop();
     } catch { /* ignore */ }
     uiohookInstance = null;
   }
@@ -137,6 +160,16 @@ export function stopAutoCorrection(): void {
   if (clipboardRestoreTimer) {
     clearTimeout(clipboardRestoreTimer);
     clipboardRestoreTimer = null;
+  }
+  keyboardLayoutCache = null;
+
+  if (lastNotificationTimer) {
+    clearTimeout(lastNotificationTimer);
+    lastNotificationTimer = null;
+  }
+  if (lastNotification) {
+    try { lastNotification.close(); } catch { /* ignore */ }
+    lastNotification = null;
   }
 
   console.log("[PimPid] Auto-correction engine stopped");
@@ -202,8 +235,8 @@ function handleKeyDown(event: {
 
   wordBuffer += shiftKey ? mapping[1] : mapping[0];
 
-  // Cap buffer to prevent runaway growth
-  if (wordBuffer.length > 64) wordBuffer = wordBuffer.slice(-64);
+  // Keep buffer bounded so backspace replacement always matches captured length.
+  if (wordBuffer.length > MAX_BUFFER_LENGTH) wordBuffer = wordBuffer.slice(-MAX_BUFFER_LENGTH);
 
   scheduleDebounce();
 }
@@ -254,6 +287,10 @@ function clearProcessingLock(): void {
 // ─── Correction logic ─────────────────────────────────────────────────────────
 
 function triggerCorrection(): void {
+  void triggerCorrectionAsync();
+}
+
+async function triggerCorrectionAsync(): Promise<void> {
   cancelDebounce();
 
   const word = wordBuffer.trim();
@@ -284,10 +321,25 @@ function triggerCorrection(): void {
     return;
   }
 
+  // Release captured word immediately so newly typed characters are tracked independently.
+  wordBuffer = "";
+
+  if (
+    replacement.direction === ConversionDirection.ThaiToEnglish &&
+    replacement.converted === word &&
+    replacement.original !== word
+  ) {
+    const isThaiLayout = await isThaiKeyboardLayoutActive();
+    // User already continued typing; skip stale correction to avoid deleting newer text.
+    if (wordBuffer.length > 0) return;
+    if (!isThaiLayout) {
+      return;
+    }
+  }
+
   lastCorrectionTime = now;
   setProcessingLock();
-  const deleteCount = [...word].length;
-  wordBuffer = "";
+  const deleteCount = Math.min([...word].length, MAX_DELETE_COUNT);
 
   performReplacement(deleteCount, replacement.converted)
     .then(() => {
@@ -318,17 +370,8 @@ function checkReplacement(
   // Skip when user typed Thai and it's a prefix of a word (กำลังพิมพ์อยู่)
   if (hasWordWithPrefix(asThai) && typedTextContainsThai(asEnglish)) return null;
 
-  const direction = dominantLanguage(asThai);
-
-  if (direction === ConversionDirection.EnglishToThai) {
-    // QWERTY looks English, Thai conversion looks valid
-    if (containsKnownThai(asThai)) {
-      return { original: asEnglish, converted: asThai, direction };
-    }
-  }
-
   // Check: QWERTY maps to invalid Thai, but Thai→English gives valid English (หรือผลเป็น prefix ของคำ เช่น megd→ทำเก)
-  const thaiConverted = convertEnglishToThai(asEnglish);
+  const thaiConverted = asThai;
   const thaiConvertedValid =
     containsKnownThai(thaiConverted) || hasWordWithPrefix(thaiConverted);
   if (thaiConvertedValid && !looksLikeValidEnglish(asEnglish)) {
@@ -393,7 +436,7 @@ async function performReplacement(
   const savedClipboard = clipboard.readText();
   clipboard.writeText(newText);
 
-  const bsCount = Math.min(deleteCount, 50);
+  const bsCount = Math.min(deleteCount, MAX_DELETE_COUNT);
   const sendKeysArg = `{BS ${bsCount}}^v`;
 
   await runPowerShell(
@@ -410,8 +453,9 @@ async function performReplacement(
 
 function runPowerShell(script: string): Promise<void> {
   return new Promise((resolve, reject) => {
+    const encoded = Buffer.from(script, "utf16le").toString("base64");
     exec(
-      `powershell -NoProfile -WindowStyle Hidden -Command "${script}"`,
+      `powershell -NoProfile -WindowStyle Hidden -EncodedCommand ${encoded}`,
       { timeout: 5000 },
       (error) => {
         if (error) reject(error);
@@ -452,4 +496,72 @@ function showCorrectionNotification(
     if (lastNotification === n) lastNotification = null;
     lastNotificationTimer = null;
   }, 5000);
+}
+
+async function isThaiKeyboardLayoutActive(): Promise<boolean> {
+  const now = Date.now();
+  if (keyboardLayoutCache && now - keyboardLayoutCache.timestamp < KEYBOARD_LAYOUT_CACHE_MS) {
+    return keyboardLayoutCache.isThai;
+  }
+
+  try {
+    const langId = await readForegroundKeyboardLangId();
+    const isThai = THAI_LAYOUT_IDS.has(langId);
+    keyboardLayoutCache = { isThai, timestamp: now };
+    return isThai;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[PimPid] Failed to read keyboard layout:", msg);
+    return false;
+  }
+}
+
+function readForegroundKeyboardLangId(): Promise<string> {
+  const script = [
+    "$sig = @'",
+    "using System;",
+    "using System.Runtime.InteropServices;",
+    "public static class PimPidLayoutReader {",
+    "  [DllImport(\"user32.dll\")] public static extern IntPtr GetForegroundWindow();",
+    "  [DllImport(\"user32.dll\")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr lpdwProcessId);",
+    "  [DllImport(\"user32.dll\")] public static extern IntPtr GetKeyboardLayout(uint idThread);",
+    "}",
+    "'@;",
+    "Add-Type -TypeDefinition $sig -ErrorAction SilentlyContinue | Out-Null;",
+    "$hwnd = [PimPidLayoutReader]::GetForegroundWindow();",
+    "$tid = [PimPidLayoutReader]::GetWindowThreadProcessId($hwnd, [IntPtr]::Zero);",
+    "$hkl = [PimPidLayoutReader]::GetKeyboardLayout($tid);",
+    "$lang = $hkl.ToInt64() -band 0xFFFF;",
+    "\"{0:X4}\" -f $lang",
+  ].join(" ");
+
+  return new Promise((resolve, reject) => {
+    const encoded = Buffer.from(script, "utf16le").toString("base64");
+    exec(
+      `powershell -NoProfile -WindowStyle Hidden -EncodedCommand ${encoded}`,
+      { timeout: 1500, maxBuffer: 16 * 1024 },
+      (error, stdout) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        const langId = String(stdout ?? "").trim().toUpperCase();
+        if (!/^[0-9A-F]{4}$/.test(langId)) {
+          reject(new Error(`Unexpected keyboard layout output: "${langId}"`));
+          return;
+        }
+        resolve(langId);
+      }
+    );
+  });
+}
+
+function detachKeydownListener(hook: UiohookLike): void {
+  if (typeof hook.off === "function") {
+    hook.off("keydown", handleKeyDown);
+    return;
+  }
+  if (typeof hook.removeListener === "function") {
+    hook.removeListener("keydown", handleKeyDown);
+  }
 }

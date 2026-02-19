@@ -4,14 +4,23 @@ import SwiftUI
 @MainActor
 final class AppState: ObservableObject {
     @Published var isEnabled: Bool {
-        didSet { UserDefaults.standard.set(isEnabled, forKey: PimPidKeys.enabled) }
+        didSet {
+            UserDefaults.standard.set(isEnabled, forKey: PimPidKeys.enabled)
+            if isEnabled {
+                if autoCorrectEnabled {
+                    AutoCorrectionEngine.shared.start()
+                }
+            } else {
+                AutoCorrectionEngine.shared.stop()
+            }
+        }
     }
 
     // Auto-correction settings
     @Published var autoCorrectEnabled: Bool {
         didSet {
             UserDefaults.standard.set(autoCorrectEnabled, forKey: PimPidKeys.autoCorrectEnabled)
-            if autoCorrectEnabled {
+            if autoCorrectEnabled && isEnabled {
                 AutoCorrectionEngine.shared.start()
             } else {
                 AutoCorrectionEngine.shared.stop()
