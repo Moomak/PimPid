@@ -128,15 +128,15 @@ final class ArticleSimulationTests: XCTestCase {
         return (total, passed, failures)
     }
 
-    /// รายชื่อบทความใน Resources ที่ใช้ทดสอบ simulation (หลายเคส)
-    private static let articleResourceNames = [
-        "article-01", "article-02", "article-03", "article-04", "article-05",
-        "article-06", "article-07", "article-08", "article-09", "article-10",
-        "article-11", "article-12", "article-13", "article-14", "article-15",
-        "article-16", "article-17", "article-18", "article-19", "article-20",
-        "article-21", "article-22", "article-23", "article-24", "article-25",
-        "article-26", "article-27", "article-28", "article-29", "article-30",
-    ]
+    /// รายชื่อบทความใน Resources ที่ใช้ทดสอบ simulation (จาก Wikipedia ไทย)
+    private static let articleResourceNames: [String] = {
+        let bundle = Bundle.module
+        let urls = bundle.urls(forResourcesWithExtension: "txt", subdirectory: nil) ?? []
+        return urls
+            .map { $0.deletingPathExtension().lastPathComponent }
+            .filter { $0.hasPrefix("article-") }
+            .sorted()
+    }()
 
     func testArticleSimulationFromResource() throws {
         guard let url = Bundle.module.url(forResource: "article-01", withExtension: "txt"),

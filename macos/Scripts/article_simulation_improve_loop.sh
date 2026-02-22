@@ -24,6 +24,14 @@ skip_prefix() {
   esac
 }
 
+# ไม่เพิ่มคำที่มีตัวอักษรอังกฤษหรือตัวเลข (ต้องเป็นคำไทยล้วน)
+only_thai() {
+  local w="$1"
+  [[ "$w" =~ [a-zA-Z0-9] ]] && return 1
+  [[ "$w" == -* ]] && return 1  # ขึ้นต้นด้วย - ไม่เพิ่ม
+  return 0
+}
+
 # ความยาวเหมาะสม และเป็นคำที่ดูปลอดภัย (ไม่ยาวเกิน)
 ok_length() {
   local w="$1"
@@ -66,6 +74,7 @@ while (( round < ROUNDS )); do
     w=$(printf '%s' "$w" | tr -d '\r\n')
     [[ -z "$w" ]] && continue
     skip_prefix "$w" && continue
+    only_thai "$w" || continue
     ok_length "$w" || continue
     already_in_swift "$w" && continue
     chosen="$w"
