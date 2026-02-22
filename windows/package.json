@@ -1,13 +1,14 @@
 {
   "name": "pimpid-windows",
-  "version": "1.6.5",
+  "version": "1.6.6",
   "description": "PimPid — Thai ⇄ English Keyboard Layout Converter for Windows",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
     "start": "npm run build && electron .",
     "dist": "npm run build && electron-builder --win portable",
-    "dist:nsis": "npm run build && electron-builder --win nsis"
+    "dist:nsis": "npm run build && electron-builder --win nsis",
+    "simulate-article": "npm run build && npx electron dist/scripts/run-article-simulation.js"
   },
   "author": "PimPid",
   "license": "MIT",

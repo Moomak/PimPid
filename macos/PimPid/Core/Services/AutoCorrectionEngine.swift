@@ -319,24 +319,18 @@ final class AutoCorrectionEngine {
         let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
+        if isCurrentAppExcluded() { return nil }
+        if isCurrentWindowExcluded() { return nil }
+
         let excludeWords = Set(
             (UserDefaults.standard.stringArray(forKey: PimPidKeys.excludeWords) ?? [])
                 .map { $0.lowercased().trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty }
         )
-        if excludeWords.contains(trimmed.lowercased()) { return nil }
-        if isCurrentAppExcluded() { return nil }
-        if isCurrentWindowExcluded() { return nil }
-
-        let direction = KeyboardLayoutConverter.dominantLanguage(trimmed)
-        guard direction != .none else { return nil }
-
-        let converted = KeyboardLayoutConverter.convertAuto(trimmed)
-        guard converted != trimmed else { return nil }
-
-        guard ConversionValidator.shouldReplace(converted: converted, direction: direction, original: trimmed) else { return nil }
-
-        return ReplacementInfo(converted: converted, direction: direction)
+        guard let result = AutoCorrectionLogic.replacement(for: trimmed, excludeWords: excludeWords) else {
+            return nil
+        }
+        return ReplacementInfo(converted: result.converted, direction: result.direction)
     }
 
     private func isCurrentAppExcluded() -> Bool {

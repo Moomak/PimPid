@@ -56,6 +56,14 @@ struct KeyboardLayoutConverter {
         return map
     }()
 
+    /// เลือกคีย์ที่เหมาะสำหรับ Thai→English เมื่อมีหลายคีย์แมปถึงตัวไทยเดียวกัน:  prefer ตัวเลข/สัญลักษณ์ over ตัวอักษร
+    private static func preferKeyForThaiToEnglish(_ eng: Unicode.Scalar, over existing: Unicode.Scalar) -> Bool {
+        let e = Character(eng), x = Character(existing)
+        if e.isNumber && !x.isNumber { return true }
+        if e.isNumber == x.isNumber && !e.isLetter && x.isLetter { return true }
+        return false
+    }
+
     /// Thai → English (inverted from englishToThai)
     private static let thaiToEnglish: [Unicode.Scalar: Unicode.Scalar] = {
         var map: [Unicode.Scalar: Unicode.Scalar] = [:]
@@ -87,8 +95,15 @@ struct KeyboardLayoutConverter {
         if let overlay = loadBundleMapping(forLayoutName: name) {
             for (k, v) in overlay { e2t[k] = v }
         }
+        // สร้าง T→E โดยเมื่อมีหลาย eng แมปถึง thai เดียวกัน ให้เลือกตัวเลข/สัญลักษณ์ก่อน (เช่น  ๆ → "1" ไม่ใช่ "q") เพื่อให้ตัวเลข round-trip ถูกต้อง
         var t2e: [Unicode.Scalar: Unicode.Scalar] = [:]
-        for (eng, thai) in e2t { t2e[thai] = eng }
+        for (eng, thai) in e2t {
+            if let existing = t2e[thai] {
+                if preferKeyForThaiToEnglish(eng, over: existing) { t2e[thai] = eng }
+            } else {
+                t2e[thai] = eng
+            }
+        }
         _cachedEffectiveE2T = e2t
         _cachedEffectiveT2E = t2e
         _cachedLayoutName = name

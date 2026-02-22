@@ -10,6 +10,13 @@ final class ConversionValidatorTests: XCTestCase {
         XCTAssertFalse(ConversionValidator.shouldReplace(converted: "ab1c", direction: .thaiToEnglish, original: "อะไร"))
     }
 
+    /// อนุญาตเมื่อแปลงแล้วเป็นตัวเลขล้วน (พิมพ์ตัวเลขด้วย layout ไทยแล้วแก้กลับ เช่น ๆถ → 15)
+    func testThaiToEnglish_AcceptConvertedAllDigits() {
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "15", direction: .thaiToEnglish, original: "ๆถ"))
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "110", direction: .thaiToEnglish, original: "ๆๆจ"))
+        XCTAssertTrue(ConversionValidator.shouldReplace(converted: "3.14", direction: .thaiToEnglish, original: "-ภๆภ"))
+    }
+
     func testThaiToEnglish_RejectNonEnglishWords() {
         XCTAssertFalse(ConversionValidator.shouldReplace(converted: "xit", direction: .thaiToEnglish, original: "ประ"))
         XCTAssertFalse(ConversionValidator.shouldReplace(converted: "gmL", direction: .thaiToEnglish, original: "เทศ"))

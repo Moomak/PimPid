@@ -18,7 +18,8 @@ let package = Package(
         .testTarget(
             name: "PimPidTests",
             dependencies: ["PimPid"],
-            path: "Tests/PimPidTests"
+            path: "Tests/PimPidTests",
+            resources: [.process("Resources")]
         ),
     ]
 )

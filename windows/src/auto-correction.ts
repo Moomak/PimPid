@@ -21,6 +21,7 @@ import { exec } from "child_process";
 import {
   convertEnglishToThai,
   convertThaiToEnglish,
+  dominantLanguage,
   ConversionDirection,
 } from "./converter";
 import { containsKnownThai, hasWordWithPrefix } from "./thai-words";
@@ -365,8 +366,14 @@ function checkReplacement(
   asEnglish: string,
   asThai: string
 ): ReplacementResult | null {
-  // If Thai interpretation is a known Thai word → user meant to type Thai, skip
-  if (containsKnownThai(asThai)) return null;
+  // If Thai interpretation is a known Thai word → skip only when typed string looks like intentional English (ยาวหรือเป็นคำอังกฤษชัดเจน)
+  const trimmedEng = asEnglish.trim();
+  if (
+    containsKnownThai(asThai) &&
+    (looksLikeValidEnglish(asEnglish) || trimmedEng.length > 3)
+  ) {
+    return null;
+  }
   // Skip when user typed Thai and it's a prefix of a word (กำลังพิมพ์อยู่)
   if (hasWordWithPrefix(asThai) && typedTextContainsThai(asEnglish)) return null;
 
@@ -382,10 +389,10 @@ function checkReplacement(
     };
   }
 
-  // Check: typed with Thai layout but meant English
+  // Check: typed with Thai layout but meant English (หรือตัวเลข)
   const englishFromThai = convertThaiToEnglish(asThai);
   if (
-    looksLikeValidEnglish(englishFromThai) &&
+    (looksLikeValidNumber(englishFromThai) || looksLikeValidEnglish(englishFromThai)) &&
     !containsKnownThai(asThai) &&
     !hasWordWithPrefix(asThai)
   ) {
@@ -399,9 +406,55 @@ function checkReplacement(
   return null;
 }
 
+/**
+ * คืนผลลัพธ์ที่ engine จะใช้แทนที่สำหรับ "คำที่ user พิมพ์" (ผิด layout)
+ * สำหรับจำลองบทความ — ไม่กดคีย์ / ไม่ใช้ clipboard / ไม่เช็ค keyboard layout
+ */
+export function getReplacementForTypedWord(
+  word: string,
+  options?: { excludeWords?: string[] }
+): { original: string; converted: string } | null {
+  const trimmed = word.trim();
+  if (!trimmed) return null;
+
+  const excludeWords = options?.excludeWords ?? [];
+  const asThai = convertEnglishToThai(trimmed);
+  if (
+    excludeWords.some(
+      (w) =>
+        w.toLowerCase() === trimmed.toLowerCase() ||
+        w.toLowerCase() === asThai.toLowerCase()
+    )
+  ) {
+    return null;
+  }
+
+  // กรณี mixed (เช่น "20" พิมพ์ผิดเป็น "/จ") ได้ direction None — ลอง Thai→English ถ้าผลเป็นตัวเลขให้ใช้
+  if (dominantLanguage(trimmed) === ConversionDirection.None) {
+    const asEnglish = convertThaiToEnglish(trimmed);
+    if (asEnglish !== trimmed && looksLikeValidNumber(asEnglish)) {
+      return { original: trimmed, converted: asEnglish };
+    }
+    return null;
+  }
+
+  const replacement = checkReplacement(trimmed, asThai);
+  return replacement
+    ? { original: replacement.original, converted: replacement.converted }
+    : null;
+}
+
 /** ตรวจว่าข้อความที่พิมพ์มีตัวอักษรไทย (ใช้ตัดว่าเป็นคำที่กำลังพิมพ์ไทยอยู่หรือพิมพ์อังกฤษผิด layout) */
 function typedTextContainsThai(text: string): boolean {
   return /[\u0E01-\u0E5B]/.test(text);
+}
+
+/** ตัวเลขล้วนหรือตัวเลข+จุดเดียว (เช่น 15, 110, 3.14) — แก้กลับได้เมื่อพิมพ์ด้วย layout ไทย */
+function looksLikeValidNumber(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  const dots = (trimmed.match(/\./g) ?? []).length;
+  return /^[0-9.]+$/.test(trimmed) && dots <= 1;
 }
 
 function looksLikeValidEnglish(text: string): boolean {

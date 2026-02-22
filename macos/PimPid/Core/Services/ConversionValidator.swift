@@ -23,13 +23,22 @@ enum ConversionValidator {
             let originalLikelyWrongLayout = hasLeadingThaiVowelOrSign(original)
             return isValidEnglishForReplace(converted, allowShortWhenOriginalIsSuspiciousThai: originalLikelyWrongLayout)
         case .englishToThai:
-            // อย่าแปลงเมื่อเป็นแค่ตัวเลขหรือช่องว่าง
+            // อย่าแปลงเมื่อเป็นแค่ตัวเลขหรือช่องว่าง (เว้นแต่ต้นทางสั้น + แปลงแล้วเป็นคำไทยที่รู้จัก เช่น .[ → ใบ, =, → ชม)
             if !original.contains(where: { $0.isLetter }) {
+                let trimmed = original.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.count >= 2 && trimmed.count <= 6 && ThaiWordList.containsKnownThai(converted) {
+                    return true
+                }
                 return false
             }
             // แปลงแล้วต้องมีความหมายเป็นคำไทย หรือเป็น prefix ของคำ (เช่น megd→ทำเก เป็นต้นของ ทำเกม)
             if !ThaiWordList.containsKnownThai(converted) && !ThaiWordList.hasWordWithPrefix(converted) {
                 return false
+            }
+            // ต้นทางสั้นมาก (≤3 ตัว) และแปลงแล้วเป็นคำไทยที่รู้จัก — มักเป็นคำผิด layout ให้แก้ได้
+            let trimmedOriginal = original.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmedOriginal.count <= 3 && ThaiWordList.containsKnownThai(converted) {
+                return true
             }
             if original.contains(where: { $0.isNumber }) { return true }
             if !original.allSatisfy({ $0.isLetter || $0 == " " || $0 == "'" }) { return true }
@@ -42,9 +51,15 @@ enum ConversionValidator {
     /// ตรวจว่าข้อความหลังแปลง (Thai→English) ควรใช้แทนที่ได้หรือไม่
     /// ไม่แทนที่ถ้ามีตัวเลข/ punctuation ปน หรือไม่ผ่าน spell check
     /// คำเดี่ยวสั้นมาก (≤2 ตัว) ไม่แทนที่ ยกเว้นกรณี allowShortWhenOriginalIsSuspiciousThai (สระนำ = มักผิด layout)
+    /// อนุญาตผลลัพธ์ที่เป็นตัวเลขล้วน (หรือมีจุดเดียว เช่น 3.14) — กรณีพิมพ์ตัวเลขด้วย layout ไทยแล้วแก้กลับ
     private static func isValidEnglishForReplace(_ text: String, allowShortWhenOriginalIsSuspiciousThai: Bool = false) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
+        // ตัวเลขล้วนหรือตัวเลข+จุดเดียว (เช่น 15, 110, 3.14) — แก้กลับได้เมื่อพิมพ์ผิด layout
+        if trimmed.allSatisfy({ $0.isNumber || $0 == "." }),
+           trimmed.filter({ $0 == "." }).count <= 1 {
+            return true
+        }
         if trimmed.contains(where: { $0.isNumber }) { return false }
         if trimmed.contains(where: { !$0.isLetter && $0 != " " && $0 != "'" }) { return false }
         let words = trimmed.split(separator: " ").map(String.init).filter { !$0.isEmpty }
