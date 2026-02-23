@@ -23,6 +23,7 @@ import {
   convertThaiToEnglish,
   dominantLanguage,
   ConversionDirection,
+  THAI_TO_ENGLISH_OVERRIDES,
 } from "./converter";
 import { containsKnownThai, hasWordWithPrefix } from "./thai-words";
 
@@ -362,12 +363,17 @@ interface ReplacementResult {
   direction: ConversionDirection;
 }
 
+/** คำอังกฤษที่ไม่อยากให้แปลงเป็นไทย (เช่น com สำหรับ domain) */
+const ENGLISH_KEEP_AS_IS = new Set(["com"]);
+
 function checkReplacement(
   asEnglish: string,
   asThai: string
 ): ReplacementResult | null {
-  // If Thai interpretation is a known Thai word → skip only when typed string looks like intentional English (ยาวหรือเป็นคำอังกฤษชัดเจน)
   const trimmedEng = asEnglish.trim();
+  if (ENGLISH_KEEP_AS_IS.has(trimmedEng.toLowerCase())) return null;
+
+  // If Thai interpretation is a known Thai word → skip only when typed string looks like intentional English (ยาวหรือเป็นคำอังกฤษชัดเจน)
   if (
     containsKnownThai(asThai) &&
     (looksLikeValidEnglish(asEnglish) || trimmedEng.length > 3)
@@ -391,6 +397,14 @@ function checkReplacement(
 
   // Check: typed with Thai layout but meant English (หรือตัวเลข)
   const englishFromThai = convertThaiToEnglish(asThai);
+  const useThaiToEnglishOverride = THAI_TO_ENGLISH_OVERRIDES[asThai];
+  if (useThaiToEnglishOverride) {
+    return {
+      original: asThai,
+      converted: useThaiToEnglishOverride,
+      direction: ConversionDirection.ThaiToEnglish,
+    };
+  }
   if (
     (looksLikeValidNumber(englishFromThai) || looksLikeValidEnglish(englishFromThai)) &&
     !containsKnownThai(asThai) &&

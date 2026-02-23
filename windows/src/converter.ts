@@ -87,8 +87,14 @@ export function dominantLanguage(text: string): ConversionDirection {
   return ConversionDirection.None;
 }
 
+/** Override บางคำไทยที่พิมพ์ผิด layout → คำอังกฤษที่ต้องการ (สนพก = lord ตามปุ่ม) */
+export const THAI_TO_ENGLISH_OVERRIDES: Record<string, string> = {
+  สนพก: "lord",
+};
+
 /** แปลงไทย → อังกฤษ ตามตำแหน่งปุ่ม */
 export function convertThaiToEnglish(text: string): string {
+  if (THAI_TO_ENGLISH_OVERRIDES[text]) return THAI_TO_ENGLISH_OVERRIDES[text];
   let result = "";
   for (const char of text) {
     result += thaiToEnglish[char] ?? char;

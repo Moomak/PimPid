@@ -9,6 +9,14 @@ enum AutoCorrectionLogic {
         let direction: KeyboardLayoutConverter.ConversionDirection
     }
 
+    /// Override บางคำไทยที่พิมพ์ผิด layout → คำอังกฤษที่ต้องการ (สนพก = lord ตามปุ่ม)
+    private static let thaiToEnglishOverrides: [String: String] = [
+        "สนพก": "lord",
+    ]
+
+    /// คำอังกฤษที่ไม่อยากให้แปลงเป็นไทย (เช่น com สำหรับ domain) — ใช้ใน ConversionValidator
+    static let englishKeepAsIs: Set<String> = ["com"]
+
     /// คืนผลลัพธ์ที่ engine จะใช้แทนที่สำหรับ "คำที่ user พิมพ์" (ผิด layout)
     /// ไม่เช็ค app/window — ใช้สำหรับ simulation หรือเมื่อ caller ตรวจแล้ว
     static func replacement(
@@ -22,7 +30,10 @@ enum AutoCorrectionLogic {
         if excludeWords.contains(lower) { return nil }
 
         let direction = KeyboardLayoutConverter.dominantLanguage(trimmed)
-        let converted = KeyboardLayoutConverter.convertAuto(trimmed)
+        var converted = KeyboardLayoutConverter.convertAuto(trimmed)
+        if direction == .thaiToEnglish, let override = Self.thaiToEnglishOverrides[trimmed] {
+            converted = override
+        }
 
         // กรณี mixed (เช่น "20" พิมพ์ผิดเป็น "/จ") ได้ direction .none — ลอง Thai→English ถ้าผลเป็นตัวเลขให้ใช้
         if direction == .none {

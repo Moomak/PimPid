@@ -23,6 +23,9 @@ enum ConversionValidator {
             let originalLikelyWrongLayout = hasLeadingThaiVowelOrSign(original)
             return isValidEnglishForReplace(converted, allowShortWhenOriginalIsSuspiciousThai: originalLikelyWrongLayout)
         case .englishToThai:
+            // คำเช่น "com" (domain) ไม่อยากให้เปลี่ยนเป็น "แนท"
+            let lower = original.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            if AutoCorrectionLogic.englishKeepAsIs.contains(lower) { return false }
             // อย่าแปลงเมื่อเป็นแค่ตัวเลขหรือช่องว่าง (เว้นแต่ต้นทางสั้น + แปลงแล้วเป็นคำไทยที่รู้จัก เช่น .[ → ใบ, =, → ชม)
             if !original.contains(where: { $0.isLetter }) {
                 let trimmed = original.trimmingCharacters(in: .whitespacesAndNewlines)
