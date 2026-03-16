@@ -364,7 +364,11 @@ interface ReplacementResult {
 }
 
 /** คำอังกฤษที่ไม่อยากให้แปลงเป็นไทย (เช่น com สำหรับ domain) */
-const ENGLISH_KEEP_AS_IS = new Set(["com"]);
+const ENGLISH_KEEP_AS_IS = new Set([
+  "com", "cloud",
+  "881", "ano", "avo", "cla", "cri", "dao", "idor", "ios",
+  "lot", "mcp", "mem", "opt", "req", "ski", "soko", "vec",
+]);
 
 function checkReplacement(
   asEnglish: string,

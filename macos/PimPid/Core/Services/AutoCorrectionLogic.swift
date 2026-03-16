@@ -15,7 +15,11 @@ enum AutoCorrectionLogic {
     ]
 
     /// คำอังกฤษที่ไม่อยากให้แปลงเป็นไทย (เช่น com สำหรับ domain) — ใช้ใน ConversionValidator
-    static let englishKeepAsIs: Set<String> = ["com"]
+    static let englishKeepAsIs: Set<String> = [
+        "com", "cloud",
+        "881", "ano", "avo", "cla", "cri", "dao", "idor", "ios",
+        "lot", "mcp", "mem", "opt", "req", "ski", "soko", "vec",
+    ]
 
     /// คืนผลลัพธ์ที่ engine จะใช้แทนที่สำหรับ "คำที่ user พิมพ์" (ผิด layout)
     /// ไม่เช็ค app/window — ใช้สำหรับ simulation หรือเมื่อ caller ตรวจแล้ว

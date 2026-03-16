@@ -176,6 +176,12 @@ enum UndoHelper {
 struct RecentConversionRow: View {
     @EnvironmentObject var appState: AppState
     let record: ConversionRecord
+    @StateObject private var excludeStore = ExcludeListStore.shared
+
+    /// คำต้นทาง (ตัวเล็ก) ที่จะ exclude — ใช้ original เพราะเป็นคำที่ user พิมพ์
+    private var excludeWord: String {
+        record.original.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
 
     var body: some View {
         HStack(spacing: 8) {
@@ -203,6 +209,29 @@ struct RecentConversionRow: View {
             }
 
             Spacer(minLength: 0)
+
+            // Exclude button
+            if !excludeWord.isEmpty && !excludeStore.contains(excludeWord) {
+                Button {
+                    excludeStore.add(excludeWord)
+                } label: {
+                    Text("Exclude")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color.orange)
+                        )
+                }
+                .buttonStyle(.plain)
+                .help(String(localized: "recent.add_exclude", bundle: appState.localizedBundle))
+            } else if !excludeWord.isEmpty {
+                Text("Excluded")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+            }
 
             // Time ago
             Text(timeAgo(from: record.timestamp))

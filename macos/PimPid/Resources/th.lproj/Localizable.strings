@@ -24,6 +24,7 @@
 "stats.header" = "สถิติ";
 "recent.header" = "แปลงล่าสุด";
 "recent.no_history" = "ยังไม่มีประวัติ";
+"recent.add_exclude" = "เพิ่มเข้ารายการ Exclude";
 "time.just_now" = "เมื่อสักครู่";
 "time.minutes_ago" = "%dน. ที่แล้ว";
 "time.hours_ago" = "%dชม. ที่แล้ว";

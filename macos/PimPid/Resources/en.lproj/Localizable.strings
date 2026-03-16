@@ -24,6 +24,7 @@
 "stats.header" = "Statistics";
 "recent.header" = "Recent Conversions";
 "recent.no_history" = "No history yet";
+"recent.add_exclude" = "Add to exclude list";
 "time.just_now" = "Just now";
 "time.minutes_ago" = "%dm ago";
 "time.hours_ago" = "%dh ago";
