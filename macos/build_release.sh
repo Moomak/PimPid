@@ -95,11 +95,27 @@ cp "$MACOS_DIR/PimPid/Icon/PimPid.icns" "$RELEASE_DIR/PimPid.app/Contents/Resour
 echo "🔄 Refreshing Services registration..."
 /System/Library/CoreServices/pbs -update
 
-# 7. แสดงข้อมูล
+# 7. Remove quarantine attribute (fix "damaged" error for unsigned apps)
+echo "🔓 Removing quarantine attribute..."
+xattr -cr "$RELEASE_DIR/PimPid.app" 2>/dev/null || true
+
+# 8. Create zip for distribution
+echo "📦 Creating zip archive..."
+ZIP_NAME="PimPid-${VERSION}-macOS.zip"
+cd "$RELEASE_DIR"
+rm -f "$ZIP_NAME"
+ditto -c -k --sequesterRsrc --keepParent "PimPid.app" "$ZIP_NAME"
+
+# 9. แสดงข้อมูล
 echo ""
 echo "✅ Build complete!"
-echo "📍 Location: $RELEASE_DIR/PimPid.app"
+echo "📍 App: $RELEASE_DIR/PimPid.app"
+echo "📦 Zip: $RELEASE_DIR/$ZIP_NAME"
 echo ""
 ls -lh "$RELEASE_DIR/PimPid.app/Contents/MacOS/PimPid"
+ls -lh "$RELEASE_DIR/$ZIP_NAME"
 echo ""
 echo "🚀 To run: open $RELEASE_DIR/PimPid.app"
+echo ""
+echo "⚠️  Note: If macOS shows 'damaged' error after download, run:"
+echo "   xattr -cr /Applications/PimPid.app"
