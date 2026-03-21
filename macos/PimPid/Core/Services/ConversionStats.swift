@@ -55,12 +55,18 @@ final class ConversionStats: ObservableObject {
         checkAndResetDaily()
     }
 
+    /// Cached DateFormatter for date keys (yyyy-MM-dd) — avoid re-creating on every call
+    private static let dateKeyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = Calendar.current.timeZone
+        return f
+    }()
+
     /// สถิติ 7 วันล่าสุด เรียงจากเก่าไปใหม่ (สำหรับกราฟ — task 66). วันนี้ใช้ todayConversions
     func last7DaysCounts() -> [(date: String, count: Int)] {
         let cal = Calendar.current
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = cal.timeZone
+        let formatter = Self.dateKeyFormatter
         let todayKey = formatter.string(from: Date())
         var result: [(String, Int)] = []
         for offset in (0..<7).reversed() {
@@ -73,10 +79,7 @@ final class ConversionStats: ObservableObject {
     }
 
     private static func dateKey(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = Calendar.current.timeZone
-        return f.string(from: date)
+        dateKeyFormatter.string(from: date)
     }
 
     private func trimDailyCounts(_ dict: [String: Int]) -> [String: Int] {

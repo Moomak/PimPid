@@ -23,15 +23,12 @@ final class AutoCorrectionEngine {
 
     private let replacementQueue = DispatchQueue(label: "com.pimpid.autocorrect.replacement")
 
-    /// จำนวนตัวอักษรขั้นต่ำก่อนจะเริ่มตรวจ — อ่านจาก settings (2–5), ค่าเริ่มต้น 3
-    private var minBufferLength: Int {
-        let n = UserDefaults.standard.object(forKey: PimPidKeys.autoCorrectMinChars).flatMap { $0 as? NSNumber }.map(\.intValue)
-        guard let v = n, (2...5).contains(v) else { return 3 }
-        return v
-    }
-
     /// Default debounce ถ้า user ไม่ได้ตั้ง delay (200ms)
     private let defaultDebounce: TimeInterval = 0.2
+
+    // Cached settings values — updated on start() to avoid UserDefaults reads on every keystroke
+    private var _cachedMinBufferLength: Int = 3
+    private var _cachedDebounceInterval: TimeInterval = 0.2
 
     var isRunning: Bool {
         os_unfair_lock_lock(&_lock)
@@ -39,12 +36,14 @@ final class AutoCorrectionEngine {
         return _isRunning
     }
 
-    /// อ่านค่า delay จาก settings — ถ้า 0 ใช้ default debounce
-    private var currentDebounce: TimeInterval {
+    /// Reload cached settings from UserDefaults (call on start or when settings change)
+    func reloadCachedSettings() {
+        let n = UserDefaults.standard.object(forKey: PimPidKeys.autoCorrectMinChars).flatMap { $0 as? NSNumber }.map(\.intValue)
+        _cachedMinBufferLength = (n.flatMap { (2...5).contains($0) ? $0 : nil }) ?? 3
+
         let userDelay = UserDefaults.standard.double(forKey: PimPidKeys.autoCorrectDelay)
-        // userDelay is in ms from settings, convert to seconds
         let delaySec = userDelay / 1000.0
-        return max(defaultDebounce, delaySec)
+        _cachedDebounceInterval = max(defaultDebounce, delaySec)
     }
 
     // Whitespace = word boundary
@@ -79,11 +78,18 @@ final class AutoCorrectionEngine {
             os_unfair_lock_unlock(&_lock)
             return
         }
+        // Set _isRunning immediately to prevent concurrent start() calls (TOCTOU fix)
+        _isRunning = true
         os_unfair_lock_unlock(&_lock)
+
+        reloadCachedSettings()
 
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         guard AXIsProcessTrustedWithOptions(options) else {
             logger.warning("Accessibility permission not granted")
+            os_unfair_lock_lock(&_lock)
+            _isRunning = false
+            os_unfair_lock_unlock(&_lock)
             return
         }
 
@@ -97,6 +103,9 @@ final class AutoCorrectionEngine {
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
             logger.error("Failed to create event tap")
+            os_unfair_lock_lock(&_lock)
+            _isRunning = false
+            os_unfair_lock_unlock(&_lock)
             return
         }
 
@@ -105,11 +114,7 @@ final class AutoCorrectionEngine {
         CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
 
-        os_unfair_lock_lock(&_lock)
-        _isRunning = true
-        os_unfair_lock_unlock(&_lock)
-
-        logger.info("Started (minChars=\(self.minBufferLength))")
+        logger.info("Started (minChars=\(self._cachedMinBufferLength))")
     }
 
     func stop() {
@@ -209,7 +214,7 @@ final class AutoCorrectionEngine {
         os_unfair_lock_lock(&_lock)
         _debounceWorkItem?.cancel()
 
-        guard buffer.unicodeScalars.count >= minBufferLength else {
+        guard buffer.unicodeScalars.count >= _cachedMinBufferLength else {
             _debounceWorkItem = nil
             os_unfair_lock_unlock(&_lock)
             return
@@ -221,7 +226,7 @@ final class AutoCorrectionEngine {
         _debounceWorkItem = item
         os_unfair_lock_unlock(&_lock)
 
-        replacementQueue.asyncAfter(deadline: .now() + currentDebounce, execute: item)
+        replacementQueue.asyncAfter(deadline: .now() + _cachedDebounceInterval, execute: item)
     }
 
     private func onDebounce() {
@@ -234,12 +239,9 @@ final class AutoCorrectionEngine {
         os_unfair_lock_unlock(&_lock)
 
         // Task 4: กด Option (Alt) ค้างไว้ = ไม่แก้คำล่าสุด (ปิดการทำงานชั่วคราวสำหรับคำนี้)
-        var optionHeld = false
-        if Thread.isMainThread {
-            optionHeld = NSEvent.modifierFlags.contains(.option)
-        } else {
-            DispatchQueue.main.sync { optionHeld = NSEvent.modifierFlags.contains(.option) }
-        }
+        // ใช้ CGEventSource แทน NSEvent.modifierFlags เพื่อหลีกเลี่ยง DispatchQueue.main.sync (deadlock risk)
+        let flags = CGEventSource.flagsState(.combinedSessionState)
+        let optionHeld = flags.contains(.maskAlternate)
         if optionHeld {
             cancelAndClear()
             return
@@ -315,6 +317,22 @@ final class AutoCorrectionEngine {
         let direction: KeyboardLayoutConverter.ConversionDirection
     }
 
+    // Cache exclude words to avoid re-creating Set from UserDefaults on every debounce
+    private var _cachedExcludeWords: Set<String> = []
+    private var _cachedExcludeWordsRaw: [String]?
+
+    private func getCachedExcludeWords() -> Set<String> {
+        let raw = UserDefaults.standard.stringArray(forKey: PimPidKeys.excludeWords) ?? []
+        if raw != _cachedExcludeWordsRaw {
+            _cachedExcludeWordsRaw = raw
+            _cachedExcludeWords = Set(
+                raw.map { $0.lowercased().trimmingCharacters(in: .whitespaces) }
+                    .filter { !$0.isEmpty }
+            )
+        }
+        return _cachedExcludeWords
+    }
+
     private func checkReplacement(_ word: String) -> ReplacementInfo? {
         let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -322,11 +340,7 @@ final class AutoCorrectionEngine {
         if isCurrentAppExcluded() { return nil }
         if isCurrentWindowExcluded() { return nil }
 
-        let excludeWords = Set(
-            (UserDefaults.standard.stringArray(forKey: PimPidKeys.excludeWords) ?? [])
-                .map { $0.lowercased().trimmingCharacters(in: .whitespaces) }
-                .filter { !$0.isEmpty }
-        )
+        let excludeWords = getCachedExcludeWords()
         guard let result = AutoCorrectionLogic.replacement(for: trimmed, excludeWords: excludeWords) else {
             return nil
         }
@@ -366,8 +380,9 @@ private func autoCorrectionCallback(
         logger.info("Event tap re-enabled")
         DispatchQueue.main.async {
             Task { @MainActor in
+                let bundle = AppState.makeLocalizedBundle(for: UserDefaults.standard.string(forKey: PimPidKeys.appLanguage) ?? "th")
                 NotificationService.shared.showToast(
-                    message: "Auto-Correct ถูกปิดชั่วคราว — เปิดใช้งานใหม่แล้ว",
+                    message: String(localized: "toast.autocorrect_reenabled", bundle: bundle),
                     type: .info
                 )
             }

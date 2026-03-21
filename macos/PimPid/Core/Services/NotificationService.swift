@@ -11,6 +11,8 @@ final class NotificationService: ObservableObject {
     @Published var toastQueue: [ToastMessage] = []
 
     private var isShowingToast = false
+    /// ID ของ toast ที่กำลังแสดงอยู่ — ใช้ป้องกัน stale auto-dismiss ลบ toast ตัวถัดไป
+    private var currentDismissID: UUID?
 
     /// อ่านจาก UserDefaults (วินาที), ค่าเริ่มต้น 2.0
     private var toastDuration: TimeInterval {
@@ -37,10 +39,13 @@ final class NotificationService: ObservableObject {
     private func displayToast(_ toast: ToastMessage) {
         isShowingToast = true
         currentToast = toast
+        let dismissID = toast.id
+        currentDismissID = dismissID
 
-        // Auto-dismiss after duration
+        // Auto-dismiss after duration — only if this toast is still the current one
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: UInt64(toastDuration * 1_000_000_000))
+            guard currentDismissID == dismissID else { return }
             dismissCurrentToast()
         }
     }
@@ -49,6 +54,7 @@ final class NotificationService: ObservableObject {
     func dismissCurrentToast() {
         currentToast = nil
         isShowingToast = false
+        currentDismissID = nil
 
         // Show next toast in queue
         if !toastQueue.isEmpty {
@@ -62,6 +68,7 @@ final class NotificationService: ObservableObject {
         currentToast = nil
         toastQueue.removeAll()
         isShowingToast = false
+        currentDismissID = nil
     }
 }
 

@@ -3,6 +3,8 @@ import Foundation
 
 /// ดึงข้อความที่เลือกจากแอปที่โฟกัส แล้วแทนที่ด้วยข้อความที่แปลงแล้ว (ใช้ Cmd+C แล้ว Cmd+V)
 enum TextReplacementService {
+    /// ป้องกัน concurrent execution ของ convertSelectedText (เช่น กด shortcut ซ้อนกัน)
+    @MainActor private static var isConverting = false
     /// ดึงข้อความที่เลือกผ่าน pasteboard (ผู้ใช้กด Cmd+C หรือเรา simulate Copy แล้วอ่าน)
     static func getSelectedTextViaPasteboard() async -> String? {
         let pasteboard = NSPasteboard.general
@@ -34,8 +36,14 @@ enum TextReplacementService {
         direction: KeyboardLayoutConverter.ConversionDirection? = nil
     ) async {
         guard enabled else { return }
+        // Prevent concurrent execution — a second shortcut press during await would corrupt clipboard
+        guard !isConverting else { return }
+        isConverting = true
+        defer { isConverting = false }
         let original = await getSelectedTextViaPasteboard()
         guard let raw = original?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return }
+        // Guard against extremely large selections to prevent conversion timeout
+        guard raw.count <= 100_000 else { return }
         if excludeStore.shouldExclude(text: raw) { return }
         let directionUsed: KeyboardLayoutConverter.ConversionDirection
         let converted: String
