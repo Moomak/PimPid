@@ -1,113 +1,141 @@
-# PimPid
+# PimPid — Thai ⇄ English Keyboard Converter
 
-โปรแกรมแปลงข้อความที่พิมพ์ผิดภาษา (ไทย Kedmanee ↔ QWERTY) พร้อม Auto-Correct — รองรับทั้ง **macOS** และ **Windows**
+พิมพ์ผิดภาษา? กด shortcut แปลงทันที ไม่ต้องลบแล้วพิมพ์ใหม่
 
-## คุณสมบัติ
+PimPid แปลงข้อความที่พิมพ์ผิด layout (ไทย Kedmanee ↔ US QWERTY) ตามตำแหน่งปุ่มคีย์บอร์ด พร้อม Auto-Correct แก้ไขอัตโนมัติขณะพิมพ์ — รองรับทั้ง **macOS** และ **Windows**
 
-- **สลับภาษาข้อความที่เลือก** — เลือกข้อความที่พิมพ์ผิดภาษา กดปุ่มลัด แล้วแปลงตามตำแหน่งปุ่มคีย์บอร์ด (ไทย Kedmanee ↔ QWERTY)
-- **Auto-Correct** — แก้ไขอัตโนมัติเมื่อพิมพ์ผิดภาษา (real-time)
-- **Exclude คำ** — กำหนดรายการคำที่ไม่ต้องการให้แปลง
-- **System Tray / Menu Bar** — เปิด/ปิดการทำงานจากไอคอน
+---
 
 ## ดาวน์โหลด
 
-ไปที่หน้า [Releases](https://github.com/Moomak/PimPid/releases) เพื่อดาวน์โหลดไฟล์สำหรับระบบของคุณ:
+> **[ดาวน์โหลด PimPid v1.7.0 — Latest Release](https://github.com/Moomak/PimPid/releases/latest)**
 
-| ระบบ | ไฟล์ | ปุ่มลัด |
-|------|------|---------|
-| macOS (14+, Apple Silicon) | `PimPid.app.zip` | ⌘⇧L |
-| Windows (10/11) | `PimPid-Windows.exe` | Ctrl+Shift+L |
-
-## โครงสร้างโปรเจกต์
-
-```
-PimPid/
-├── macos/                    # macOS version (Swift + SwiftUI)
-│   ├── PimPid/               #   Source code
-│   ├── PimPid.xcodeproj/     #   Xcode project
-│   ├── Package.swift         #   Swift Package Manager
-│   ├── Tests/                #   Unit tests
-│   └── build_release.sh      #   Build script
-├── windows/                  # Windows version (Electron + TypeScript)
-│   ├── src/                  #   Source code
-│   ├── package.json          #   Node.js project
-│   └── tsconfig.json         #   TypeScript config
-└── releases/                 # Pre-built releases
-    ├── macos/PimPid.app
-    └── windows/
-```
+| Platform | ไฟล์ | วิธี install |
+|----------|------|-------------|
+| **macOS** 14+ | `.dmg` | เปิด DMG → ลากไป Applications → Right-click > Open |
+| **Windows** 10/11 | `.exe` | Portable — ดับเบิลคลิกรันได้เลย |
 
 ---
 
-## macOS
+## วิธีติดตั้ง
 
-### วิธีใช้
+### macOS
 
-1. เปิดโปรแกรม — ไอคอนจะปรากฏใน Menu Bar
-2. เลือกข้อความที่พิมพ์ผิดภาษา กด **⌘⇧L** (Command + Shift + L)
-3. ข้อความจะถูกแปลงอัตโนมัติ
+1. ดาวน์โหลด **`.dmg`** จาก [Releases](https://github.com/Moomak/PimPid/releases/latest)
+2. เปิด DMG → ลาก **PimPid** ไปไว้ใน **Applications**
+3. เปิด PimPid — **ครั้งแรก** macOS จะถาม:
 
-### ติดตั้ง
+   > **Right-click** ที่ PimPid.app → เลือก **Open** → กด **Open**
+   >
+   > หรือไปที่ System Settings → Privacy & Security → กด **Open Anyway**
 
-**วิธีที่ 1: ใช้ .app ที่ build ไว้แล้ว** — ดาวน์โหลดจาก [Releases](https://github.com/Moomak/PimPid/releases) หรือในโฟลเดอร์ [releases/macos/](releases/macos/)
+4. อนุญาต **Accessibility** เมื่อระบบถาม (จำเป็นสำหรับการแปลงข้อความ)
 
-**วิธีที่ 2: Build เอง**
+> ต้องทำขั้นตอน 3 **แค่ครั้งเดียว** — ครั้งต่อไปเปิดได้ปกติ
 
-```bash
-cd macos
-swift build -c release
-./build_release.sh
-```
+### Windows
 
-**วิธีที่ 3: รันจาก source**
-
-```bash
-cd macos
-swift run PimPid
-```
-
-### สิทธิ์ที่จำเป็น
-
-- **Accessibility** — System Settings → Privacy & Security → Accessibility → เพิ่ม PimPid
+1. ดาวน์โหลด **`.exe`** จาก [Releases](https://github.com/Moomak/PimPid/releases/latest)
+2. รันไฟล์ได้เลย — ไม่ต้อง install
+3. PimPid จะอยู่ใน System Tray (มุมขวาล่าง)
 
 ---
 
-## Windows
+## วิธีใช้งาน
 
-### วิธีใช้
+### แปลงข้อความด้วย Shortcut
+1. **เลือก** ข้อความที่พิมพ์ผิดภาษา
+2. กด **⌘⇧L** (macOS) หรือ **Ctrl+Shift+L** (Windows)
+3. ข้อความแปลงทันที (shortcut เปลี่ยนได้ใน Settings)
 
-1. เปิดโปรแกรม — ไอคอนจะปรากฏใน System Tray
-2. เลือกข้อความที่พิมพ์ผิดภาษา กด **Ctrl+Shift+L**
-3. ข้อความจะถูกแปลงอัตโนมัติ
-
-### ติดตั้ง
-
-**วิธีที่ 1: ดาวน์โหลด .exe** — ดาวน์โหลดจาก [Releases](https://github.com/Moomak/PimPid/releases)
-
-**วิธีที่ 2: Build เอง**
-
-```bash
-cd windows
-npm install
-npm run dist
-```
-
-ไฟล์ .exe จะอยู่ใน `windows/release/`
+### Auto-Correct (แก้ไขอัตโนมัติ)
+เปิดจาก menu bar / tray → **Auto-Correct: ON** → พิมพ์ผิดภาษา PimPid แก้ให้ทันที
 
 ---
 
-## การทดสอบ
+## คุณสมบัติ
+
+| คุณสมบัติ | macOS | Windows |
+|-----------|:-----:|:-------:|
+| แปลงข้อความที่เลือก (Shortcut) | ✅ | ✅ |
+| Auto-Correct ขณะพิมพ์ | ✅ | ✅ |
+| Custom Shortcut | ✅ | ✅ |
+| Statistics + Recent Conversions | ✅ | ✅ |
+| Exclude Words | ✅ | ✅ |
+| Appearance (Theme / Font Size) | ✅ | ✅ |
+| Onboarding | ✅ | ✅ |
+| Toast Notification | ✅ | ✅ |
+| Floating Convert Button | — | ✅ |
+| Export CSV | ✅ | ✅ |
+| App/Window Exclusion | ✅ | — |
+| i18n (ไทย / English) | ✅ | ✅ |
+
+---
+
+## Troubleshooting
+
+<details>
+<summary><b>macOS: "PimPid is damaged and can't be opened"</b></summary>
+
+เกิดจาก Gatekeeper บล็อกแอป — แก้โดย:
+
+**วิธี A** (แนะนำ): Right-click ที่ PimPid.app → Open → Open
+
+**วิธี B**: รันใน Terminal:
+```bash
+xattr -cr /Applications/PimPid.app
+```
+</details>
+
+<details>
+<summary><b>macOS: ขอ Accessibility permission</b></summary>
+
+PimPid ต้องการ Accessibility เพื่ออ่าน/แปลง/วางข้อความ + Auto-Correct
+
+ไปที่: **System Settings → Privacy & Security → Accessibility** → เปิดสวิตช์ PimPid
+</details>
+
+<details>
+<summary><b>macOS: Auto-Correct ไม่ทำงาน</b></summary>
+
+1. ตรวจ Accessibility permission เปิดแล้ว
+2. ตรวจ Auto-Correct เปิดอยู่ (menu bar)
+3. ลอง toggle ปิด/เปิดใหม่
+</details>
+
+<details>
+<summary><b>Windows: Ctrl+Shift+L ไม่ทำงาน</b></summary>
+
+1. ตรวจว่า PimPid ทำงานอยู่ (icon ใน System Tray)
+2. Shortcut อาจชนกับโปรแกรมอื่น → เปลี่ยนได้ใน Settings
+3. บางโปรแกรม (เกม, IDE) อาจดักจับ keyboard ก่อน
+</details>
+
+---
+
+## Build จาก Source
 
 ```bash
 # macOS
-cd macos && swift test
+cd macos && swift build -c release && ./build_release.sh
 
 # Windows
-cd windows && npm run build
+cd windows && npm install && npm run build && npm run dist
+
+# Tests
+cd macos && swift test          # 189 tests
+cd windows && npm test          # 96 tests
 ```
+
+---
 
 ## หมายเหตุ
 
-- ใช้การแมปคีย์บอร์ด **ไทย Kedmanee** กับ **US QWERTY** (ตำแหน่งปุ่มเดียวกัน)
-- macOS version ใช้ Swift + SwiftUI + Accessibility API
-- Windows version ใช้ Electron + TypeScript + PowerShell SendKeys
+- แมปคีย์บอร์ด **ไทย Kedmanee** ↔ **US QWERTY** ตามตำแหน่งปุ่ม
+- macOS: Swift + SwiftUI + CGEventTap
+- Windows: Electron + TypeScript
+- ทำงาน **offline ทั้งหมด** — ไม่ส่งข้อมูลออก
+
+## License
+
+MIT
