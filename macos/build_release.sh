@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # PimPid Release Build Script
-# Build และสร้าง .app bundle สำหรับ macOS
+# Build, ad-hoc sign, สร้าง DMG + zip สำหรับ macOS
 # รันจากโฟลเดอร์ macos/ หรือจาก root ของโปรเจกต์
 
 set -e
 
-VERSION="${PIMPID_VERSION:-1.6.6}"
-BUILD="${PIMPID_BUILD:-22}"
+VERSION="${PIMPID_VERSION:-1.7.0}"
+BUILD="${PIMPID_BUILD:-23}"
 
 # หา root directory ของโปรเจกต์
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -95,27 +95,79 @@ cp "$MACOS_DIR/PimPid/Icon/PimPid.icns" "$RELEASE_DIR/PimPid.app/Contents/Resour
 echo "🔄 Refreshing Services registration..."
 /System/Library/CoreServices/pbs -update
 
-# 7. Remove quarantine attribute (fix "damaged" error for unsigned apps)
+# 7. Ad-hoc code signing
+# เปลี่ยนจาก "damaged and can't be opened" เป็น "unidentified developer"
+# ผู้ใช้สามารถกด Right-click > Open เพื่อเปิดได้
+echo "🔏 Ad-hoc code signing..."
+codesign --force --deep --sign - "$RELEASE_DIR/PimPid.app"
+echo "   Verifying signature..."
+codesign --verify --verbose "$RELEASE_DIR/PimPid.app" 2>&1 || true
+
+# 8. Remove quarantine attribute
 echo "🔓 Removing quarantine attribute..."
 xattr -cr "$RELEASE_DIR/PimPid.app" 2>/dev/null || true
 
-# 8. Create zip for distribution
+# 9. Create DMG for distribution
+echo "💿 Creating DMG..."
+DMG_NAME="PimPid-${VERSION}-macOS.dmg"
+DMG_TEMP="$RELEASE_DIR/dmg_temp"
+rm -rf "$DMG_TEMP" "$RELEASE_DIR/$DMG_NAME"
+mkdir -p "$DMG_TEMP"
+cp -R "$RELEASE_DIR/PimPid.app" "$DMG_TEMP/"
+ln -s /Applications "$DMG_TEMP/Applications"
+
+# สร้าง README สำหรับ first-time users
+cat > "$DMG_TEMP/README — วิธีติดตั้ง.txt" << 'READMEEOF'
+PimPid — วิธีติดตั้ง / Installation Guide
+==========================================
+
+1. ลาก PimPid.app ไปไว้ใน Applications
+   Drag PimPid.app to Applications folder
+
+2. เปิด PimPid จาก Applications
+   Open PimPid from Applications
+
+3. ถ้า macOS แสดง "unidentified developer":
+   If macOS shows "unidentified developer":
+
+   วิธี A: คลิกขวา (Right-click) ที่ PimPid.app > เลือก Open > กด Open
+   Method A: Right-click PimPid.app > Open > Click Open
+
+   วิธี B: ไปที่ System Settings > Privacy & Security > เลื่อนลงหา "PimPid" > กด Open Anyway
+   Method B: Go to System Settings > Privacy & Security > Scroll down > Click "Open Anyway"
+
+4. อนุญาต Accessibility permission เมื่อระบบถาม
+   Grant Accessibility permission when prompted
+
+เสร็จเรียบร้อย! PimPid จะอยู่ใน menu bar ด้านบน
+Done! PimPid will appear in the menu bar at the top.
+READMEEOF
+
+hdiutil create -volname "PimPid $VERSION" \
+  -srcfolder "$DMG_TEMP" \
+  -ov -format UDZO \
+  "$RELEASE_DIR/$DMG_NAME" \
+  2>/dev/null
+
+rm -rf "$DMG_TEMP"
+
+# 10. Create zip as fallback
 echo "📦 Creating zip archive..."
 ZIP_NAME="PimPid-${VERSION}-macOS.zip"
 cd "$RELEASE_DIR"
 rm -f "$ZIP_NAME"
 ditto -c -k --sequesterRsrc --keepParent "PimPid.app" "$ZIP_NAME"
 
-# 9. แสดงข้อมูล
+# 11. แสดงข้อมูล
 echo ""
 echo "✅ Build complete!"
 echo "📍 App: $RELEASE_DIR/PimPid.app"
+echo "💿 DMG: $RELEASE_DIR/$DMG_NAME"
 echo "📦 Zip: $RELEASE_DIR/$ZIP_NAME"
 echo ""
 ls -lh "$RELEASE_DIR/PimPid.app/Contents/MacOS/PimPid"
+ls -lh "$RELEASE_DIR/$DMG_NAME"
 ls -lh "$RELEASE_DIR/$ZIP_NAME"
 echo ""
+echo "🔏 Signed: ad-hoc (users Right-click > Open to bypass Gatekeeper)"
 echo "🚀 To run: open $RELEASE_DIR/PimPid.app"
-echo ""
-echo "⚠️  Note: If macOS shows 'damaged' error after download, run:"
-echo "   xattr -cr /Applications/PimPid.app"
