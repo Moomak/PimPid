@@ -4,7 +4,7 @@ import AppKit
 /// About view with app information and quick start guide
 struct AboutView: View {
     @EnvironmentObject var appState: AppState
-    @ObservedObject private var thaiWordLoader = ThaiWordListLoader.shared
+    @StateObject private var thaiWordLoader = ThaiWordListLoader.shared
 
     var body: some View {
         Form {
@@ -67,7 +67,7 @@ struct AboutView: View {
                     )
                 }
             } header: {
-                Text("Quick Start Guide")
+                Text(String(localized: "about.quickstart.header", bundle: appState.localizedBundle))
                     .font(.headline)
             }
 
@@ -79,7 +79,7 @@ struct AboutView: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                                 .frame(width: 20)
-                            Text("GitHub")
+                            Text(String(localized: "about.github", bundle: appState.localizedBundle))
                                 .font(.system(size: 12, weight: .medium))
                             Spacer()
                             Text("github.com/Moomak/PimPid")
@@ -97,7 +97,7 @@ struct AboutView: View {
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                             .frame(width: 20)
-                        Text("License")
+                        Text(String(localized: "about.license", bundle: appState.localizedBundle))
                             .font(.system(size: 12, weight: .medium))
                         Spacer()
                         Text("MIT License")
@@ -127,7 +127,7 @@ struct AboutView: View {
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                                 .frame(width: 20)
-                            Text("Copy diagnostic info")
+                            Text(String(localized: "about.copy_diagnostic", bundle: appState.localizedBundle))
                                 .font(.system(size: 12, weight: .medium))
                         }
                     }
@@ -176,11 +176,11 @@ struct AboutView: View {
                     Text(String(localized: "about.thai_credit", bundle: appState.localizedBundle))
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text("© 2025 PimPid · MIT License")
+                    Text("© 2025-2026 PimPid · MIT License")
                         .font(.caption)
                         .foregroundColor(.secondary)
 
-                    Text("Made with ❤️ for Thai and English keyboard switchers")
+                    Text(String(localized: "about.made_with_love", bundle: appState.localizedBundle))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

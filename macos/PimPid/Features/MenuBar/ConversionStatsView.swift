@@ -4,57 +4,82 @@ import CoreGraphics
 /// แสดงสถิติการแปลงใน menu bar
 struct ConversionStatsView: View {
     @EnvironmentObject var appState: AppState
-    @ObservedObject var stats = ConversionStats.shared
+    @StateObject private var stats = ConversionStats.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             // Header
             HStack {
                 Image(systemName: "chart.bar.fill")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                 Text(String(localized: "stats.header", bundle: appState.localizedBundle))
                     .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
             }
 
             // Stats grid
-            VStack(alignment: .leading, spacing: 8) {
-                StatRow(
+            HStack(spacing: 12) {
+                StatBadge(
                     icon: "calendar",
                     label: String(localized: "stats.today", bundle: appState.localizedBundle),
-                    value: "\(stats.todayConversions) " + String(localized: "stats.times", bundle: appState.localizedBundle)
+                    value: "\(stats.todayConversions)",
+                    unit: String(localized: "stats.times", bundle: appState.localizedBundle)
                 )
 
-                StatRow(
+                StatBadge(
                     icon: "sum",
                     label: String(localized: "stats.total", bundle: appState.localizedBundle),
-                    value: "\(stats.totalConversions) " + String(localized: "stats.times", bundle: appState.localizedBundle)
+                    value: "\(stats.totalConversions)",
+                    unit: String(localized: "stats.times", bundle: appState.localizedBundle)
                 )
             }
 
             // Task 66: กราฟ 7 วันล่าสุด
             let days = stats.last7DaysCounts()
-            if !days.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "stats.last7days", bundle: appState.localizedBundle))
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
+            let allZero = days.isEmpty || days.allSatisfy({ $0.count == 0 })
+            VStack(alignment: .leading, spacing: 4) {
+                Text(String(localized: "stats.last7days", bundle: appState.localizedBundle))
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                if allZero {
+                    Text(String(localized: "stats.empty_graph", bundle: appState.localizedBundle))
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 12)
+                } else {
                     let maxCount = max(days.map(\.count).max() ?? 1, 1)
-                    HStack(alignment: .bottom, spacing: 4) {
+                    HStack(alignment: .bottom, spacing: 6) {
                         ForEach(Array(days.enumerated()), id: \.offset) { _, item in
-                            VStack(spacing: 2) {
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(Color.blue.opacity(0.6))
-                                    .frame(width: 20, height: max(2, CGFloat(item.count) / CGFloat(maxCount) * 24))
+                            VStack(spacing: 3) {
+                                if item.count > 0 {
+                                    Text("\(item.count)")
+                                        .font(.system(size: 8, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                }
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                    .frame(width: 24, height: max(3, CGFloat(item.count) / CGFloat(maxCount) * 32))
                                 Text(shortDayLabel(item.date))
-                                    .font(.system(size: 8))
-                                    .foregroundColor(.secondary)
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }
                             .frame(maxWidth: .infinity)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("\(shortDayLabel(item.date)): \(item.count)")
                         }
                     }
-                    .frame(height: 36)
+                    .frame(height: 52)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel(String(localized: "stats.last7days", bundle: appState.localizedBundle))
                 }
             }
         }
@@ -71,7 +96,7 @@ private func shortDayLabel(_ dateKey: String) -> String {
     return String(dateKey.suffix(2))
 }
 
-/// แถวแสดงสถิติแต่ละรายการ
+/// แถวแสดงสถิติแต่ละรายการ (legacy — kept for backward compat)
 struct StatRow: View {
     let icon: String
     let label: String
@@ -81,59 +106,111 @@ struct StatRow: View {
         HStack {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .frame(width: 20)
 
             Text(label)
                 .font(.system(size: 12))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Spacer()
 
             Text(value)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
+    }
+}
+
+/// Compact stat badge showing value prominently
+struct StatBadge: View {
+    let icon: String
+    let label: String
+    let value: String
+    let unit: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                Text(label)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+                Text(unit)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.secondary.opacity(0.06))
+        )
     }
 }
 
 /// แสดงรายการแปลงล่าสุด
 struct RecentConversionsView: View {
     @EnvironmentObject var appState: AppState
-    @ObservedObject var stats = ConversionStats.shared
+    @StateObject private var stats = ConversionStats.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             // Header
             HStack {
                 Image(systemName: "clock.fill")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
                 Text(String(localized: "recent.header", bundle: appState.localizedBundle))
                     .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Spacer()
+                if !stats.recentConversions.isEmpty {
+                    Text("\(min(stats.recentConversions.count, 5))")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color.secondary.opacity(0.12))
+                        )
+                }
             }
 
             // Recent conversions list
             if stats.recentConversions.isEmpty {
                 Text(String(localized: "recent.no_history", bundle: appState.localizedBundle))
                     .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .padding(.vertical, 8)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 12)
             } else {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     ForEach(stats.recentConversions.prefix(5)) { record in
                         RecentConversionRow(record: record)
                     }
                 }
             }
 
-            HStack(spacing: 8) {
-                if !stats.recentConversions.isEmpty {
+            if !stats.recentConversions.isEmpty {
+                Divider()
+                    .padding(.vertical, 2)
+
+                HStack(spacing: 12) {
                     Button(String(localized: "button.clear_recent", bundle: appState.localizedBundle)) {
                         ConversionStats.shared.clearRecentConversions()
                     }
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .buttonStyle(.plain)
 
                     Button(String(localized: "button.undo_last", bundle: appState.localizedBundle)) {
@@ -142,11 +219,10 @@ struct RecentConversionsView: View {
                         }
                     }
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.top, 4)
         }
         .padding(12)
         .background(
@@ -215,7 +291,7 @@ struct RecentConversionRow: View {
                 Button {
                     excludeStore.add(excludeWord)
                 } label: {
-                    Text("Exclude")
+                    Text(String(localized: "recent.exclude_button", bundle: appState.localizedBundle))
                         .font(.system(size: 9, weight: .medium))
                         .foregroundColor(.white)
                         .padding(.horizontal, 6)
@@ -228,7 +304,7 @@ struct RecentConversionRow: View {
                 .buttonStyle(.plain)
                 .help(String(localized: "recent.add_exclude", bundle: appState.localizedBundle))
             } else if !excludeWord.isEmpty {
-                Text("Excluded")
+                Text(String(localized: "recent.excluded_label", bundle: appState.localizedBundle))
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
             }

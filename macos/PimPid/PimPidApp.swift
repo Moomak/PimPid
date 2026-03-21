@@ -25,10 +25,8 @@ struct PimPidApp: App {
         appState.autoCorrectEnabled ? "character.bubble.fill" : "character.bubble"
     }
 
-    private var menuBarIconColor: Color {
-        if appState.autoCorrectEnabled { return .orange }
-        return .primary
-    }
+    // HIG: Menu bar icons should be template images — the system handles tinting.
+    // State is indicated by filled vs outlined variant, not by color.
 
     var body: some Scene {
         Settings {
@@ -41,7 +39,6 @@ struct PimPidApp: App {
                 .environmentObject(appState)
         } label: {
             Image(systemName: menuBarIconName)
-                .foregroundStyle(menuBarIconColor)
         }
         .menuBarExtraStyle(.window)
 
@@ -112,9 +109,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "onboarding" }) {
                     window.makeKeyAndOrderFront(nil)
-                    NSApp.activate(ignoringOtherApps: true)
+                    NSApp.activate()
                 } else {
-                    NSWorkspace.shared.open(URL(string: "pimpid://onboarding")!)
+                    if let url = URL(string: "pimpid://onboarding") {
+                        NSWorkspace.shared.open(url)
+                    }
                 }
             }
         }
@@ -123,7 +122,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if UserDefaults.standard.bool(forKey: PimPidKeys.autoCorrectEnabled), !AccessibilityHelper.isAccessibilityTrusted {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 Task { @MainActor in
-                    NotificationService.shared.showToast(message: "ต้องการสิทธิ์ Accessibility เพื่อให้ Auto-Correct ทำงาน", type: .warning)
+                    let bundle = AppState.makeLocalizedBundle(for: UserDefaults.standard.string(forKey: PimPidKeys.appLanguage) ?? "th")
+                    NotificationService.shared.showToast(message: String(localized: "toast.accessibility_required", bundle: bundle), type: .warning)
                 }
             }
         }
@@ -146,7 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if NSApp.activationPolicy() != newPolicy {
             NSApp.setActivationPolicy(newPolicy)
             if hasVisibleWindow {
-                NSApp.activate(ignoringOtherApps: true)
+                NSApp.activate()
             }
         }
     }

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>PimPid Float</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f3f3f3;
+      --surface: #ffffff;
+      --border: #d1d1d1;
+      --accent: #0078d4;
+      --accent-hover: #106ebe;
+      --text: #1f1f1f;
+      --text-secondary: #616161;
+      --danger: #c42b1c;
+      --danger-hover: #a12010;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #202020;
+        --surface: #2d2d2d;
+        --border: #404040;
+        --text: #f3f3f3;
+        --text-secondary: #a0a0a0;
+      }
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: "Segoe UI", "Tahoma", sans-serif;
+    }
+
+    .float-container {
+      position: relative;
+      width: 48px;
+      height: 48px;
+    }
+
+    .float-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-size: 22px;
+      line-height: 48px;
+      text-align: center;
+      cursor: grab;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1);
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+      user-select: none;
+      -webkit-app-region: no-drag;
+    }
+
+    .float-btn:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.12);
+      transform: scale(1.05);
+    }
+
+    .float-btn:active {
+      cursor: grabbing;
+      transform: scale(0.97);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: var(--danger);
+      color: white;
+      font-size: 11px;
+      line-height: 18px;
+      text-align: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .float-container:hover .close-btn {
+      opacity: 1;
+    }
+
+    .close-btn:hover {
+      background: var(--danger-hover);
+    }
+
+    .float-btn:focus-visible {
+      outline: 3px solid white;
+      outline-offset: 2px;
+    }
+    .close-btn:focus-visible {
+      outline: 2px solid white;
+      outline-offset: 1px;
+    }
+  </style>
+</head>
+<body>
+<div class="float-container" id="float-container">
+  <button class="float-btn" id="float-btn" title="Convert selected text" aria-label="Convert selected text">&#x21C4;</button>
+  <button class="close-btn" id="close-btn" title="Close" aria-label="Close float button">&#x2715;</button>
+</div>
+
+<script src="float-renderer.js"></script>
+</body>
+</html>
