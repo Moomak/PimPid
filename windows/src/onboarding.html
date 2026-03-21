@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>Welcome to PimPid</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f3f3f3;
+      --surface: #ffffff;
+      --border: #d1d1d1;
+      --accent: #0078d4;
+      --accent-hover: #106ebe;
+      --text: #1f1f1f;
+      --text-secondary: #616161;
+      --radius: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #202020;
+        --surface: #2d2d2d;
+        --border: #404040;
+        --text: #f3f3f3;
+        --text-secondary: #a0a0a0;
+      }
+    }
+
+    .theme-light {
+      --bg: #f3f3f3;
+      --surface: #ffffff;
+      --border: #d1d1d1;
+      --text: #1f1f1f;
+      --text-secondary: #616161;
+    }
+    .theme-dark {
+      --bg: #202020;
+      --surface: #2d2d2d;
+      --border: #404040;
+      --text: #f3f3f3;
+      --text-secondary: #a0a0a0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: "Segoe UI", "Tahoma", sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .onboarding {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ─── Step indicator ─── */
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px 0 0;
+    }
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.3s, transform 0.3s;
+    }
+    .step-dot.active {
+      background: var(--accent);
+      transform: scale(1.3);
+    }
+
+    /* ─── Slide container ─── */
+    .slides {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 32px 40px;
+      opacity: 0;
+      transform: translateX(60px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    .slide.exit-left {
+      opacity: 0;
+      transform: translateX(-60px);
+    }
+
+    .slide-icon {
+      font-size: 56px;
+      margin-bottom: 20px;
+      line-height: 1;
+    }
+
+    .slide-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .slide-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 360px;
+    }
+
+    .shortcut-badge {
+      display: inline-block;
+      margin-top: 14px;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 15px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 8px 18px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    /* ─── Navigation ─── */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px 20px;
+    }
+
+    .nav-btn {
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 20px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s;
+      min-width: 90px;
+    }
+    .nav-btn:hover { background: var(--border); }
+    .nav-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .nav-btn.primary:hover { background: var(--accent-hover); }
+    .nav-btn.hidden { visibility: hidden; }
+
+    .nav-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .skip-link:hover {
+      color: var(--text);
+    }
+    .skip-link:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+<div class="onboarding">
+
+  <!-- Skip link -->
+  <button class="skip-link" id="btn-skip">Skip</button>
+
+  <!-- Step indicator -->
+  <div class="step-indicator" role="progressbar" aria-label="Onboarding progress" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" id="progress-indicator">
+    <div class="step-dot active" data-step="0"></div>
+    <div class="step-dot" data-step="1"></div>
+    <div class="step-dot" data-step="2"></div>
+    <div class="step-dot" data-step="3"></div>
+  </div>
+
+  <!-- Slides -->
+  <div class="slides">
+
+    <!-- Step 1: Welcome -->
+    <div class="slide active" data-slide="0">
+      <div class="slide-icon">&#x2328;&#xFE0F;</div>
+      <div class="slide-title" id="s-welcome-title">Welcome to PimPid</div>
+      <div class="slide-desc" id="s-welcome-desc">Automatically convert text when you type in the wrong keyboard layout.</div>
+    </div>
+
+    <!-- Step 2: Shortcut -->
+    <div class="slide" data-slide="1">
+      <div class="slide-icon">&#x26A1;</div>
+      <div class="slide-title" id="s-shortcut-title">Quick Convert Shortcut</div>
+      <div class="slide-desc" id="s-shortcut-desc">Select text and press the shortcut to instantly convert.</div>
+      <div class="shortcut-badge">Ctrl + Shift + L</div>
+    </div>
+
+    <!-- Step 3: Auto-Correct -->
+    <div class="slide" data-slide="2">
+      <div class="slide-icon">&#x1F504;</div>
+      <div class="slide-title" id="s-autocorrect-title">Auto-Correct</div>
+      <div class="slide-desc" id="s-autocorrect-desc">Enable Auto-Correct to fix text typed in the wrong language automatically.</div>
+    </div>
+
+    <!-- Step 4: Get Started -->
+    <div class="slide" data-slide="3">
+      <div class="slide-icon">&#x1F680;</div>
+      <div class="slide-title" id="s-getstarted-title">Ready to Go!</div>
+      <div class="slide-desc" id="s-getstarted-desc">PimPid runs in the System Tray. Start using it right away!</div>
+    </div>
+
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav">
+    <button class="nav-btn hidden" id="btn-prev">Back</button>
+    <button class="nav-btn primary" id="btn-next">Next</button>
+  </div>
+
+</div>
+
+<script src="onboarding-renderer.js"></script>
+</body>
+</html>

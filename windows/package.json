@@ -8,14 +8,17 @@
     "start": "npm run build && electron .",
     "dist": "npm run build && electron-builder --win portable",
     "dist:nsis": "npm run build && electron-builder --win nsis",
+    "test": "vitest run",
     "simulate-article": "npm run build && npx electron dist/scripts/run-article-simulation.js"
   },
   "author": "PimPid",
   "license": "MIT",
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.0",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0"
   },
   "build": {
     "appId": "com.pimpid.windows",
@@ -33,6 +36,10 @@
     "files": [
       "dist/**/*",
       "src/icon.png",
+      "src/settings.html",
+      "src/onboarding.html",
+      "src/toast.html",
+      "src/float-button.html",
       "node_modules/uiohook-napi/**/*"
     ],
     "asarUnpack": [
@@ -44,6 +51,5 @@
   },
   "optionalDependencies": {
     "uiohook-napi": "^1.5.4"
-  },
-  "dependencies": {}
+  }
 }
