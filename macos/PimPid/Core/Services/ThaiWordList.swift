@@ -104,12 +104,48 @@ enum ThaiWordList {
         return dp[n]
     }
 
+    // MARK: - Sorted word list for binary search prefix lookup
+
+    private static let sortedLock = NSLock()
+    private static var _sortedWords: [String]?
+
+    /// Sorted array of words for O(log n) prefix search
+    private static var sortedWords: [String] {
+        sortedLock.lock()
+        defer { sortedLock.unlock() }
+        if let s = _sortedWords { return s }
+        let s = words.sorted()
+        _sortedWords = s
+        return s
+    }
+
+    /// Invalidate sorted cache when word set changes (called from ThaiWordListLoader)
+    static func invalidateSortedCache() {
+        sortedLock.lock()
+        _sortedWords = nil
+        sortedLock.unlock()
+    }
+
     /// ตรวจว่ามีคำไทยที่รู้จักที่ขึ้นต้นด้วย prefix นี้ (เช่น เก็ เป็นต้นของ เก็บ) — กำลังพิมพ์อยู่ ไม่แปลง
+    /// ใช้ binary search บน sorted array — O(log n) แทน O(n) linear scan
     static func hasWordWithPrefix(_ prefix: String) -> Bool {
         let p = prefix.trimmingCharacters(in: .whitespacesAndNewlines)
         guard p.unicodeScalars.count >= 2 else { return false }
-        let w = words
-        return w.contains { $0.hasPrefix(p) }
+        let sorted = sortedWords
+        guard !sorted.isEmpty else { return false }
+        // Binary search: find insertion point of prefix
+        var lo = 0, hi = sorted.count
+        while lo < hi {
+            let mid = lo + (hi - lo) / 2
+            if sorted[mid] < p {
+                lo = mid + 1
+            } else {
+                hi = mid
+            }
+        }
+        // Check if element at insertion point starts with prefix
+        if lo < sorted.count && sorted[lo].hasPrefix(p) { return true }
+        return false
     }
 
     private static func loadFromBundle() -> Set<String>? {

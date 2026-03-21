@@ -20,6 +20,7 @@ struct SettingsNavigationView: View {
         switch appState.appearanceFontSize {
         case "small": return 0.9
         case "large": return 1.15
+        case "xl": return 1.35
         default: return 1.0
         }
     }
@@ -81,8 +82,8 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     func title(in bundle: Bundle) -> String {
         switch self {
         case .general: return String(localized: "settings.general.title", bundle: bundle)
-        case .shortcut: return "Shortcut"
-        case .autoCorrect: return "Auto-Correct"
+        case .shortcut: return String(localized: "settings.shortcut.title", bundle: bundle)
+        case .autoCorrect: return String(localized: "settings.autocorrect.title", bundle: bundle)
         case .exclude: return String(localized: "settings.exclude.title", bundle: bundle)
         case .appearance: return String(localized: "settings.appearance.title", bundle: bundle)
         case .about: return String(localized: "settings.about.title", bundle: bundle)
@@ -123,7 +124,13 @@ struct GeneralSettingsView: View {
         Form {
             Section {
                 LabeledContent(String(localized: "general.version", bundle: appState.localizedBundle), value: Bundle.main.appVersion)
-                LabeledContent(String(localized: "general.status", bundle: appState.localizedBundle), value: appState.autoCorrectEnabled ? String(localized: "general.status.active", bundle: appState.localizedBundle) : String(localized: "general.status.paused", bundle: appState.localizedBundle))
+                LabeledContent(String(localized: "general.status", bundle: appState.localizedBundle)) {
+                    HStack(spacing: 4) {
+                        Image(systemName: appState.autoCorrectEnabled ? "checkmark.circle.fill" : "pause.circle.fill")
+                            .foregroundStyle(appState.autoCorrectEnabled ? .green : .secondary)
+                        Text(appState.autoCorrectEnabled ? String(localized: "general.status.active", bundle: appState.localizedBundle) : String(localized: "general.status.paused", bundle: appState.localizedBundle))
+                    }
+                }
             } header: {
                 Text(String(localized: "section.info", bundle: appState.localizedBundle))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
@@ -158,7 +165,7 @@ struct ShortcutSettingsView: View {
                     .font(.system(size: 13 * fontScale, weight: .medium))
 
                 if let name = currentLayoutName {
-                    LabeledContent("Keyboard layout", value: name)
+                    LabeledContent(String(localized: "shortcut.keyboard_layout", bundle: appState.localizedBundle), value: name)
                         .font(.system(size: 13 * fontScale, weight: .medium))
                 }
 
@@ -170,7 +177,7 @@ struct ShortcutSettingsView: View {
                     .buttonStyle(.bordered)
                 }
 
-                Button("ใช้ค่าเริ่มต้น (⌘⇧L)") {
+                Button(String(localized: "shortcut.use_default", bundle: appState.localizedBundle)) {
                     UserDefaults.standard.set(Int(PimPidKeys.defaultShortcutKeyCode), forKey: PimPidKeys.shortcutKeyCode)
                     UserDefaults.standard.set(Int(PimPidKeys.defaultShortcutModifierFlags), forKey: PimPidKeys.shortcutModifierFlags)
                     KeyboardShortcutManager.shared.update()
@@ -178,7 +185,7 @@ struct ShortcutSettingsView: View {
                 }
                 .buttonStyle(.borderedProminent)
             } header: {
-                Text("Convert Selected Text")
+                Text(String(localized: "menu.convert_selected", bundle: appState.localizedBundle))
                     .font(.system(size: 13 * fontScale, weight: .semibold))
             } footer: {
                 Text(String(localized: "shortcut.footer", bundle: appState.localizedBundle))
@@ -186,7 +193,7 @@ struct ShortcutSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Shortcut")
+        .navigationTitle(String(localized: "settings.shortcut.title", bundle: appState.localizedBundle))
         .onAppear {
             displayShortcut = KeyboardShortcutManager.shortcutDisplayString()
             currentLayoutName = InputSourceSwitcher.currentLayoutName()
@@ -229,7 +236,7 @@ struct ExcludeSettingsView: View {
                     .disabled(newWord.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
 
-                Button("Paste & Add") {
+                Button(String(localized: "exclude.paste_add", bundle: appState.localizedBundle)) {
                     pasteAndAddWords()
                 }
                 .buttonStyle(.bordered)
@@ -259,8 +266,8 @@ struct ExcludeSettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     HStack {
-                        Button("Export") { exportExcludeList() }
-                        Button("Import…") { importExcludeList() }
+                        Button(String(localized: "exclude.export", bundle: appState.localizedBundle)) { exportExcludeList() }
+                        Button(String(localized: "exclude.import", bundle: appState.localizedBundle)) { importExcludeList() }
                     }
                     .buttonStyle(.bordered)
                 }
@@ -273,19 +280,18 @@ struct ExcludeSettingsView: View {
                         .foregroundStyle(.secondary)
                         .font(.caption)
                 } else {
-                    List {
-                        ForEach(filteredWords, id: \.self) { word in
-                            HStack {
-                                Text(word)
-                                Spacer()
-                                Button(action: {
-                                    store.remove(word)
-                                }) {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(.red)
-                                }
-                                .buttonStyle(.plain)
+                    ForEach(filteredWords, id: \.self) { word in
+                        HStack {
+                            Text(word)
+                            Spacer()
+                            Button(action: {
+                                store.remove(word)
+                            }) {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(String(localized: "a11y.remove_word", bundle: appState.localizedBundle) + " \(word)")
                         }
                     }
                 }

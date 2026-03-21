@@ -19,6 +19,8 @@ enum ConversionValidator {
             if convertedEnglishHasSuspiciousCasing(converted) { return false }
             // แปลงแล้วเป็นคำสั้นมาก + มี apostrophe (เช่น ''q จาก งงๆ) ไม่ใช่คำ — ไม่แปลง
             if convertedLooksLikeGarbageEnglish(converted) { return false }
+            // ผลลัพธ์ที่ดูเหมือน gibberish (ไม่มีสระ, มีตัวอักษรซ้ำผิดปกติ) — ไม่แปลง
+            if convertedEnglishLooksLikeGibberish(converted) { return false }
             // ต้นทางที่เป็นสระ/วรรณยุกต์นำ มักเป็นคำผิด layout — ให้แปลงเป็นอังกฤษได้
             let originalLikelyWrongLayout = hasLeadingThaiVowelOrSign(original)
             return isValidEnglishForReplace(converted, allowShortWhenOriginalIsSuspiciousThai: originalLikelyWrongLayout)
@@ -26,6 +28,8 @@ enum ConversionValidator {
             // คำเช่น "com" (domain) ไม่อยากให้เปลี่ยนเป็น "แนท"
             let lower = original.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
             if AutoCorrectionLogic.englishKeepAsIs.contains(lower) { return false }
+            // ตรวจ default tech terms (ป้องกัน "git" → "เำะ" ฯลฯ)
+            if AutoCorrectionLogic.defaultExcludedTechTerms.contains(lower) { return false }
             // อย่าแปลงเมื่อเป็นแค่ตัวเลขหรือช่องว่าง (เว้นแต่ต้นทางสั้น + แปลงแล้วเป็นคำไทยที่รู้จัก เช่น .[ → ใบ, =, → ชม)
             if !original.contains(where: { $0.isLetter }) {
                 let trimmed = original.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -111,6 +115,40 @@ enum ConversionValidator {
         guard let first = text.trimmingCharacters(in: .whitespacesAndNewlines).unicodeScalars.first else { return false }
         let v = first.value
         return (v >= 0x0E01 && v <= 0x0E5B) && (v > 0x0E2E)
+    }
+
+    /// ผลลัพธ์อังกฤษที่ดู gibberish — ไม่มีสระ (a,e,i,o,u) หรือมีตัวอักษรเดียวซ้ำ >= 3 ครั้ง (เช่น "bbb", "rrr")
+    /// คำยาว >= 4 ตัวที่ไม่มีสระเลยมักไม่ใช่คำจริง (ยกเว้นตัวเลขล้วน)
+    private static func convertedEnglishLooksLikeGibberish(_ text: String) -> Bool {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !t.isEmpty else { return false }
+
+        // ตัวเลขล้วน/ตัวเลข+จุด ไม่ถือเป็น gibberish
+        if t.allSatisfy({ $0.isNumber || $0 == "." }) { return false }
+
+        let letters = t.filter(\.isLetter)
+        guard !letters.isEmpty else { return false }
+
+        // คำยาว >= 4 ตัวอักษร ที่ไม่มีสระเลย → gibberish (เช่น "dkjf", "xrst")
+        let vowels: Set<Character> = ["a", "e", "i", "o", "u", "y"]
+        if letters.count >= 4 && !letters.contains(where: { vowels.contains($0) }) {
+            return true
+        }
+
+        // ตัวอักษรเดียวซ้ำติดกัน >= 3 ครั้ง (เช่น "aaa", "rrr" ใน "arrrg")
+        var prevChar: Character = "\0"
+        var repeatCount = 1
+        for c in t where c.isLetter {
+            if c == prevChar {
+                repeatCount += 1
+                if repeatCount >= 3 { return true }
+            } else {
+                repeatCount = 1
+            }
+            prevChar = c
+        }
+
+        return false
     }
 
     /// Cache ผล spell check ต่อคำ (task 17) — ลดการเรียก NSSpellChecker ซ้ำ

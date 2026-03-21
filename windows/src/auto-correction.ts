@@ -181,6 +181,11 @@ export function isAutoCorrectRunning(): boolean {
   return config.enabled;
 }
 
+/** Check if auto-correction is currently performing a replacement (clipboard in use) */
+export function isAutoCorrectProcessing(): boolean {
+  return isProcessing;
+}
+
 /** Update config without restarting the engine */
 export function updateAutoCorrectConfig(
   updates: Partial<Pick<AutoCorrectionConfig, "debounceMs" | "minBufferLength">>
@@ -370,12 +375,62 @@ const ENGLISH_KEEP_AS_IS = new Set([
   "lot", "mcp", "mem", "opt", "req", "ski", "soko", "vec",
 ]);
 
+/** Default technical terms ที่ไม่ควรถูก auto-correct (case-insensitive) */
+const DEFAULT_EXCLUDED_TECH_TERMS = new Set([
+  // Version control
+  "git", "svn", "hg",
+  // Package managers / build tools
+  "npm", "npx", "yarn", "pnpm", "pip", "brew", "apt", "cargo", "make", "cmake",
+  // Web / protocols
+  "api", "url", "uri", "http", "https", "ftp", "ssh", "ssl", "tls", "tcp", "udp", "dns",
+  "cors", "rest", "grpc", "graphql", "oauth", "jwt", "smtp", "imap",
+  // Languages / markup
+  "html", "css", "scss", "sass", "less", "json", "xml", "yaml", "yml", "toml",
+  "sql", "jsx", "tsx", "vue", "php", "perl", "ruby", "rust", "golang",
+  // Frameworks / tools
+  "node", "deno", "bun", "react", "next", "nuxt", "vite", "webpack", "babel",
+  "docker", "nginx", "redis", "mongo", "mysql", "postgres",
+  "laravel", "django", "flask", "rails", "express", "fastapi",
+  "swift", "xcode", "cocoa", "swiftui",
+  // Common dev terms
+  "localhost", "stdin", "stdout", "stderr", "argv", "argc", "async", "await",
+  "null", "nil", "void", "bool", "enum", "struct", "class", "func", "impl",
+  "sudo", "chmod", "chown", "grep", "awk", "sed", "curl", "wget",
+  // Cloud / services
+  "aws", "gcp", "azure", "vercel", "heroku", "netlify",
+  // File extensions often typed
+  "pdf", "png", "jpg", "jpeg", "gif", "svg", "mp3", "mp4", "mov", "zip", "tar",
+  // Misc tech
+  "cli", "gui", "ide", "sdk", "cdn", "ci", "cd", "devops", "saas", "paas",
+  "regex", "cron", "env", "config", "init", "login", "admin", "root",
+]);
+
+/** ตรวจว่ามี mixed language (ทั้ง Thai + English) เกิน threshold หรือไม่ */
+function hasMixedLanguageAboveThreshold(text: string, threshold: number): boolean {
+  let thaiCount = 0;
+  let engCount = 0;
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    if (code >= 0x0e01 && code <= 0x0e5b) thaiCount++;
+    else if (code < 128 && /[a-zA-Z0-9]/.test(char)) engCount++;
+  }
+  const total = thaiCount + engCount;
+  if (total === 0) return false;
+  return thaiCount / total >= threshold && engCount / total >= threshold;
+}
+
 function checkReplacement(
   asEnglish: string,
   asThai: string
 ): ReplacementResult | null {
   const trimmedEng = asEnglish.trim();
+  // Minimum word length: ต้องมีอย่างน้อย 2 ตัวอักษร
+  if (trimmedEng.length < 2) return null;
   if (ENGLISH_KEEP_AS_IS.has(trimmedEng.toLowerCase())) return null;
+  // ตรวจ default tech terms (case-insensitive)
+  if (DEFAULT_EXCLUDED_TECH_TERMS.has(trimmedEng.toLowerCase())) return null;
+  // Mixed language ratio check: ถ้ามีทั้ง Thai + English > 30% → skip
+  if (hasMixedLanguageAboveThreshold(trimmedEng, 0.3)) return null;
 
   // If Thai interpretation is a known Thai word → skip only when typed string looks like intentional English (ยาวหรือเป็นคำอังกฤษชัดเจน)
   if (
@@ -434,6 +489,15 @@ export function getReplacementForTypedWord(
 ): { original: string; converted: string } | null {
   const trimmed = word.trim();
   if (!trimmed) return null;
+
+  // Minimum word length
+  if (trimmed.length < 2) return null;
+
+  // ตรวจ default tech terms
+  if (DEFAULT_EXCLUDED_TECH_TERMS.has(trimmed.toLowerCase())) return null;
+
+  // Mixed language ratio check
+  if (hasMixedLanguageAboveThreshold(trimmed, 0.3)) return null;
 
   const excludeWords = options?.excludeWords ?? [];
   const asThai = convertEnglishToThai(trimmed);

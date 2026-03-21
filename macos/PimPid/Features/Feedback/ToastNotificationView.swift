@@ -16,6 +16,7 @@ struct ToastNotificationView: View {
         switch key {
         case "small": return 0.9
         case "large": return 1.15
+        case "xl": return 1.35
         default: return 1.0
         }
     }
@@ -33,6 +34,7 @@ struct ToastNotificationView: View {
                 Image(systemName: toast.type.icon)
                     .font(.system(size: 16 * scale, weight: .semibold))
                     .foregroundColor(toast.type.color)
+                    .accessibilityHidden(true)
             }
 
             Text(toast.message)
@@ -66,12 +68,15 @@ struct ToastNotificationView: View {
         .onTapGesture {
             NotificationService.shared.dismissCurrentToast()
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(toast.message)
+        .accessibilityAddTraits(.isStaticText)
     }
 }
 
 /// Container สำหรับแสดง toast notification overlay
 struct ToastOverlayView: View {
-    @ObservedObject var notificationService = NotificationService.shared
+    @StateObject private var notificationService = NotificationService.shared
 
     var body: some View {
         GeometryReader { geometry in
@@ -86,7 +91,7 @@ struct ToastOverlayView: View {
             }
             .frame(width: geometry.size.width)
         }
-        .allowsHitTesting(false) // Allow clicks to pass through
+        .allowsHitTesting(notificationService.currentToast != nil) // Pass through clicks when no toast, allow tap-to-dismiss when showing
     }
 }
 

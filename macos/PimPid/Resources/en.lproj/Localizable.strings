@@ -14,6 +14,7 @@
 "stats.total" = "Total";
 "stats.times" = "times";
 "stats.last7days" = "Last 7 days";
+"stats.empty_graph" = "No statistics yet";
 "button.use_defaults" = "Use defaults";
 "button.clear_recent" = "Clear recent";
 "button.undo_last" = "Undo last conversion";
@@ -85,6 +86,7 @@
 "appearance.font_small" = "Small";
 "appearance.font_medium" = "Medium";
 "appearance.font_large" = "Large";
+"appearance.font_xl" = "Extra Large";
 "appearance.notify_minimal" = "Minimal";
 "appearance.notify_off" = "Off";
 "appearance.toast_sec" = "%@ sec";
@@ -107,8 +109,8 @@
 "general.section.basic" = "Basic Operation";
 "general.version" = "Version";
 "general.status" = "Status";
-"general.status.active" = "✅ Active";
-"general.status.paused" = "⏸️ Paused";
+"general.status.active" = "Active";
+"general.status.paused" = "Paused";
 "general.nav_title" = "General";
 
 /* SettingsNavigationView — Shortcut */
@@ -136,7 +138,7 @@
 "about.description1" = "Convert Thai ⇄ English text by keyboard key position (Kedmanee / QWERTY)";
 "about.description2" = "Supports Auto-Correct while typing and exclude word list";
 "about.quickstart.step1.title" = "Enable PimPid";
-"about.quickstart.step1.desc" = "Click the menu bar icon and toggle 'PimPid Enable'";
+"about.quickstart.step1.desc" = "Click the menu bar icon and toggle 'Enable PimPid'";
 "about.quickstart.step2.title" = "Grant Accessibility";
 "about.quickstart.step2.desc" = "Allow PimPid keyboard access in System Settings";
 "about.quickstart.step3.title" = "Enable Auto-Correct";
@@ -162,6 +164,42 @@
 "onboarding.skip" = "Skip";
 "onboarding.next" = "Next";
 "onboarding.open_system_settings" = "Open System Settings";
+"onboarding.open_accessibility" = "Open Privacy > Accessibility";
 "onboarding.granted_hint" = "If permission is granted, come back and press Done";
 "onboarding.open_pimpid_settings" = "Open PimPid Settings";
 "onboarding.done" = "Done";
+"onboarding.a11y.status.granted" = "Permission granted";
+"onboarding.a11y.status.not_granted" = "Permission not granted";
+"onboarding.a11y.all_set" = "All set! Press Done to start using PimPid";
+"onboarding.a11y.step1" = "Click the button below to open System Settings";
+"onboarding.a11y.step2" = "Toggle the switch next to PimPid";
+"onboarding.a11y.step3" = "Come back to this app — status updates automatically";
+
+/* MenuBarContentView — status */
+"menu.status.on" = "ON";
+"menu.status.off" = "OFF";
+
+/* Hardcoded strings fixed */
+"shortcut.keyboard_layout" = "Keyboard layout";
+"shortcut.use_default" = "Use default (⌘⇧L)";
+"exclude.paste_add" = "Paste & Add";
+"exclude.export" = "Export";
+"exclude.import" = "Import...";
+"recent.exclude_button" = "Exclude";
+"recent.excluded_label" = "Excluded";
+"about.quickstart.header" = "Quick Start Guide";
+"about.github" = "GitHub";
+"about.license" = "License";
+"about.copy_diagnostic" = "Copy diagnostic info";
+"about.made_with_love" = "Made with love for Thai and English keyboard switchers";
+"autocorrect.excluded_apps_header" = "Excluded Apps (%d)";
+"autocorrect.excluded_windows_header" = "Excluded Windows (%d)";
+"appearance.notify_toast" = "Toast";
+
+/* Toast messages */
+"toast.accessibility_required" = "Accessibility permission required for Auto-Correct to work";
+"toast.clipboard_warning" = "Clipboard may have been overwritten — you may need to paste manually";
+"toast.autocorrect_reenabled" = "Auto-Correct was temporarily disabled — re-enabled";
+
+/* Accessibility labels */
+"a11y.remove_word" = "Remove";

@@ -18,7 +18,7 @@ import AppKit
 /// | hasCompletedOnboarding | ผ่าน onboarding แล้ว | false |
 /// | onboardingDidOpenAccessibilitySettings | เคยกดเปิด Accessibility settings จาก onboarding | false |
 /// | appearanceTheme | auto/light/dark | auto |
-/// | appearanceFontSize | small/medium/large | medium |
+/// | appearanceFontSize | small/medium/large/xl | medium |
 /// | notificationStyle | toast/minimal/off | toast |
 /// | toastDuration | วินาที (1.5/2/3) | 2.0 |
 enum PimPidKeys {

@@ -18,9 +18,10 @@ struct AppearanceSettingsView: View {
         ("small", String(localized: "appearance.font_small", bundle: appState.localizedBundle)),
         ("medium", String(localized: "appearance.font_medium", bundle: appState.localizedBundle)),
         ("large", String(localized: "appearance.font_large", bundle: appState.localizedBundle)),
+        ("xl", String(localized: "appearance.font_xl", bundle: appState.localizedBundle)),
     ]}
     private var notificationStyleOptions: [(id: String, label: String)] {[
-        ("toast", "Toast"),
+        ("toast", String(localized: "appearance.notify_toast", bundle: appState.localizedBundle)),
         ("minimal", String(localized: "appearance.notify_minimal", bundle: appState.localizedBundle)),
         ("off", String(localized: "appearance.notify_off", bundle: appState.localizedBundle)),
     ]}
@@ -92,19 +93,6 @@ struct AppearanceSettingsView: View {
             }
 
             Section {
-                Button(String(localized: "button.use_defaults", bundle: appState.localizedBundle)) {
-                    appState.appearanceTheme = "auto"
-                    appState.appearanceFontSize = "medium"
-                    appState.notificationStyle = "toast"
-                    UserDefaults.standard.set(2.0, forKey: PimPidKeys.toastDuration)
-                }
-                .buttonStyle(.bordered)
-            } header: {
-                Text(String(localized: "section.reset", bundle: appState.localizedBundle))
-                    .font(.headline)
-            }
-
-            Section {
                 Picker(String(localized: "appearance.toast_picker", bundle: appState.localizedBundle), selection: Binding(
                     get: {
                         let d = UserDefaults.standard.double(forKey: PimPidKeys.toastDuration)
@@ -119,6 +107,19 @@ struct AppearanceSettingsView: View {
                 .pickerStyle(.menu)
             } header: {
                 Text(String(localized: "appearance.section.toast", bundle: appState.localizedBundle))
+                    .font(.headline)
+            }
+
+            Section {
+                Button(String(localized: "button.use_defaults", bundle: appState.localizedBundle)) {
+                    appState.appearanceTheme = "auto"
+                    appState.appearanceFontSize = "medium"
+                    appState.notificationStyle = "toast"
+                    UserDefaults.standard.set(2.0, forKey: PimPidKeys.toastDuration)
+                }
+                .buttonStyle(.bordered)
+            } header: {
+                Text(String(localized: "section.reset", bundle: appState.localizedBundle))
                     .font(.headline)
             }
         }
