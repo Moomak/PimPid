@@ -3,7 +3,7 @@
  * Port จาก ThaiWordList.swift
  */
 
-const embeddedWords: string[
+const embeddedWords: string[] = [
   "ประเทศ",
   "เทศ",
   "รัก",
@@ -837,6 +837,9 @@ const embeddedWords: string[
 
 const wordSet: Set<string> = new Set(embeddedWords);
 
+// Sorted array for efficient prefix search via binary search (O(log n) vs O(n))
+const sortedWords: string[] = [...wordSet].sort();
+
 /** ไม้ยมก (ๆ) — ถ้าต่อท้ายคำ ให้ถือว่าเป็นคำเดียวกัน (งงๆ = งง) */
 const THAI_REPETITION_MARK = "\u0E46";
 
@@ -914,14 +917,22 @@ function decomposeAll(chars: string[], minLen: number, maxLen: number): boolean 
   return dp[n];
 }
 
-/** ตรวจว่ามีคำไทยที่ขึ้นต้นด้วย prefix นี้ */
+/** ตรวจว่ามีคำไทยที่ขึ้นต้นด้วย prefix นี้ (binary search on sorted array, O(log n)) */
 export function hasWordWithPrefix(prefix: string): boolean {
   const p = prefix.trim();
   if ([...p].length < 2) return false;
-  for (const word of wordSet) {
-    if (word.startsWith(p)) return true;
+
+  // Binary search for the first word >= prefix
+  let lo = 0;
+  let hi = sortedWords.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (sortedWords[mid] < p) lo = mid + 1;
+    else hi = mid;
   }
-  return false;
+
+  // Check if the word at position lo starts with the prefix
+  return lo < sortedWords.length && sortedWords[lo].startsWith(p);
 }
 
 /** ตรวจว่าเป็น Thai character (U+0E01–U+0E5B) */

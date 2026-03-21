@@ -166,6 +166,7 @@ struct AutoCorrectionSettingsView: View {
                                             .font(.system(size: 12))
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityLabel("Remove \(appDisplayName(for: bundleID))")
                                 }
                                 .padding(.vertical, 4)
                             }
@@ -173,7 +174,7 @@ struct AutoCorrectionSettingsView: View {
                     }
                 }
             } header: {
-                Text("Excluded Apps (\(appState.excludedApps.count))")
+                Text(String(format: String(localized: "autocorrect.excluded_apps_header", bundle: appState.localizedBundle), appState.excludedApps.count))
                     .font(.headline)
             }
 
@@ -210,13 +211,14 @@ struct AutoCorrectionSettingsView: View {
                                         .font(.system(size: 12))
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel("Remove \(excludedWindowDisplay(key))")
                             }
                             .padding(.vertical, 4)
                         }
                     }
                 }
             } header: {
-                Text("Excluded Windows (\(appState.excludedWindows.count))")
+                Text(String(format: String(localized: "autocorrect.excluded_windows_header", bundle: appState.localizedBundle), appState.excludedWindows.count))
                     .font(.headline)
             }
 
@@ -264,7 +266,7 @@ struct AutoCorrectionSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Auto-Correct")
+        .navigationTitle(String(localized: "settings.autocorrect.title", bundle: appState.localizedBundle))
         .sheet(isPresented: $showRunningAppPicker) {
             RunningAppPickerView(excludedApps: $appState.excludedApps, onDismiss: { showRunningAppPicker = false })
         }

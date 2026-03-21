@@ -37,16 +37,25 @@ enum TextManipulator {
         let custom = clipboardBackup
 
         // Save current clipboard ไป custom pasteboard (ลดโอกาสแอปอื่นอ่าน/เขียน general ระหว่าง replace)
+        // Limit total backup size to 10 MB to prevent memory pressure from large clipboard contents
+        let maxBackupBytes = 10 * 1024 * 1024
         var savedItems: [[(type: NSPasteboard.PasteboardType, data: Data)]] = []
+        var totalBytes = 0
         if let items = general.pasteboardItems {
             for item in items {
                 var itemData: [(NSPasteboard.PasteboardType, Data)] = []
                 for type in item.types {
                     if let data = item.data(forType: type) {
+                        totalBytes += data.count
+                        if totalBytes > maxBackupBytes {
+                            // Skip remaining data to avoid excessive memory use
+                            break
+                        }
                         itemData.append((type, data))
                     }
                 }
                 if !itemData.isEmpty { savedItems.append(itemData) }
+                if totalBytes > maxBackupBytes { break }
             }
         }
 
@@ -107,7 +116,8 @@ enum TextManipulator {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     if let expected = exp, general.string(forType: .string) != expected {
                         Task { @MainActor in
-                            NotificationService.shared.showToast(message: "คลิปบอร์ดอาจถูกเขียนทับ — อาจต้อง paste เอง", type: .warning)
+                            let bundle = AppState.makeLocalizedBundle(for: UserDefaults.standard.string(forKey: PimPidKeys.appLanguage) ?? "th")
+                            NotificationService.shared.showToast(message: String(localized: "toast.clipboard_warning", bundle: bundle), type: .warning)
                         }
                     }
                 }
