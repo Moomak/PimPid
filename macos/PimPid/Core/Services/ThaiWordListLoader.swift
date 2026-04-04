@@ -51,9 +51,9 @@ final class ThaiWordListLoader: ObservableObject {
     private func loadFromBundle() -> Set<String>? {
         let bundles: [Bundle] = {
             #if canImport(AppKit)
-            return [Bundle.main, Bundle.module]
+            return [Bundle.main, Bundle.appModule]
             #else
-            return [Bundle.module]
+            return [Bundle.appModule]
             #endif
         }()
         for bundle in bundles {

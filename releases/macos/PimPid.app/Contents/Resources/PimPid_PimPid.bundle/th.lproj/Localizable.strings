@@ -14,6 +14,7 @@
 "stats.total" = "ทั้งหมด";
 "stats.times" = "ครั้ง";
 "stats.last7days" = "7 วันที่ผ่านมา";
+"stats.empty_graph" = "ยังไม่มีข้อมูลสถิติ";
 "button.use_defaults" = "ใช้ค่าเริ่มต้น";
 "button.clear_recent" = "ล้างรายการล่าสุด";
 "button.undo_last" = "ยกเลิกการแปลงล่าสุด";
@@ -26,9 +27,9 @@
 "recent.no_history" = "ยังไม่มีประวัติ";
 "recent.add_exclude" = "เพิ่มเข้ารายการ Exclude";
 "time.just_now" = "เมื่อสักครู่";
-"time.minutes_ago" = "%dน. ที่แล้ว";
-"time.hours_ago" = "%dชม. ที่แล้ว";
-"time.days_ago" = "%dวัน ที่แล้ว";
+"time.minutes_ago" = "%d น. ที่แล้ว";
+"time.hours_ago" = "%d ชม. ที่แล้ว";
+"time.days_ago" = "%d วัน ที่แล้ว";
 
 /* MenuBarContentView */
 "toggle.enable" = "เปิดใช้งาน";
@@ -83,8 +84,9 @@
 "appearance.theme_light" = "สว่าง";
 "appearance.theme_dark" = "มืด";
 "appearance.font_small" = "เล็ก";
-"appearance.font_medium" = "ปกติ";
+"appearance.font_medium" = "กลาง";
 "appearance.font_large" = "ใหญ่";
+"appearance.font_xl" = "ใหญ่พิเศษ";
 "appearance.notify_minimal" = "แบบย่อ";
 "appearance.notify_off" = "ปิด";
 "appearance.toast_sec" = "%@ วินาที";
@@ -107,8 +109,8 @@
 "general.section.basic" = "การทำงานพื้นฐาน";
 "general.version" = "เวอร์ชัน";
 "general.status" = "สถานะ";
-"general.status.active" = "✅ ใช้งาน";
-"general.status.paused" = "⏸️ หยุดชั่วคราว";
+"general.status.active" = "ใช้งาน";
+"general.status.paused" = "หยุดชั่วคราว";
 "general.nav_title" = "ทั่วไป";
 
 /* SettingsNavigationView — Shortcut */
@@ -162,6 +164,42 @@
 "onboarding.skip" = "ข้าม";
 "onboarding.next" = "ถัดไป";
 "onboarding.open_system_settings" = "เปิด System Settings";
+"onboarding.open_accessibility" = "เปิด Privacy > Accessibility";
 "onboarding.granted_hint" = "ถ้าให้สิทธิ์แล้ว ให้กลับมาแล้วกด เสร็จสิ้น";
 "onboarding.open_pimpid_settings" = "เปิดการตั้งค่า PimPid";
 "onboarding.done" = "เสร็จสิ้น";
+"onboarding.a11y.status.granted" = "ได้รับสิทธิ์แล้ว";
+"onboarding.a11y.status.not_granted" = "ยังไม่ได้รับสิทธิ์";
+"onboarding.a11y.all_set" = "พร้อมใช้งานแล้ว! กด เสร็จสิ้น เพื่อเริ่มใช้ PimPid";
+"onboarding.a11y.step1" = "คลิกปุ่มด้านล่างเพื่อเปิด System Settings";
+"onboarding.a11y.step2" = "เปิดสวิตช์ข้าง PimPid";
+"onboarding.a11y.step3" = "กลับมาที่แอปนี้ — สถานะจะอัปเดตอัตโนมัติ";
+
+/* MenuBarContentView — status */
+"menu.status.on" = "ON";
+"menu.status.off" = "OFF";
+
+/* Hardcoded strings fixed */
+"shortcut.keyboard_layout" = "Layout คีย์บอร์ด";
+"shortcut.use_default" = "ใช้ค่าเริ่มต้น (⌘⇧L)";
+"exclude.paste_add" = "วาง & เพิ่ม";
+"exclude.export" = "Export";
+"exclude.import" = "Import...";
+"recent.exclude_button" = "Exclude";
+"recent.excluded_label" = "Excluded";
+"about.quickstart.header" = "เริ่มต้นใช้งาน";
+"about.github" = "GitHub";
+"about.license" = "License";
+"about.copy_diagnostic" = "คัดลอกข้อมูลวินิจฉัย";
+"about.made_with_love" = "สร้างด้วยความรักสำหรับคนสลับภาษาไทย-อังกฤษ";
+"autocorrect.excluded_apps_header" = "Excluded Apps (%d)";
+"autocorrect.excluded_windows_header" = "Excluded Windows (%d)";
+"appearance.notify_toast" = "Toast";
+
+/* Toast messages */
+"toast.accessibility_required" = "ต้องการสิทธิ์ Accessibility เพื่อให้ Auto-Correct ทำงาน";
+"toast.clipboard_warning" = "คลิปบอร์ดอาจถูกเขียนทับ — อาจต้อง paste เอง";
+"toast.autocorrect_reenabled" = "Auto-Correct ถูกปิดชั่วคราว — เปิดใช้งานใหม่แล้ว";
+
+/* Accessibility labels */
+"a11y.remove_word" = "ลบ";

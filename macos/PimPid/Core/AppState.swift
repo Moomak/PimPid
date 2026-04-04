@@ -96,9 +96,9 @@ final class AppState: ObservableObject {
     /// Loads the .lproj bundle for `language` directly, bypassing Apple's cached
     /// bundle localization system. Falls back to `.module` if not found.
     static func makeLocalizedBundle(for language: String) -> Bundle {
-        guard language != "system", !language.isEmpty else { return .module }
-        guard let path = Bundle.module.path(forResource: language, ofType: "lproj"),
-              let bundle = Bundle(path: path) else { return .module }
+        guard language != "system", !language.isEmpty else { return .appModule }
+        guard let path = Bundle.appModule.path(forResource: language, ofType: "lproj"),
+              let bundle = Bundle(path: path) else { return .appModule }
         return bundle
     }
 

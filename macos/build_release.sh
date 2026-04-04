@@ -84,12 +84,13 @@ else
 EOF
 fi
 
-# 5. Copy icon
+# 5. Copy resource bundle (localization strings, ThaiWords.txt)
+echo "📦 Copying resource bundle..."
+cp -R "$MACOS_DIR/.build/release/PimPid_PimPid.bundle" "$RELEASE_DIR/PimPid.app/Contents/Resources/"
+
+# 5b. Copy icon
 echo "🎨 Copying icon..."
 cp "$MACOS_DIR/PimPid/Icon/PimPid.icns" "$RELEASE_DIR/PimPid.app/Contents/Resources/"
-
-# 5b. Copy Thai words list (optional)
-[ -f "$MACOS_DIR/PimPid/Resources/ThaiWords.txt" ] && cp "$MACOS_DIR/PimPid/Resources/ThaiWords.txt" "$RELEASE_DIR/PimPid.app/Contents/Resources/"
 
 # 6. Refresh Services registration
 echo "🔄 Refreshing Services registration..."
