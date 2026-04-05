@@ -81,9 +81,9 @@ final class AppState: ObservableObject {
     }
 
     /// The explicit .lproj bundle for the current language.
-    /// Views must use `bundle: appState.localizedBundle` instead of `bundle: .module`
+    /// Views must use `bundle: appState.localizedBundle` instead of `bundle: .appModule`
     /// so that language changes take effect immediately (no restart needed).
-    @Published private(set) var localizedBundle: Bundle = .module
+    @Published private(set) var localizedBundle: Bundle = .appModule
 
     private func applyAutoCorrectionRuntimeState() {
         if autoCorrectEnabled && isEnabled {
@@ -94,7 +94,7 @@ final class AppState: ObservableObject {
     }
 
     /// Loads the .lproj bundle for `language` directly, bypassing Apple's cached
-    /// bundle localization system. Falls back to `.module` if not found.
+    /// bundle localization system. Falls back to `.appModule` if not found.
     static func makeLocalizedBundle(for language: String) -> Bundle {
         guard language != "system", !language.isEmpty else { return .appModule }
         guard let path = Bundle.appModule.path(forResource: language, ofType: "lproj"),

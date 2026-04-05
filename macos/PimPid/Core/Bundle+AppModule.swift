@@ -13,7 +13,12 @@ extension Bundle {
             return bundle
         }
 
-        // 2. Fallback to SwiftPM auto-generated accessor (works in dev builds)
-        return Bundle.module
+        // 2. Alongside the executable (SwiftPM dev builds)
+        let executableURL = Bundle.main.bundleURL.appendingPathComponent("\(bundleName).bundle")
+        if let bundle = Bundle(url: executableURL) {
+            return bundle
+        }
+
+        fatalError("could not load resource bundle: \(bundleName)")
     }()
 }
